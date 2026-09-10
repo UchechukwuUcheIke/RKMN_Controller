@@ -1,42 +1,66 @@
 --!strict
 
+local Types = require(script.Parent.Types)
+
 local RKMNController = {}
 RKMNController.__index = RKMNController
 
-local MovementConstants = require(script.Parent.MovementConstants)
-local TimerUtility = require(script.Parent.TimerUtility)
-local InputController = require(script.Parent.InputController)
-local CollisionQuery = require(script.Parent.CollisionQuery)
-local MovementStateMachine = require(script.Parent.MovementStateMachine)
-local ActionStateMachine = require(script.Parent.ActionStateMachine)
-local PhysicsResolver = require(script.Parent.PhysicsResolver)
-local AnimationController = require(script.Parent.AnimationController)
 
-type TimerUtility = TimerUtility.TimerUtility
-type InputController = InputController.InputController
-type CollisionQuery = CollisionQuery.CollisionQuery
-type MovementStateMachine = MovementStateMachine.MovementStateMachine
-type ActionStateMachine = ActionStateMachine.ActionStateMachine
-type PhysicsResolver = PhysicsResolver.PhysicsResolver
-type AnimationController = AnimationController.AnimationController
+local MovementConstantsModule = require(script.Parent.MovementConstants)
+local TimerUtilityModule = require(script.Parent.TimerUtility)
+local CollisionQueryModule = require(script.Parent.CollisionQuery)
+local InputControllerModule = require(script.Parent.InputController)
+local MovementStateMachineModule = require(script.Parent.MovementStateMachine)
+local ActionStateMachineModule = require(script.Parent.ActionStateMachine)
+local PhysicsResolverModule = require(script.Parent.PhysicsResolver)
+local AnimationControllerModule = require(script.Parent.AnimationController)
 
-type RKMNControllerData = {
+export type RKMNController = {
     Character: Model,
     IsRunning: boolean,
     InputEnabled: boolean,
     
-    Constants: MovementConstants,
-    Timers: TimerUtility.TimerUtility,
-    Collision: CollisionQuery,
-    Input: InputController,
-    MovementFSM: MovementStateMachine,
-    ActionFSM: ActionStateMachine,
-    Physics: PhysicsResolver,
-    Animator: AnimationController,
+    Constants: MovementConstantsModule.MovementConstants,
+    TimerUtility: TimerUtilityModule.TimerUtility,
+    CollisionQuery: CollisionQueryModule.CollisionQuery,
+    InputController: InputControllerModule.InputController,
+    MovementFSM: MovementStateMachineModule.MovementStateMachine,
+    ActionFSM: ActionStateMachineModule.ActionStateMachine,
+    PhysicsResolver: PhysicsResolverModule.PhysicsResolver,
+    AnimationController: AnimationControllerModule.AnimationController,
     _connections: {RBXScriptSignal}
 
 }
 
-export type RKMNController = typeof(setmetatable({} :: RKMNControllerData, RKMNController))
+function RKMNController.new(characterModel: Model): RKMNController
+    local self = {}
+
+    self.Character = characterModel
+    self.IsRunning = false
+    self.InputEnabled = true
+
+    self.Constants = MovementConstantsModule.new(characterModel)
+    self.TimerUtility = TimerUtilityModule.new()
+    self.CollisionQuery = CollisionQueryModule.new(characterModel, self.Constants)
+    self.InputController = InputControllerModule.new(self.TimerUtility)
+    self.MovementFSM = MovementStateMachineModule.new(
+        self.InputController, 
+        self.CollisionQuery)
+    self.ActionFSM = ActionStateMachineModule.new(self.InputController)
+
+    self.PhysicsResolver = PhysicsResolverModule.new(
+        characterModel,
+        self.Constants)
+    self.AnimationController = AnimationControllerModule.new(
+        characterModel,
+        self.MovementFSM,
+        self.ActionFSM
+    )
+
+    self._connections = {}
+
+    setmetatable(self , RKMNController)
+    return self
+end
 
 return RKMNController

@@ -3,11 +3,9 @@
 local StateMachine = {}
 StateMachine.__index = StateMachine
 
-type PhysicsResolverData = {
+local Types = require(script.Parent.Types)
 
-}
-
-export type PhysicsResolver = typeof(setmetatable({} :: PhysicsResolverData, PhysicsResolver))
+export type StateMachine = typeof(setmetatable({} :: Types.StateMachineData, StateMachine))
 
 
 return StateMachine

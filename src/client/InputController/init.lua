@@ -1,16 +1,13 @@
 --!strict
 
-local UserInputService = game:GetService("UserInputService")
-
-local TimerUtility = require(script.Parent.TimerUtility)
-
-type TimerUtility = TimerUtility.TimerUtility
-
 local InputController = {}
 InputController.__index = InputController
 
+
+local TimerUtilityModule = require(script.Parent.TimerUtility)
+
 type InputControllerData = {
-    Timers: TimerUtility,
+    Timers: TimerUtilityModule.TimerUtility,
     IsEnabled: boolean,
     
     MoveDirection: number,
@@ -23,5 +20,20 @@ type InputControllerData = {
 }
 
 export type InputController = typeof(setmetatable({} :: InputControllerData, InputController))
+
+function InputController.new(Timers: TimerUtilityModule.TimerUtility): InputController
+    local self = setmetatable({}, InputController)
+
+    self.Timers = Timers
+    self.IsEnabled = false
+    self.MoveDirection = 0
+    self.IsHoldingJump = false
+    self.IsHoldingDash = false
+    self.IsCharging = false
+    self.HasBufferedJump = false
+    self._connections = {}
+
+    return self
+end
 
 return InputController

@@ -1,13 +1,16 @@
 --!strict
 
 local MovementConstants = {}
-ActionStateMachine.__index = ActionStateMachine
+MovementConstants.__index = MovementConstants
 
-type MovementConstantsData = {
+local Types = require(script.Parent.Types)
 
-}
+export type MovementConstants = typeof(setmetatable({} :: Types.MovementConstantsData, MovementConstants))
 
-export type MovementConstants = typeof(setmetatable({} :: MovementConstantsData, MovementConstants))
+function MovementConstants.new(characterModel: Model): MovementConstants
+    local self = setmetatable({}, MovementConstants)
 
+    return self
+end
 
 return MovementConstants
