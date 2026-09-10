@@ -1,4 +1,13 @@
-local ActionStateMachine = {}
-ActionStateMachine.__index = ActionStateMachine
+--!strict
 
-return ActionStateMachine
+local MovementStateMachine = {}
+MovementStateMachine.__index = MovementStateMachine
+
+type MovementStateMachineData = {
+
+}
+
+export type MovementStateMachine = typeof(setmetatable({} :: MovementStateMachineData, MovementStateMachine))
+
+
+return MovementStateMachine

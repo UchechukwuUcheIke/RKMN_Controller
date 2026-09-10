@@ -1,7 +1,7 @@
 --!strict
 
-local PhysicsResolver = {}
-PhysicsResolver.__index = PhysicsResolver
+local StateMachine = {}
+StateMachine.__index = StateMachine
 
 type PhysicsResolverData = {
 
@@ -9,4 +9,5 @@ type PhysicsResolverData = {
 
 export type PhysicsResolver = typeof(setmetatable({} :: PhysicsResolverData, PhysicsResolver))
 
-return PhysicsResolver
+
+return StateMachine
