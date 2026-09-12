@@ -3,9 +3,11 @@
 local StateMachine = {}
 StateMachine.__index = StateMachine
 
-local Types = require(script.Parent.Types)
+export type StateMachineData = {
 
-export type StateMachine = typeof(setmetatable({} :: Types.StateMachineData, StateMachine))
+}
+
+export type StateMachine = typeof(setmetatable({} :: StateMachineData, StateMachine))
 
 
 return StateMachine

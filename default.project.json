@@ -6,6 +6,9 @@
     "ReplicatedStorage": {
       "DevPackages": {
         "$path": "DevPackages"
+      },
+      "RKMNController": {
+        "$path": "src/client"
       }
     },
 
@@ -14,13 +17,5 @@
         "$path": "src/server"
       }
     },
-
-    "StarterPlayer": {
-      "StarterPlayerScripts": {
-        "RKMNController": {
-          "$path": "src/client"
-        }
-      }
-    }
   }
 }
