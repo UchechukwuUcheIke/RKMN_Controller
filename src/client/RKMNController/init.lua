@@ -1,6 +1,7 @@
 --!strict
 
 local Types = require(script.Parent.Types)
+local RunService = game:GetService("RunService")
 
 local RKMNController = {}
 RKMNController.__index = RKMNController
@@ -15,7 +16,7 @@ local ActionStateMachineModule = require(script.Parent.ActionStateMachine)
 local PhysicsResolverModule = require(script.Parent.PhysicsResolver)
 local AnimationControllerModule = require(script.Parent.AnimationController)
 
-export type RKMNController = {
+type RKMNControllerData = {
     Character: Model,
     IsRunning: boolean,
     InputEnabled: boolean,
@@ -28,9 +29,11 @@ export type RKMNController = {
     ActionFSM: ActionStateMachineModule.ActionStateMachine,
     PhysicsResolver: PhysicsResolverModule.PhysicsResolver,
     AnimationController: AnimationControllerModule.AnimationController,
-    _connections: {RBXScriptSignal}
-
+    _connections: {RBXScriptSignal},
+    _loopName: string
 }
+
+export type RKMNController = typeof(setmetatable({} :: RKMNControllerData, RKMNController))
 
 function RKMNController.new(characterModel: Model): RKMNController
     local self = {}
@@ -59,8 +62,7 @@ function RKMNController.new(characterModel: Model): RKMNController
 
     self._connections = {}
 
-    setmetatable(self , RKMNController)
+    setmetatable(self, RKMNController)
     return self
 end
 
-return RKMNController

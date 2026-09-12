@@ -3,7 +3,6 @@
 local InputController = {}
 InputController.__index = InputController
 
-
 local TimerUtilityModule = require(script.Parent.TimerUtility)
 
 type InputControllerData = {
