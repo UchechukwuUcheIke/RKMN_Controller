@@ -97,7 +97,6 @@ return function()
             local timerId = "timer"
             Timer:StartTimer(timerId, 5)
             Timer:Step(10)
-            print(Timer:GetActiveTimers())
             expect(getDictionaryLength(Timer:GetActiveTimers())).to.equal(0)
         end)
 
