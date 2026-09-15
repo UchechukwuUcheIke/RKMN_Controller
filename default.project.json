@@ -8,8 +8,12 @@
         "$path": "DevPackages"
       },
       "RKMNController": {
-        "$path": "src/client"
+        "$path": "src/rkmncontroller"
+      },
+      "MockWorld": {
+        "$path": "src/mockworld"
       }
+
     },
 
     "ServerScriptService": {
@@ -17,5 +21,11 @@
         "$path": "src/server"
       }
     },
+
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "$path": "src/client"
+      }
+    }
   }
 }
