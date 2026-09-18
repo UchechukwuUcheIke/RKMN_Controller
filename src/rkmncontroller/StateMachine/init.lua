@@ -1,62 +1,87 @@
 --!strict
+local ParentDirectory = script.Parent
+local BaseState = require(ParentDirectory.BaseState)
+local FSMContext = require(ParentDirectory.FSMContext)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Types = require(ParentDirectory.Types)
+local Signal = require(ReplicatedStorage:WaitForChild("DevPackages"):WaitForChild("goodsignal"))
 
 local StateMachine = {}
 StateMachine.__index = StateMachine
 
-local StateDefinitionModule = require(script.Parent.StateDefinition)
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Signal = require(ReplicatedStorage:WaitForChild("DevPackages"):WaitForChild("goodsignal"))
+type BaseState = BaseState.BaseState
+type FSMContext = FSMContext.FSMContext
+type Signal = typeof(Signal)
 
-export type StateMachineData = {
-    Context: {},
-    States: {StateDefinitionModule.StateDefinition},
-    CurrentStateId: string?,
-    CurrentState: StateDefinitionModule.StateDefinition?,
-    OnStateChanged: typeof(Signal)
-}
+export type StateMachine = Types.StateMachine
 
-export type StateMachine = typeof(setmetatable({} :: StateMachineData, StateMachine))
-
-function StateMachine.new(initialStateId: string, context): StateMachine
-    local self = setmetatable({}, StateMachine)
-
-    self.Context = context or {}
-    self.States = {}
-
-    self.CurrentStateId = nil
-    self.CurrentState = nil
-
-    self.OnStateChanged = Signal.new()
-
-    return self
+function StateMachine.new(context: FSMContext): StateMachine
+	local self = setmetatable({}, StateMachine)
+	
+	self.Context = context
+	self.States = {}
+	
+	self.CurrentStateId = nil
+	self.CurrentState = nil
+	
+	self.OnStateChanged = Signal.new()
+	
+	return (self :: any) :: StateMachine
 end
 
-function StateMachine:RegisterState(id: string, stateDefinition: StateDefinitionModule.StateDefinition): boolean
-    if self.States[id] then
-        warn("State id " .. " already exists")
-        return false
-    end
-
-    self.States[id] = stateDefinition
-    return true
+function StateMachine.RegisterState(self: StateMachine, id: string, state: BaseState): ()
+	self.States[id] = (state :: any) :: Types.BaseState
 end
 
-function StateMachine:ChangeState(newStateId: string): boolean
-    if self.CurrentStateId == newStateId then
-        return true
-    end
-
-    local newState = self.States[newStateId]
-    if not newState then
-        warn("State " .. newStateId .. "not found")
-        return false
-    end
-
-    local currentState: StateDefinitionModule.StateDefinition = self.CurrentState
-
-    -- TODO: Complete
-
-
+function StateMachine.SetStates(self: StateMachine, states: { [string]: BaseState }): ()
+	self.States = (states :: any) :: { [string]: Types.BaseState }
 end
+
+function StateMachine._exitCurrentState(self: StateMachine): ()
+	if self.CurrentState and self.CurrentState.OnExit then
+		self.CurrentState:OnExit(self)
+	end
+end
+
+function StateMachine._enterNewState(self: StateMachine, newStateId: string, newState: BaseState): ()
+	self.CurrentStateId = newStateId
+	self.CurrentState = (newState :: any) :: Types.BaseState
+	
+	if self.CurrentState and self.CurrentState.OnEnter then
+		self.CurrentState:OnEnter(self)
+	end
+end
+
+function StateMachine.ChangeState(self: StateMachine, newStateId: string)
+	local isAlreadyInState = self.CurrentStateId == newStateId
+	if isAlreadyInState then 
+		return 
+	end
+	
+	local newState: Types.BaseState? = (self.States[newStateId] :: any) :: Types.BaseState?
+	local newStateExists = (newState ~= nil)
+	if not newStateExists then
+		error("State not found: " .. newStateId) 
+		return 
+	end
+	
+	self:_exitCurrentState()
+	self:_enterNewState(newStateId, newState :: Types.BaseState)
+	self.OnStateChanged:Fire(newStateId)
+end
+
+function StateMachine.Update(self: StateMachine, dt: number): ()
+	if self.CurrentState and self.CurrentState.OnStep then
+		self.CurrentState:OnStep(self, dt) -- Pass FSM so it can call ChangeState
+	end
+end
+
+function StateMachine.Destroy(self: StateMachine): ()
+	self.OnStateChanged:Destroy()
+	table.clear(self.States)
+	setmetatable(self, nil)
+end
+
+table.freeze(StateMachine)
 
 return StateMachine

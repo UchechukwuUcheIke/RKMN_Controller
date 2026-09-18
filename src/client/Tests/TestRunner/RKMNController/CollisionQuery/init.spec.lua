@@ -1,5 +1,4 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Workspace = game:GetService("Workspace")
 
 local RKMNController = ReplicatedStorage:WaitForChild("RKMNController")
 local Direction = require(RKMNController.Direction)
