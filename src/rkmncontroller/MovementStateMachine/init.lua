@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local FSMContext = require(ParentDirectory.FSMContext)
 local Signal = require(ReplicatedStorage:WaitForChild("DevPackages"):WaitForChild("goodsignal"))
 local Types = require(ParentDirectory.Types)
+local MovementStateID = require(ParentDirectory.MovementStateIDRegistry)
 
 local MovementStateMachine = {}
 MovementStateMachine.__index = MovementStateMachine
@@ -14,22 +15,23 @@ type BaseState = BaseState.BaseState
 type StateMachine = StateMachine.StateMachine
 type Signal = typeof(Signal)
 type FSMContext = FSMContext.FSMContext
+type MovementStateID = MovementStateID.MovementStateID
 
 export type MovementStateMachine = StateMachine & {
     _connections: {},
     _handleJumpPressed: (MovementStateMachine, FSMContext) -> (),
-    _appendContextConnections: (MovementStateMachine, FSMContext) -> ()
+    _populateContextConnections: (MovementStateMachine, FSMContext) -> ()
 }
 
 function MovementStateMachine._handleOnJumpPressed(self: MovementStateMachine, context: FSMContext): ()
 	if context.CollisionQuery:IsGrounded() or context.InputController.HasBufferedJump then
 		context.InputController:ConsumeJumpBuffer()
-		self:ChangeState("Air")
+		self:ChangeState(MovementStateID.Jump)
 	end
 end
 
 -- Not a fan of this name
-function MovementStateMachine._appendContextConnections(self: MovementStateMachine, context: FSMContext): ()
+function MovementStateMachine._populateContextConnections(self: MovementStateMachine, context: FSMContext): ()
 	local connection = context.InputController.OnJumpPressed:Connect(function()
 		self:_handleJumpPressed(context)
 	end)
@@ -42,9 +44,9 @@ function MovementStateMachine.new(self: MovementStateMachine, context: FSMContex
 	local stateMachine = StateMachine.new(context)
 	stateMachine:SetStates(states)
 	
-	self:_appendContextConnections(context)
+	self:_populateContextConnections(context)
 
-	stateMachine:ChangeState("Idle")
+	stateMachine:ChangeState(MovementStateID.Idle)
 	
 	return stateMachine :: MovementStateMachine
 end
