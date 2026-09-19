@@ -38,7 +38,12 @@ function StateMachine.SetStates(self: StateMachine, states: { [string]: BaseStat
 end
 
 function StateMachine._exitCurrentState(self: StateMachine): ()
-	if self.CurrentState and self.CurrentState.OnExit then
+	if self.CurrentState == nil then
+		return
+	end
+
+	self.Context.PreviousStateId = self.CurrentStateId
+	if self.CurrentState.OnExit then
 		self.CurrentState:OnExit(self)
 	end
 end
@@ -78,6 +83,7 @@ end
 
 function StateMachine.Destroy(self: StateMachine): ()
 	self.OnStateChanged:Destroy()
+	self.Context:Destroy()
 	table.clear(self.States)
 	setmetatable(self, nil)
 end

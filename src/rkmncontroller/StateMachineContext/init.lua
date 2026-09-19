@@ -26,6 +26,7 @@ export type FSMContext = typeof(setmetatable(
         CollisionQuery: CollisionQuery,
         PhysicsResolver: PhysicsResolver,
         TimerUtility: TimerUtility?,
+		PreviousStateID: string?,
         _flags: { [string]: boolean }
 	},
 	{} :: typeof(FSMContext)
@@ -38,6 +39,7 @@ function FSMContext.new(deps: FSMContextDependencies): FSMContext
 	    CollisionQuery = deps.CollisionQuery,
 	    PhysicsResolver = deps.PhysicsResolver,
 	    TimerUtility = deps.TimerUtility or nil,
+		PreviousStateID = nil,
         _flags = {}
     }, FSMContext)
 	
@@ -60,9 +62,9 @@ function FSMContext:ClearAllFlags(): ()
 	table.clear(self._flags)
 end
 
-function FSMContext:Destroy(): ()
+function FSMContext.Destroy(self: FSMContext): ()
 	self:ClearAllFlags()
-	setmetatable(self, nil)
+	self.PreviousStateID = nil
 end
 
 table.freeze(FSMContext)
