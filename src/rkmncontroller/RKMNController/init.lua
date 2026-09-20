@@ -66,3 +66,4 @@ function RKMNController.new(characterModel: Model): RKMNController
     return self
 end
 
+return RKMNController

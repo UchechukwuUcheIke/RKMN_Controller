@@ -4,6 +4,7 @@
     "$className": "DataModel",
 
     "ReplicatedStorage": {
+      "$path": "test/shared",
       "DevPackages": {
         "$path": "DevPackages"
       },
@@ -15,16 +16,22 @@
       }
 
     },
+    "ServerStorage": {
+      "$path": "src/server/ServerStorage"
+    },
 
     "ServerScriptService": {
       "Server": {
-        "$path": "src/server"
+        "$path": "src/server/ServerScriptService"
       }
     },
 
     "StarterPlayer": {
       "StarterPlayerScripts": {
-        "$path": "src/client"
+        "$path": "src/client",
+        "JestTests": {
+          "$path": "test/client"
+        }
       }
     }
   }

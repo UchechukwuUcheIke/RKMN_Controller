@@ -7,16 +7,14 @@ BaseState.__index = BaseState
 
 type StateMachine = Types.StateMachine
 
-export type BaseState = typeof(setmetatable(
-	{} :: { Id: string },
-	{} :: typeof(BaseState)
-))
+export type BaseState = Types.BaseState
 
 function BaseState.new(id: string): BaseState
 	local self = setmetatable({
 		Id = id,
-}, BaseState)
-	return (self :: BaseState)
+	}, BaseState)
+
+	return (self :: any) :: BaseState
 end
 
 function BaseState.OnEnter(self: BaseState, stateMachine: StateMachine): () end

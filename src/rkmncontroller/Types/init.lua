@@ -4,12 +4,15 @@ local Types = {}
 
 export type BaseState = typeof(setmetatable(
 	{} :: {
-        Id: string,
-        OnEnter: (self: BaseState, fsm: StateMachine) -> (),
-        OnStep: (self: BaseState, fsm: StateMachine, dt: number) -> (),
-        OnExit: (self: BaseState, fsm: StateMachine) -> ()
+        Id: string
 	},
-	{}
+	{} :: {
+		__index: {
+			OnEnter: (self: BaseState, fsm: StateMachine) -> (),
+			OnStep: (self: BaseState, fsm: StateMachine, dt: number) -> (),
+			OnExit: (self: BaseState, fsm: StateMachine) -> ()
+		}
+	}
 ))
 
 export type StateMachine = {

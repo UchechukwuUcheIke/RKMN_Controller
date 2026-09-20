@@ -30,11 +30,11 @@ function StateMachine.new(context: FSMContext): StateMachine
 end
 
 function StateMachine.RegisterState(self: StateMachine, id: string, state: BaseState): ()
-	self.States[id] = (state :: any) :: Types.BaseState
+	self.States[id] = (state) :: BaseState
 end
 
 function StateMachine.SetStates(self: StateMachine, states: { [string]: BaseState }): ()
-	self.States = (states :: any) :: { [string]: Types.BaseState }
+	self.States = (states) :: { [string]: BaseState }
 end
 
 function StateMachine._exitCurrentState(self: StateMachine): ()
@@ -50,7 +50,7 @@ end
 
 function StateMachine._enterNewState(self: StateMachine, newStateId: string, newState: BaseState): ()
 	self.CurrentStateId = newStateId
-	self.CurrentState = (newState :: any) :: Types.BaseState
+	self.CurrentState = newState
 	
 	if self.CurrentState and self.CurrentState.OnEnter then
 		self.CurrentState:OnEnter(self)
@@ -77,12 +77,11 @@ end
 
 function StateMachine.Update(self: StateMachine, dt: number): ()
 	if self.CurrentState and self.CurrentState.OnStep then
-		self.CurrentState:OnStep(self, dt) -- Pass FSM so it can call ChangeState
+		self.CurrentState:OnStep(self, dt)
 	end
 end
 
 function StateMachine.Destroy(self: StateMachine): ()
-	self.OnStateChanged:Destroy()
 	self.Context:Destroy()
 	table.clear(self.States)
 	setmetatable(self, nil)

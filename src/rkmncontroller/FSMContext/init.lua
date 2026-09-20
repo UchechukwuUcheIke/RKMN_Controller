@@ -26,6 +26,7 @@ export type FSMContext = typeof(setmetatable(
         CollisionQuery: CollisionQuery,
         PhysicsResolver: PhysicsResolver,
         TimerUtility: TimerUtility?,
+		PreviousStateId: string?,
         _flags: { [string]: boolean }
 	},
 	{} :: typeof(FSMContext)
@@ -37,6 +38,7 @@ function FSMContext.new(deps: FSMContextDependencies): FSMContext
         CollisionQuery = deps.CollisionQuery,
         PhysicsResolver = deps.PhysicsResolver,
         TimerUtility = deps.TimerUtility,
+		PreviousStateId = nil,
         _flags =  {},
     }, FSMContext)
 	
