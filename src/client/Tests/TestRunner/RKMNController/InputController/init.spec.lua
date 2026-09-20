@@ -15,7 +15,7 @@ local KEY_BINDINGS = require(
 local TIMERS = require(
 	ReplicatedStorage
 		:WaitForChild("RKMNController")
-		:WaitForChild("Timers")
+		:WaitForChild("TimerIDRegistry")
 )
 
 return function()

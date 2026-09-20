@@ -7,7 +7,7 @@ local UserInputService = game:GetService("UserInputService")
 local Signal = require(game:GetService("ReplicatedStorage"):WaitForChild("DevPackages"):WaitForChild("goodsignal"))
 local TimerUtilityModule = require(RootDirectory.TimerUtility)
 local KEY_BINDINGS = require(RootDirectory.KeyBindings)
-local TIMERS = require(RootDirectory.Timers)
+local TIMERS = require(RootDirectory.TimerIDRegistry)
 
 type Signal = typeof(Signal)
 
