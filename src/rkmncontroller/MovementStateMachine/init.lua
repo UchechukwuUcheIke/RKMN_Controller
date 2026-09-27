@@ -7,6 +7,7 @@ local FSMContext = require(ParentDirectory.FSMContext)
 local Signal = require(ReplicatedStorage:WaitForChild("DevPackages"):WaitForChild("goodsignal"))
 local Types = require(ParentDirectory.Types)
 local MovementStateID = require(ParentDirectory.MovementStateIDRegistry)
+local MovementStateRegistry = require(ParentDirectory.MovementStateRegistry)
 
 local MovementStateMachine = {}
 MovementStateMachine.__index = MovementStateMachine
@@ -31,7 +32,7 @@ function MovementStateMachine._handleOnJumpPressed(self: MovementStateMachine, c
 end
 
 -- Not a fan of this name
-function MovementStateMachine._populateContextConnections(self: MovementStateMachine, context: FSMContext): ()
+local function populateContextConnections(self: StateMachine, context: FSMContext): ()
 	local connection = context.InputController.OnJumpPressed:Connect(function()
 		self:_handleJumpPressed(context)
 	end)
@@ -40,11 +41,11 @@ function MovementStateMachine._populateContextConnections(self: MovementStateMac
 end
 
 -- Would be worthwhile to define the states in a separate file, import them here and then just remove the states as a dependency
-function MovementStateMachine.new(self: MovementStateMachine, context: FSMContext, states: {[string]: Types.BaseState}): MovementStateMachine	
+function MovementStateMachine.new(context: FSMContext): MovementStateMachine	
 	local stateMachine = StateMachine.new(context)
-	stateMachine:SetStates(states)
+	stateMachine:SetStates(MovementStateRegistry)
 	
-	self:_populateContextConnections(context)
+	populateContextConnections(stateMachine, context)
 
 	stateMachine:ChangeState(MovementStateID.Idle)
 	
