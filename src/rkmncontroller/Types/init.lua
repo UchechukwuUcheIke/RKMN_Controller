@@ -28,6 +28,7 @@ export type StateMachine = {
 	Destroy: (self: StateMachine) -> (),
     _enterNewState: (self: StateMachine, newStateId: string, newState: BaseState) -> (),
     _exitCurrentState: (self: StateMachine) -> (),
+	_connections: {any},
 }
 
 

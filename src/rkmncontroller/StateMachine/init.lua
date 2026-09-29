@@ -20,6 +20,7 @@ function StateMachine.new(context: FSMContext): StateMachine
 	
 	self.Context = context
 	self.States = {}
+	self._connections = {}
 	
 	self.CurrentStateId = nil
 	self.CurrentState = nil
@@ -84,6 +85,7 @@ end
 function StateMachine.Destroy(self: StateMachine): ()
 	self.Context:Destroy()
 	table.clear(self.States)
+	table.clear(self._connections)
 	setmetatable(self, nil)
 end
 

@@ -9,7 +9,8 @@ local Types = require(ParentDirectory.Types)
 local MovementStateID = require(ParentDirectory.MovementStateIDRegistry)
 local MovementStateRegistry = require(ParentDirectory.MovementStateRegistry)
 
-local MovementStateMachine = {}
+
+local MovementStateMachine = setmetatable({}, { __index = StateMachine })
 MovementStateMachine.__index = MovementStateMachine
 
 type BaseState = BaseState.BaseState
@@ -19,7 +20,6 @@ type FSMContext = FSMContext.FSMContext
 type MovementStateID = MovementStateID.MovementStateID
 
 export type MovementStateMachine = StateMachine & {
-    _connections: {},
     _handleJumpPressed: (MovementStateMachine, FSMContext) -> (),
     _populateContextConnections: (MovementStateMachine, FSMContext) -> ()
 }
@@ -31,8 +31,7 @@ function MovementStateMachine._handleOnJumpPressed(self: MovementStateMachine, c
 	end
 end
 
--- Not a fan of this name
-local function populateContextConnections(self: StateMachine, context: FSMContext): ()
+function MovementStateMachine._populateContextConnections(self: MovementStateMachine, context: FSMContext): ()
 	local connection = context.InputController.OnJumpPressed:Connect(function()
 		self:_handleJumpPressed(context)
 	end)
@@ -40,16 +39,18 @@ local function populateContextConnections(self: StateMachine, context: FSMContex
     table.insert(self._connections, connection)
 end
 
--- Would be worthwhile to define the states in a separate file, import them here and then just remove the states as a dependency
 function MovementStateMachine.new(context: FSMContext): MovementStateMachine	
-	local stateMachine = StateMachine.new(context)
-	stateMachine:SetStates(MovementStateRegistry)
+	assert(context)
+	assert(context.CollisionQuery)
+	local self = StateMachine.new(context) :: MovementStateMachine
+	setmetatable(self, MovementStateMachine)
+	self:SetStates(MovementStateRegistry)
 	
-	populateContextConnections(stateMachine, context)
+	self:_populateContextConnections(context)
 
-	stateMachine:ChangeState(MovementStateID.Idle)
+	self:ChangeState(MovementStateID.Idle)
 	
-	return stateMachine :: MovementStateMachine
+	return self
 end
 
 function MovementStateMachine.Destroy(self: MovementStateMachine): ()

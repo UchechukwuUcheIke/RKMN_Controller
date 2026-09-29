@@ -17,7 +17,7 @@ function GroundedState.new(name: string): GroundedState
 end
 
 local function attemptExitGroundedState(stateMachine: StateMachine): boolean
-    local isGrounded: boolean = stateMachine.Context.CollisionQuery.IsGrounded()
+    local isGrounded: boolean = stateMachine.Context.CollisionQuery:IsGrounded()
     if not isGrounded then
         return false
     end

@@ -33,6 +33,8 @@ export type FSMContext = typeof(setmetatable(
 ))
 
 function FSMContext.new(deps: FSMContextDependencies): FSMContext
+	assert(deps ~= nil)
+	assert(deps.CollisionQuery)
 	local self = setmetatable({
         InputController = deps.InputController,
         CollisionQuery = deps.CollisionQuery,
