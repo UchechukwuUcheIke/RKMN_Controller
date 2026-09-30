@@ -26,10 +26,12 @@ local function attemptExitGroundedState(stateMachine: StateMachine): boolean
     return true
 end
 
-local function drivePlayerPhysics(stateMachine): ()
+local function drivePlayerPhysics(stateMachine: StateMachine): ()
     --TODO: Get player speed
     -- Get player direction
     -- Move player in that direction
+    local MoveDirection = stateMachine.Context.InputController.MoveDirection
+    stateMachine.Context.PhysicsResolver:SetTargetXVelocity(0, MoveDirection)
 end
 
 function GroundedState.OnStep(self: GroundedState, stateMachine: StateMachine, dt: number): ()
@@ -41,7 +43,7 @@ function GroundedState.OnStep(self: GroundedState, stateMachine: StateMachine, d
 end
 
 local function restorePlayerControls(stateMachine: StateMachine): ()
-    stateMachine.Context.Input:SetEnabled(true)
+    stateMachine.Context.InputController:SetEnabled(true)
 end
 
 function GroundedState.OnExit(self: GroundedState, stateMachine: StateMachine): ()

@@ -2,20 +2,22 @@
 local InputController = {}
 InputController.__index = InputController
 
-local RootDirectory = script.Parent
+local RKMNControllerFolder = script.Parent
 local UserInputService = game:GetService("UserInputService")
+local Direction = require(RKMNControllerFolder.Direction)
 local Signal = require(game:GetService("ReplicatedStorage"):WaitForChild("DevPackages"):WaitForChild("goodsignal"))
-local TimerUtilityModule = require(RootDirectory.TimerUtility)
-local KEY_BINDINGS = require(RootDirectory.KeyBindings)
-local TIMERS = require(RootDirectory.TimerIDRegistry)
+local TimerUtilityModule = require(RKMNControllerFolder.TimerUtility)
+local KEY_BINDINGS = require(RKMNControllerFolder.KeyBindings)
+local Timers = require(RKMNControllerFolder.TimerIDRegistry)
 
 type Signal = typeof(Signal)
+type Direction = Direction.Direction
 
 type InputControllerData = {
     Timer: TimerUtilityModule.TimerUtility,
     IsEnabled: boolean,
     
-    MoveDirection: number,
+    MoveDirection: Direction,
     IsHoldingJump: boolean,
     IsHoldingDash: boolean,
     IsCharging: boolean,
@@ -37,7 +39,7 @@ function InputController.new(TimerUtility: TimerUtilityModule.TimerUtility): Inp
 
     self.Timer = TimerUtility
     self.IsEnabled = false
-    self.MoveDirection = 0
+    self.MoveDirection = Direction.None
     self.IsHoldingJump = false
     self.IsHoldingDash = false
     self.IsCharging = false
@@ -67,7 +69,7 @@ end
 function InputController:_handleJumpInput(): ()
     self.OnJumpPressed:Fire()
 	self.HasBufferedJump = true
-	self.Timer:StartTimer(TIMERS.JumpBuffer, 0.1)
+	self.Timer:StartTimer(Timers.JumpBuffer, 0.1)
 end
 
 function isBindingPressed(binding: {Enum.KeyCode}, keycode: Enum.KeyCode): boolean
@@ -115,13 +117,13 @@ function InputController:_resolveMoveDirection(): ()
     local rightHeld = self:_isActionHeld(KEY_BINDINGS.Right)
 
     if leftHeld and rightHeld then
-        self.MoveDirection = 0
+        self.MoveDirection = Direction.None
     elseif leftHeld then
-        self.MoveDirection = -1
+        self.MoveDirection = Direction.Left
     elseif rightHeld then
-        self.MoveDirection = 1
+        self.MoveDirection = Direction.Right
     else
-        self.MoveDirection = 0
+        self.MoveDirection = Direction.None
     end
 end
 
@@ -130,7 +132,7 @@ function InputController:Poll(dt: number): ()
         return
     end
 
-    if (self.HasBufferedJump and self.Timer.IsCompleted(TIMERS.JumpBuffer)) then
+    if (self.HasBufferedJump and self.Timer.IsCompleted(Timers.JumpBuffer)) then
         self.HasBufferedJump = false
     end
 
@@ -144,7 +146,7 @@ end
 
 function InputController:ConsumeJumpBuffer(): ()
     self.HasBufferedJump = false
-    self.Timer:Cancel(TIMERS.JumpBuffer)
+    self.Timer:Cancel(Timers.JumpBuffer)
 end
 
 function InputController:FlushActiveInputs(): ()
