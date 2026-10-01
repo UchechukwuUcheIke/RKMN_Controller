@@ -8,6 +8,7 @@ type CollisionConstantsData = {
     HitboxCFrame: CFrame,
     FootCFrame: CFrame,
     FootSize: Vector3,
+    HalfWidth: number,
 	GroundCheckDistance: number,
 	WallCheckDistance: number,
 	MaxSlopeAngle: number,
@@ -30,6 +31,7 @@ function CollisionConstants.new(characterModel: Model): CollisionConstants
     self.HitboxCFrame = hitboxCFrame
     self.FootCFrame = footCFrame
     self.FootSize = footSize
+    self.HalfWidth = hitboxSize.X/2
     self.GroundCheckDistance = 2
     self.WallCheckDistance = 2
     self.MaxSlopeAngle = 90

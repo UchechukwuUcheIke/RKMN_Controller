@@ -2,12 +2,12 @@
 local CollisionQuery = {}
 CollisionQuery.__index = CollisionQuery
 
-local RKMNControllerFolder: Folder = script.Parent
+local RKMNControllerFolder = script.Parent
 local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
 local Direction = require(RKMNControllerFolder.Direction)
 local SweepResolution = require(RKMNControllerFolder.SweepResolution)
 
-type MovementConstants = MovementConstants.MovementConstants
+type CollisionConstants = CollisionConstants.CollisionConstants
 type Direction = Direction.Direction
 type SweepResolution = SweepResolution.SweepResolution
 
@@ -19,7 +19,7 @@ type CollisionQueryData = {
 	_lastFloorCFrame: CFrame?,
 	_characterModel: Model,
 	_primaryPart: BasePart,
-	_constants: MovementConstants,
+	_constants: CollisionConstants,
 	_maxSlopeDot: number,
 	_raycastParams: RaycastParams,
 	_isGrounded: boolean,
