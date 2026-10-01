@@ -1,22 +1,5 @@
-
-
 local MockWorld = {}
 
-export type MockWorld = typeof(setmetatable(
-    {} :: {
-		_viewport: ViewportFrame,
-        _world: WorldModel,
-    },
-    {} :: typeof(MockWorld)
-))
-
-export type Properties = {
-    Size: Vector3?,
-    Position: Vector3?,
-    CFrame: CFrame?,
-}
-
--- The __index function for method routing
 local function index(t, key)
     if MockWorld[key] then
         return MockWorld[key]
@@ -37,38 +20,56 @@ local function index(t, key)
     return classMember
 end
 
+MockWorld.__index = index
+
+type MockWorldData = {
+	_surface_part: BasePart,
+    _world: WorldModel,
+}
+
+export type MockWorld = typeof(setmetatable(
+    {} :: MockWorldData,
+    MockWorld
+))
+
+export type Properties = {
+    Size: Vector3?,
+    Position: Vector3?,
+    CFrame: CFrame?,
+}
+
+
+
 function MockWorld.new(): MockWorld
-	local Players = game:GetService("Players")
-	local player = Players.LocalPlayer
-	local playerGui = player:WaitForChild("PlayerGui")
-	local screenGui = Instance.new("ScreenGui")
-	screenGui.Name = "PreviewGui"
-	screenGui.Parent = playerGui
+	local part = Instance.new("Part")
+    part.Parent = game.Workspace
+    part.Anchored = true
+
+	local surfaceGui = Instance.new("SurfaceGui")
+    surfaceGui.Parent = part
+    surfaceGui.Adornee = part
+	surfaceGui.Name = "PreviewGui"
 
 	local viewport = Instance.new("ViewportFrame")
-    viewport.Parent = screenGui
+    viewport.Parent = surfaceGui
 	local world = Instance.new("WorldModel")
 	world.Parent = viewport
 
-    -- The __index function goes into the metatable itself
     local self = setmetatable({
-		_screengui = screenGui,
-		_viewport = viewport,
+		_surface_part = part,
         _world = world
-    }, {
-        __index = index 
-    })
+    }, MockWorld)
 
     return self :: MockWorld
 end
 
-function MockWorld:SpawnPart(properties: Properties?): Part    
+function MockWorld.SpawnPart(self: MockWorld, properties: Properties?): Part    
     local part: Part = self:_spawnInstance("Part", properties) :: Part
     part.Anchored = true
     return part
 end
 
-function MockWorld:SpawnCharacter(): Model
+function MockWorld.SpawnCharacter(self: MockWorld): Model
     local characterModel: Model = self:_spawnInstance("Model") :: Model
     local properties: Properties = { Size = Vector3.new(2, 2, 1) }
     local humanoidRootPart = self:_spawnHumanoidRootPart(properties)
@@ -81,20 +82,17 @@ function MockWorld:SpawnCharacter(): Model
     return characterModel
 end
 
-function MockWorld:Clear(): ()
+function MockWorld.Clear(self: MockWorld): ()
     self._world:ClearAllChildren()
 end 
 
-function MockWorld:Destroy(): ()
-    if self._screengui then
-        self._screengui:Destroy()
-		self._screengui = nil
-        self._viewport = nil
-		self._world = nil
+function MockWorld.Destroy(self: MockWorld): ()
+    if self._surface_part then
+        self._surface_part:Destroy()
     end
 end
 
-function MockWorld:_spawnHumanoidRootPart(properties: Properties): Part
+function MockWorld._spawnHumanoidRootPart(self: MockWorld, properties: Properties): Part
     local humanoidRootPart = self:SpawnPart(properties)
     humanoidRootPart.Name = "HumanoidRootPart"
     return humanoidRootPart
@@ -112,11 +110,11 @@ local function setInstanceProperties(instance: Instance, properties: Properties)
     end
 end
 
-function MockWorld:_addInstanceToWorld(instance: Instance): ()
+function MockWorld._addInstanceToWorld(self: MockWorld, instance: Instance): ()
     instance.Parent = self._world
 end
 
-function MockWorld:_spawnInstance(className: string, properties: Properties?): Instance
+function MockWorld._spawnInstance(self: MockWorld, className: string, properties: Properties?): Instance
     local instance: Instance = Instance.new(className)
     
     if properties then
