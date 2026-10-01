@@ -7,7 +7,7 @@ local RKMNController = {}
 RKMNController.__index = RKMNController
 
 local RKMNControllerFolder = script.Parent
-local MovementConstants = require(RKMNControllerFolder.MovementConstants)
+local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
 local MovementStats = require(RKMNControllerFolder.MovementStats)
 local TimerUtility = require(RKMNControllerFolder.TimerUtility)
 local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
@@ -24,7 +24,7 @@ type RKMNControllerData = {
     IsRunning: boolean,
     InputEnabled: boolean,
     
-    Constants: MovementConstants.MovementConstants,
+    Constants: CollisionConstants.CollisionConstants,
     TimerUtility: TimerUtility.TimerUtility,
     CollisionQuery: CollisionQuery.CollisionQuery,
     InputController: InputController.InputController,
@@ -46,7 +46,7 @@ function RKMNController.new(world: WorldRoot, characterModel: Model): RKMNContro
     self.IsRunning = false
     self.InputEnabled = true
 
-    self.Constants = MovementConstants.new(characterModel)
+    self.Constants = CollisionConstants.new(characterModel)
     self.MovementStats = MovementStats.new()
     self.TimerUtility = TimerUtility.new()
     self.CollisionQuery = CollisionQuery.new(world, characterModel, self.Constants)
@@ -99,8 +99,7 @@ function RKMNController.Start(self: RKMNController): ()
 
 			self.TimerUtility:Step(dt)
 			self.InputController:Poll(dt)
-            local currentCFrame: CFrame = humanoidRootPart.CFrame
-            self.CollisionQuery:UpdateState(currentCFrame)
+            self.CollisionQuery:UpdateState()
 
 			self.MovementFSM:Update(dt)
 			self.PhysicsResolver:Resolve(dt)

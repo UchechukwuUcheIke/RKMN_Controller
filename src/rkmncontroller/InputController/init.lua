@@ -57,7 +57,7 @@ end
 
 
 
-function InputController:_isActionHeld(actionKeys: {Enum.KeyCode}): boolean
+local function isActionHeld(actionKeys: {Enum.KeyCode}): boolean
     for _, keycode: Enum.KeyCode in ipairs(actionKeys) do
 		if UserInputService:IsKeyDown(keycode) then
 			return true
@@ -66,7 +66,7 @@ function InputController:_isActionHeld(actionKeys: {Enum.KeyCode}): boolean
 	return false
 end
 
-function InputController:_handleJumpInput(): ()
+function InputController._handleJumpInput(self: InputController): ()
     self.OnJumpPressed:Fire()
 	self.HasBufferedJump = true
 	self.Timer:StartTimer(Timers.JumpBuffer, 0.1)
@@ -112,9 +112,9 @@ function InputController:_bindEvents(): ()
     table.insert(self._connections, onInputEndedConnection)
 end
 
-function InputController:_resolveMoveDirection(): ()
-    local leftHeld = self:_isActionHeld(KEY_BINDINGS.Left)
-    local rightHeld = self:_isActionHeld(KEY_BINDINGS.Right)
+function InputController._resolveMoveDirection(self: InputController): ()
+    local leftHeld = isActionHeld(KEY_BINDINGS.Left)
+    local rightHeld = isActionHeld(KEY_BINDINGS.Right)
 
     if leftHeld and rightHeld then
         self.MoveDirection = Direction.None
@@ -127,7 +127,7 @@ function InputController:_resolveMoveDirection(): ()
     end
 end
 
-function InputController:Poll(dt: number): ()
+function InputController.Poll(self: InputController, dt: number): ()
     if not self.IsEnabled then
         return
     end
@@ -139,39 +139,40 @@ function InputController:Poll(dt: number): ()
     self:_resolveMoveDirection()
 
     print(KEY_BINDINGS.Jump)
-    self.IsHoldingJump = self:_isActionHeld(KEY_BINDINGS.Jump)
-    self.IsHoldingDash = self:_isActionHeld(KEY_BINDINGS.Dash)
-    self.IsCharging = self:_isActionHeld(KEY_BINDINGS.Shoot)
+    self.IsHoldingJump = isActionHeld(KEY_BINDINGS.Jump)
+    self.IsHoldingDash = isActionHeld(KEY_BINDINGS.Dash)
+    self.IsCharging = isActionHeld(KEY_BINDINGS.Shoot)
 end
 
-function InputController:ConsumeJumpBuffer(): ()
+function InputController.ConsumeJumpBuffer(self: InputController): ()
     self.HasBufferedJump = false
     self.Timer:Cancel(Timers.JumpBuffer)
 end
 
-function InputController:FlushActiveInputs(): ()
-    self.MoveDirection = 0
+function InputController.FlushActiveInputs(self: InputController): ()
+    self.MoveDirection = Direction.None
     self.IsHoldingJump = false
     self.IsCharging = false
     self.IsHoldingDash = false
     self:ConsumeJumpBuffer()
 end
 
-function InputController:SetEnabled(isEnabled: boolean)
+function InputController.SetEnabled(self: InputController, isEnabled: boolean)
     self.IsEnabled = isEnabled
     if not isEnabled then
         self:FlushActiveInputs()
     end
 end
 
-function InputController:Destroy(): ()
+function InputController.Destroy(self: InputController): ()
     for _, connection: RBXScriptConnection in ipairs(self._connections) do
         connection:Disconnect()
     end
 
-    table.clear(self._connections)
-    table.clear(self)    
+    table.clear(self._connections)    
     table.freeze(self)
 end
+
+table.freeze(InputController)
 
 return InputController

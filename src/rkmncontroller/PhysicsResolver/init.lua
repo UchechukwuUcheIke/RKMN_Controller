@@ -105,11 +105,9 @@ function PhysicsResolver._resolveVelocity(self: PhysicsResolver, sweepResolution
 end
 
 function PhysicsResolver._sweepForCollisions(self: PhysicsResolver, dt: number): SweepResolution
-	local currentCFrame = self._rootPart.CFrame
 	local desiredDelta = self.Velocity * dt
 	
-	-- CollisionQuery handles the Blockcast/Spherecast math and returns a safe delta
-	local sweepResolution: SweepResolution = self._collisionQuery:GetSweepResolution(currentCFrame, desiredDelta)
+	local sweepResolution: SweepResolution = self._collisionQuery:GetSweepResolution(desiredDelta)
 
     return sweepResolution
 end
