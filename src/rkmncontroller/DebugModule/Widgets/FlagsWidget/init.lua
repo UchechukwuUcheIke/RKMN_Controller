@@ -2,7 +2,6 @@
 local FlagsWidget = {}
 FlagsWidget.__index = FlagsWidget
 
-local RunService = game:GetService("RunService")
 local WidgetsFolder = script.Parent
 local DataRow = require(WidgetsFolder.DataRow)
 
@@ -52,22 +51,7 @@ function FlagsWidget.MountTo(self: FlagsWidget, layerCollector: Instance)
 end
 
 function FlagsWidget.Render(self: FlagsWidget, flags: { [string]: any })
-    -- 1. Update existing flags and create new ones
-    for flagName, flagValue in pairs(flags) do
-        local row = self._flagRows[flagName]
-        
-        -- If we've never seen this flag before, create a DataRow for it
-        if not row then
-            row = DataRow.new(flagName, tostring(flagValue))
-            row:MountTo(self._canvas)
-            -- Hack to rename the row so UIListLayout sorts it alphabetically
-            row._container.Name = flagName 
-            self._flagRows[flagName] = row
-        end
-        
-        -- Update the value
-        row:UpdateValue(tostring(flagValue))
-    end
+    -- TODO
 end
 
 function FlagsWidget:Destroy()

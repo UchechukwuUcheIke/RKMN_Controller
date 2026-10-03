@@ -78,6 +78,14 @@ function DataRow.Destroy(self: DataRow): ()
     table.freeze(self)
 end
 
+function DataRow.GetValueText(self: DataRow): string
+    return self._valueLabel.Text
+end
+
+function DataRow.GetKeyText(self: DataRow): string
+    return self._keyLabel.Text
+end
+
 table.freeze(DataRow)
 
 return DataRow
