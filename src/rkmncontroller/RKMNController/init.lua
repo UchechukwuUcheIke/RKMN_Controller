@@ -28,7 +28,7 @@ type RKMNControllerData = {
     TimerUtility: TimerUtility.TimerUtility,
     CollisionQuery: CollisionQuery.CollisionQuery,
     InputController: InputController.InputController,
-    MovementFSM: MovementStateMachine.MovementStateMachine,
+    MovementStateMachine: MovementStateMachine.MovementStateMachine,
     PhysicsResolver: PhysicsResolver.PhysicsResolver,
     _connections: {RBXScriptSignal},
     _loopName: string
@@ -60,7 +60,7 @@ function RKMNController.new(world: WorldRoot, characterModel: Model): RKMNContro
         TimerUtility = self.TimerUtility
     }
     local FSMContext: FSMContext = FSMContext.new(FSMContextDependencies)
-    self.MovementFSM = MovementStateMachine.new(FSMContext)
+    self.MovementStateMachine = MovementStateMachine.new(FSMContext)
 
    
 
@@ -72,7 +72,7 @@ function RKMNController.new(world: WorldRoot, characterModel: Model): RKMNContro
 end
 
 function RKMNController.Reset(self: RKMNController): ()
-	self.MovementFSM:ChangeState(MovementState.Idle)
+	self.MovementStateMachine:ChangeState(MovementState.Idle)
 	self.TimerUtility:FlushAll()
 end
 
@@ -101,7 +101,7 @@ function RKMNController.Start(self: RKMNController): ()
 			self.InputController:Poll(dt)
             self.CollisionQuery:UpdateState()
 
-			self.MovementFSM:Update(dt)
+			self.MovementStateMachine:Update(dt)
 			self.PhysicsResolver:Resolve(dt)
 
 		end
@@ -135,7 +135,7 @@ function RKMNController.Destroy(self: RKMNController)
 	self.InputController:Destroy()
 	self.TimerUtility:Destroy()
 	self.PhysicsResolver:Destroy()
-	self.MovementFSM:Destroy()
+	self.MovementStateMachine:Destroy()
 	self.CollisionQuery:Destroy()
 
 	table.clear(self._connections)
