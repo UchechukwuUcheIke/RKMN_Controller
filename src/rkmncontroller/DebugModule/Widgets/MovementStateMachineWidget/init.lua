@@ -40,9 +40,14 @@ function MovementStateMachineWidget.new(stateMachine: MovementStateMachine): Mov
     return self
 end
 
-function MovementStateMachineWidget.MountTo(self: MovementStateMachineWidget, layerCollector: Instance)
+function MovementStateMachineWidget.MountTo(self: MovementStateMachineWidget, layerCollector: Instance): ()
     self._canvas.Parent = layerCollector
     self.IsMounted = true
+end
+
+function MovementStateMachineWidget.Dismount(self: MovementStateMachineWidget): ()
+    self._canvas.Parent = nil
+    self.IsMounted = false
 end
 
 function MovementStateMachineWidget.Render(self: MovementStateMachineWidget)
@@ -89,6 +94,6 @@ function MovementStateMachineWidget._createUI(self: MovementStateMachineWidget):
     self:_createDataRows()
 end
 
-table.freeze(MovementStateMachine)
+table.freeze(MovementStateMachineWidget)
 
 return MovementStateMachineWidget
