@@ -2,19 +2,21 @@ local RunService = game:GetService("RunService")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local KinematicWorld: KinematicWorld = require(ReplicatedStorage.)
-local RKMNController: RKMNController = require(ReplicatedStorage.RKMNController)
+local RKMNControllerFolder = ReplicatedStorage.RKMNController
+local KinematicWorld = shared("KinematicWorld")
+local RKMNController: RKMNController = require(RKMNControllerFolder.RKMNController)
 local Signal = typeof(ReplicatedStorage.DevPackages.Signal)
 
 local DebuggerFolder = script.Parent
-local DebugInputHandler = require(DebuggerFolder.DebugInputHandler)
+local DebugInputHandler = require(DebuggerFolder.DebugInputController)
 local DebugUI = require(DebuggerFolder.DebugUI)
 local DebugWorldVisualizer = require(DebuggerFolder.DebugWorldVisualizer)
 
-type KinematicWorld = KinematicWorld.KinematicWorld
+type RKMNController = RKMNController.RKMNController
+type KinematicWorld = RKMNController
 type DebugInputHandler = DebugInputHandler.DebugInputHandler
 type DebugUI = DebugUI.DebugUI
-type DebugWorldVisualizer = DebugWorldVisualizer
+type DebugWorldVisualizer = DebugWorldVisualizer.DebugWorldVisualizer
 type RKMNController = RKMNController.RKMNController
 type Signal = typeof(Signal)
 

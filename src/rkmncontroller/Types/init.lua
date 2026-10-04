@@ -1,5 +1,4 @@
 --!strict
-
 local Types = {}
 
 export type BaseState = typeof(setmetatable(

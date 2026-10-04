@@ -3,6 +3,7 @@ local CollisionQuery = {}
 CollisionQuery.__index = CollisionQuery
 
 local RKMNControllerFolder = script.Parent
+local DiagnosticCastRecord = require(RKMNControllerFolder.DiagnosticCastRecord)
 local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
 local Direction = require(RKMNControllerFolder.Direction)
 local SweepResolution = require(RKMNControllerFolder.SweepResolution)
@@ -10,6 +11,8 @@ local SweepResolution = require(RKMNControllerFolder.SweepResolution)
 type CollisionConstants = CollisionConstants.CollisionConstants
 type Direction = Direction.Direction
 type SweepResolution = SweepResolution.SweepResolution
+type DiagnosticCastRecord = DiagnosticCastRecord.DiagnosticCastRecord
+type CastVolume = DiagnosticCastRecord.CastVolume
 
 type CollisionQueryData = {
     CurrentFloorPart: BasePart?,
@@ -142,7 +145,7 @@ function CollisionQuery.CheckWallContact(
 	local rayOrigin: Vector3 = origin + direction * halfWidth
 	local raycastResult: RaycastResult<BasePart>? = self._world:Raycast(rayOrigin, direction * castDistance, self._raycastParams)
 	local hasContact: boolean = (raycastResult ~= nil) and not self:_isWalkable(raycastResult.Normal)
-	
+
 	return hasContact
 end
 
