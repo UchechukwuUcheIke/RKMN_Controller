@@ -14,7 +14,7 @@ type SweepResolution = SweepResolution.SweepResolution
 type DiagnosticCastRecord = DiagnosticCastRecord.DiagnosticCastRecord
 type CastVolume = DiagnosticCastRecord.CastVolume
 
-type CollisionQueryData = {
+export type CollisionQueryData = {
     CurrentFloorPart: BasePart?,
 	FloorNormal: Vector3,
 	MovingPlatformDelta: CFrame,
@@ -29,9 +29,11 @@ type CollisionQueryData = {
 	_lastFloorPart: BasePart?
 }
 
+export type CollisionQueryPrototype = typeof(CollisionQuery)
+
 export type CollisionQuery = typeof(setmetatable(
 	{} :: CollisionQueryData,
-	CollisionQuery))
+	{} :: CollisionQueryPrototype))
 
 function createRaycastParams(characterModel: Model): RaycastParams
 	local raycastParams = RaycastParams.new()
@@ -136,7 +138,7 @@ end
 
 function CollisionQuery.CheckWallContact(
 	self: CollisionQuery,
-	direction: Direction): boolean
+	direction: Direction): DiagnosticCastRecord
 
 	local halfWidth: number = self._constants.HalfWidth
 	local castDistance: number = self._constants.WallCheckDistance + self._constants.SkinWidth
@@ -146,7 +148,8 @@ function CollisionQuery.CheckWallContact(
 	local raycastResult: RaycastResult<BasePart>? = self._world:Raycast(rayOrigin, direction * castDistance, self._raycastParams)
 	local hasContact: boolean = (raycastResult ~= nil) and not self:_isWalkable(raycastResult.Normal)
 
-	return hasContact
+	local castRecord = DiagnosticCastRecord.fromRaycast(hasContact, origin, direction)
+	return castRecord
 end
 
 function CollisionQuery._clampSweepResolution(self: CollisionQuery, velocityDelta: Vector3, raycastResult: RaycastResult<BasePart>)

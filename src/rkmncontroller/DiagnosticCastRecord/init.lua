@@ -50,6 +50,12 @@ function DiagnosticCastRecord.fromRaycast(success: boolean, origin: Vector3, dir
     return DiagnosticCastRecord.new(success, castVolume)
 end
 
+function DiagnosticCastRecord.Destroy(self: DiagnosticCastRecord): ()
+    self.CastVolume = nil :: any
+    setmetatable(self :: any, nil)
+    table.freeze(self)
+end
+
 
 table.freeze(DiagnosticCastRecord)
 
