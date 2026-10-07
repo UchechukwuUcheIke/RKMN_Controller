@@ -29,7 +29,7 @@ local function populateMethods(classBlueprint: any): MethodMap
     return mockPrototype
 end
 
-local function createMockInstance(dataTable: any, prototype: MethodMap) 
+local function createMockInstance<T>(dataTable: any, prototype: MethodMap): T
     local mockInstance = setmetatable(dataTable, {
         __index = prototype
     })

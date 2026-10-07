@@ -4,11 +4,11 @@ local RKMNControllerFolder = ReplicatedStorage.RKMNController
 local RKMNController = require(RKMNControllerFolder.RKMNController)
 
 local DebugModuleFolder = script.Parent
-local Widgets = DebugModuleFolder.Widgets
-local PhysicsWidget = require(Widgets.PhysicsWidget)
-local InputWidget = require(Widgets.InputWidget)
-local MovementStateMachineWidget = require(Widgets.MovementStateMachineWidget)
-local FlagsWidget = require(Widgets.FlagsWidget)
+local WidgetsFolder = DebugModuleFolder.Widgets
+local PhysicsWidget = require(WidgetsFolder.PhysicsWidget)
+local InputWidget = require(WidgetsFolder.InputWidget)
+local MovementStateMachineWidget = require(WidgetsFolder.MovementStateMachineWidget)
+local FlagsWidget = require(WidgetsFolder.FlagsWidget)
 
 local DebugUI = {}
 DebugUI.__index = DebugUI

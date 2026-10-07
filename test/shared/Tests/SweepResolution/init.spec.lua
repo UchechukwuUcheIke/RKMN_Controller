@@ -5,7 +5,7 @@ local JestGlobals = require(ReplicatedStorage.DevPackages.JestGlobals)
 local DiagnosticCastRecord = require(ReplicatedStorage.RKMNController.DiagnosticCastRecord)
 local RKMNControllerFolder = ReplicatedStorage.RKMNController
 local SweepResolution = require(RKMNControllerFolder.SweepResolution)
-local TestUtilsFolder = ReplicatedStorage.TestUtils
+local TestUtilsFolder = ReplicatedStorage.Tests.TestUtils
 local MockerUtils = require(TestUtilsFolder.MockUtils)
 
 local describe = JestGlobals.describe

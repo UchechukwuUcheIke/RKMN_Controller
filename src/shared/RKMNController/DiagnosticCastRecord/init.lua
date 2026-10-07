@@ -50,6 +50,26 @@ function DiagnosticCastRecord.fromRaycast(success: boolean, origin: Vector3, dir
     return DiagnosticCastRecord.new(success, castVolume)
 end
 
+local function getCastVolumeFromBlockcast(origin: CFrame, size: Vector3, direction: Vector3): CastVolume
+    local localDir = origin:VectorToObjectSpace(direction)
+    local sweptSize = size + Vector3.new(
+        math.abs(localDir.X),
+        math.abs(localDir.Y),
+        math.abs(localDir.Z)
+    )
+
+    local castVolume: CastVolume = {
+        Size = sweptSize,
+        CFrame = origin + direction / 2,
+    }
+    return castVolume
+end
+
+function DiagnosticCastRecord.fromBlockcast(success: boolean, origin: CFrame, size: Vector3, direction: Vector3): DiagnosticCastRecord
+    local castVolume: CastVolume = getCastVolumeFromBlockcast(origin, size, direction)
+    return DiagnosticCastRecord.new(success, castVolume)
+end
+
 function DiagnosticCastRecord.Destroy(self: DiagnosticCastRecord): ()
     self.CastVolume = nil :: any
     setmetatable(self :: any, nil)

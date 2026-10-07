@@ -16,10 +16,11 @@ type DiagnosticCollisionQuery = DiagnosticCollisionQuery.DiagnosticCollisionQuer
 type CollisionQuerySnapshot = CollisionQuerySnapshot.CollisionQuerySnapshot
 
 type DebugWorldVisualizerData = {
-	_visualizationFolder: Folder,
 	GroundCheckHitbox: BoxHandleAdornment,
 	WallCheckRaycast: BoxHandleAdornment,
 	SweepResolutionHitbox: BoxHandleAdornment,
+	_visualizationFolder: Folder,
+	_isEnabled: boolean,
 	_collisionQuery: DiagnosticCollisionQuery,
 } 
 
@@ -66,7 +67,8 @@ function DebugWorldVisualizer.new(world: WorldRoot, collisionQuery: DiagnosticCo
 
 	local data = {
 		_visualizationFolder = createVisualizationFolder(world),
-		_collisionQuery = collisionQuery
+		_collisionQuery = collisionQuery,
+		_isEnabled = true,
 	} :: DebugWorldVisualizerData
 
 	local self = setmetatable(data, DebugWorldVisualizer)
@@ -77,25 +79,33 @@ function DebugWorldVisualizer.new(world: WorldRoot, collisionQuery: DiagnosticCo
 	return self :: DebugWorldVisualizer
 end
 
-function DebugWorldVisualizer._createHitboxMarker(self: DebugWorldVisualizer, name: string): ()
+function DebugWorldVisualizer._createHitboxMarker(self: DebugWorldVisualizer, name: string): BoxHandleAdornment
 	local marker: BoxHandleAdornment = createBoxAdornment(name)
 	marker.Parent = self._visualizationFolder
 	return marker
 end
 
 function DebugWorldVisualizer.Enable(self: DebugWorldVisualizer): ()
-	self.GroundCheckHitbox.Visible = true
-	self.WallCheckRaycast.Visible = true
-	self.SweepResolutionHitbox.Visible = true
+	self._isEnabled = true
 end
 
-function DebugWorldVisualizer.Disable(self: DebugWorldVisualizer)
+function DebugWorldVisualizer.Disable(self: DebugWorldVisualizer): ()
+	self._isEnabled = false
+	self._hideAllVisualizations(self)
+end
+
+function DebugWorldVisualizer.IsEnabled(self: DebugWorldVisualizer): boolean
+	return self._isEnabled
+end
+
+function DebugWorldVisualizer._hideAllVisualizations(self: DebugWorldVisualizer): ()
 	self.GroundCheckHitbox.Visible = false
 	self.WallCheckRaycast.Visible = false
 	self.SweepResolutionHitbox.Visible = false
 end
 
 local function renderCastRecord(hitbox: BoxHandleAdornment, castRecord: DiagnosticCastRecord)
+	hitbox.Visible = true
 	hitbox.Size = castRecord.CastVolume.Size
 	hitbox.CFrame = castRecord.CastVolume.CFrame
 
@@ -106,13 +116,10 @@ local function renderCastRecord(hitbox: BoxHandleAdornment, castRecord: Diagnost
 	end
 end
 
-function DebugWorldVisualizer.Render(self: DebugWorldVisualizer)
-	if (self._collisionQuery.IsRecording) then
+function DebugWorldVisualizer.Render(self: DebugWorldVisualizer): ()
+	self:_hideAllVisualizations()
 
-		return
-	end
-
-	local snapshot: CollisionQuerySnapshot = self._collisionQuery.LastSnapshot
+	local snapshot: CollisionQuerySnapshot = self._collisionQuery.Snapshot
 	if snapshot.GroundContactCheck then
 		renderCastRecord(self.GroundCheckHitbox, snapshot.GroundContactCheck)
 	end

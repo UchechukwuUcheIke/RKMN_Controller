@@ -14,21 +14,6 @@ local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
 local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
 local Direction = require(RKMNControllerFolder.Direction)
 
---[[
-	Test layout. MockWorld:SpawnCharacter() gives a 2x2x1 HumanoidRootPart at the origin, so
-	CollisionConstants.new() derives:
-	  - Hitbox: 2 x 2 x 1 at the origin -> x = -1..1, y = -1..1
-	  - HalfWidth = 1
-
-	Tuning values and the foot are overridden in makeConstants for these tests:
-	  - Foot: 0.2 x 0.1 x 0.2, bottom face at y = -1.0 (narrow so tilted slabs don't clip it)
-	  - Ground reach = 0.5 + 0.1 = 0.6 -> floors with a top between y = -1.0 and -1.6 count
-	  - Wall ray starts at x = +-1, reach 0.6 -> wall faces between 1.0 and 1.6 count
-	  - SkinWidth = 0.1, MaxSlopeAngle = 45
-
-	Blockcast ignores parts it initially overlaps, so every test leaves a gap between the
-	cast shape and the geometry it should hit.
-]]
 local function makeConstants(character)
 	local constants = CollisionConstants.new(character)
 
@@ -93,6 +78,12 @@ describe("CollisionQuery", function()
 		expect(resolution.hitWall).toBe(expectedHitWall)
 	end
 
+	-- CheckWallContact returns a DiagnosticCastRecord, not a boolean;
+	-- the contact result lives in its Success field.
+	local function hasContact(castRecord)
+		return castRecord.Success
+	end
+
 	beforeEach(function()
 		world = MockWorld.new()
 		character = world:SpawnCharacter()
@@ -111,10 +102,20 @@ describe("CollisionQuery", function()
 
 	describe("new", function()
 		it("should start in a not-grounded state", function()
-			expect(query:IsGrounded()).toBe(false)
+			expect(query.IsGrounded).toBe(false)
 			expect(query.CurrentFloorPart).toBeNil()
 			expect(query.FloorNormal == Vector3.zero).toBe(true)
-			expect(query.MovingPlatformDelta == CFrame.identity).toBe(true)
+		end)
+
+		it("should precompute the max slope dot from the max slope angle", function()
+			expect(query._maxSlopeDot).toBeCloseTo(math.cos(math.rad(45)), 5)
+		end)
+
+		it("should exclude the character from the raycast filter", function()
+			local params = query._raycastParams
+
+			expect(params.FilterType).toBe(Enum.RaycastFilterType.Exclude)
+			expect(table.find(params.FilterDescendantsInstances, character)).toBeDefined()
 		end)
 
 		it("should throw when the character has no PrimaryPart", function()
@@ -126,12 +127,13 @@ describe("CollisionQuery", function()
 		end)
 	end)
 
-	describe("UpdateState / IsGrounded", function()
+	describe("UpdateState", function()
 		it("should not be grounded when there is no floor", function()
 			query:UpdateState()
 
-			expect(query:IsGrounded()).toBe(false)
+			expect(query.IsGrounded).toBe(false)
 			expect(query.CurrentFloorPart).toBeNil()
+			expect(query.FloorNormal == Vector3.zero).toBe(true)
 		end)
 
 		it("should be grounded on a floor within check distance", function()
@@ -139,17 +141,27 @@ describe("CollisionQuery", function()
 
 			query:UpdateState()
 
-			expect(query:IsGrounded()).toBe(true)
+			expect(query.IsGrounded).toBe(true)
 			expect(query.CurrentFloorPart).toBe(floor)
 			expectVector(query.FloorNormal, Vector3.yAxis)
 		end)
 
-		it("should not be grounded when the floor is beyond check distance", function()
-			spawnFloor(-2.0)
+		it("should include the skin width in the ground check distance", function()
+			-- Gap of 0.55: beyond GroundCheckDistance (0.5) but inside GroundCheckDistance + SkinWidth (0.6)
+			spawnFloor(-1.55)
 
 			query:UpdateState()
 
-			expect(query:IsGrounded()).toBe(false)
+			expect(query.IsGrounded).toBe(true)
+		end)
+
+		it("should not be grounded when the floor is beyond check distance plus skin width", function()
+			-- Gap of 0.7 > 0.6
+			spawnFloor(-1.7)
+
+			query:UpdateState()
+
+			expect(query.IsGrounded).toBe(false)
 			expect(query.CurrentFloorPart).toBeNil()
 		end)
 
@@ -158,9 +170,9 @@ describe("CollisionQuery", function()
 
 			query:UpdateState()
 
-			expect(query:IsGrounded()).toBe(true)
+			expect(query.IsGrounded).toBe(true)
 			expect(query.CurrentFloorPart).toBe(slope)
-			expect(query.FloorNormal.X).toBeCloseTo(-0.5, 3) -- -sin(30)
+			expect(query.FloorNormal.X).toBeCloseTo(-math.sin(math.rad(30)), 3)
 			expect(query.FloorNormal.Y).toBeCloseTo(math.cos(math.rad(30)), 3)
 		end)
 
@@ -169,7 +181,7 @@ describe("CollisionQuery", function()
 
 			query:UpdateState()
 
-			expect(query:IsGrounded()).toBe(false)
+			expect(query.IsGrounded).toBe(false)
 			expect(query.CurrentFloorPart).toBeNil()
 			expect(query.FloorNormal == Vector3.zero).toBe(true)
 		end)
@@ -183,130 +195,113 @@ describe("CollisionQuery", function()
 
 			query:UpdateState()
 
-			expect(query:IsGrounded()).toBe(false)
+			expect(query.IsGrounded).toBe(false)
 		end)
 
 		it("should clear grounded state when the floor goes away", function()
 			local floor = spawnFloor(-1.3)
 			query:UpdateState()
-			expect(query:IsGrounded()).toBe(true)
+			expect(query.IsGrounded).toBe(true)
 
 			floor.Position = Vector3.new(0, -100, 0)
 			query:UpdateState()
 
-			expect(query:IsGrounded()).toBe(false)
-			expect(query.CurrentFloorPart).toBeNil()
+			expect(query.IsGrounded).toBe(false)
 			expect(query.FloorNormal == Vector3.zero).toBe(true)
-			expect(query.MovingPlatformDelta == CFrame.identity).toBe(true)
-		end)
-	end)
-
-	describe("MovingPlatformDelta", function()
-		it("should be identity on the first frame of landing", function()
-			spawnFloor(-1.3)
-
-			query:UpdateState()
-
-			expect(query.MovingPlatformDelta == CFrame.identity).toBe(true)
+			-- NOTE: this currently fails: _updateStateToNotOnGround doesn't reset CurrentFloorPart
+			expect(query.CurrentFloorPart).toBeNil()
 		end)
 
-		it("should be identity while standing on a stationary floor", function()
-			spawnFloor(-1.3)
-
-			query:UpdateState()
-			query:UpdateState()
-
-			expect(query.MovingPlatformDelta.Position.Magnitude).toBeCloseTo(0, 3)
-		end)
-
-		it("should report the platform's movement between frames", function()
-			local platform = spawnFloor(-1.3)
-			query:UpdateState()
-
-			platform.Position += Vector3.new(5, 0, 0)
-			query:UpdateState()
-
-			expectVector(query.MovingPlatformDelta.Position, Vector3.new(5, 0, 0))
-		end)
-
-		it("should reset to identity when switching to a different platform", function()
+		it("should track a new floor part when the floor changes", function()
 			local platformA = spawnFloor(-1.3)
 			query:UpdateState()
 			expect(query.CurrentFloorPart).toBe(platformA)
 
-			-- Move A away and put B in range
 			platformA.Position = Vector3.new(0, -100, 0)
 			local platformB = spawnFloor(-1.4)
 			query:UpdateState()
 
+			expect(query.IsGrounded).toBe(true)
 			expect(query.CurrentFloorPart).toBe(platformB)
-			expect(query.MovingPlatformDelta == CFrame.identity).toBe(true)
 		end)
 
-		it("should not carry a stale delta across an airborne gap", function()
-			local platform = spawnFloor(-1.3)
+		it("should update the floor normal when moving from a flat floor to a slope", function()
+			local floor = spawnFloor(-1.3)
+			query:UpdateState()
+			expectVector(query.FloorNormal, Vector3.yAxis)
+
+			floor.Position = Vector3.new(0, -100, 0)
+			spawnSlab(Vector3.new(0, -1.4, 0), 30)
 			query:UpdateState()
 
-			-- Leave the ground, move the platform, then land again
-			local originalPosition = platform.Position
-			platform.Position = Vector3.new(0, -100, 0)
-			query:UpdateState()
-			platform.Position = originalPosition + Vector3.new(5, 0, 0)
-			query:UpdateState()
-
-			expect(query:IsGrounded()).toBe(true)
-			expect(query.MovingPlatformDelta == CFrame.identity).toBe(true)
+			expect(query.FloorNormal.Y).toBeCloseTo(math.cos(math.rad(30)), 3)
 		end)
 	end)
 
 	describe("CheckWallContact", function()
-		it("should return false when nothing is nearby", function()
-			expect(query:CheckWallContact(Direction.Right)).toBe(false)
+		it("should return a cast record with no contact when nothing is nearby", function()
+			local record = query:CheckWallContact(Direction.Right)
+
+			expect(record).toBeDefined()
+			expect(hasContact(record)).toBe(false)
 		end)
 
 		it("should detect a wall on the right", function()
 			spawnWall(1.3)
 
-			expect(query:CheckWallContact(Direction.Right)).toBe(true)
+			expect(hasContact(query:CheckWallContact(Direction.Right))).toBe(true)
 		end)
 
 		it("should detect a wall on the left", function()
 			spawnWall(-1.3)
 
-			expect(query:CheckWallContact(Direction.Left)).toBe(true)
+			expect(hasContact(query:CheckWallContact(Direction.Left))).toBe(true)
 		end)
 
 		it("should only check the requested direction", function()
 			spawnWall(1.3)
 
-			expect(query:CheckWallContact(Direction.Left)).toBe(false)
+			expect(hasContact(query:CheckWallContact(Direction.Left))).toBe(false)
 		end)
 
-		it("should return false when the wall is beyond check distance", function()
+		it("should return no contact when the wall is beyond check distance", function()
 			spawnWall(3)
 
-			expect(query:CheckWallContact(Direction.Right)).toBe(false)
+			expect(hasContact(query:CheckWallContact(Direction.Right))).toBe(false)
 		end)
 
-		it("should return false for Direction.None", function()
+		it("should include the skin width in the wall check distance", function()
+			-- Gap of 0.55 from the ray origin: beyond WallCheckDistance (0.5), inside +SkinWidth (0.6)
+			spawnWall(1.55)
+
+			expect(hasContact(query:CheckWallContact(Direction.Right))).toBe(true)
+		end)
+
+		it("should return no contact for Direction.None", function()
 			spawnWall(1.3)
 			spawnWall(-1.3)
 
-			expect(query:CheckWallContact(Direction.None)).toBe(false)
+			expect(hasContact(query:CheckWallContact(Direction.None))).toBe(false)
 		end)
 
 		it("should not treat a walkable slope as a wall", function()
 			-- Gentle slope whose top face crosses the +X ray at x = 1.3
 			spawnSlab(Vector3.new(1.3, 0, 0), 30)
 
-			expect(query:CheckWallContact(Direction.Right)).toBe(false)
+			expect(hasContact(query:CheckWallContact(Direction.Right))).toBe(false)
+		end)
+
+		it("should treat a too-steep slope as a wall", function()
+			spawnSlab(Vector3.new(1.3, 0, 0), 70)
+
+			expect(hasContact(query:CheckWallContact(Direction.Right))).toBe(true)
 		end)
 
 		it("should ignore parts that belong to the character model", function()
 			local accessory = spawnWall(1.3)
 			accessory.Parent = character
 
-			expect(query:CheckWallContact(Direction.Right)).toBe(false)
+			expect(hasContact(query:CheckWallContact(Direction.Right))).toBe(false)
 		end)
 	end)
 
@@ -346,6 +341,15 @@ describe("CollisionQuery", function()
 			expectResolution(resolution, Vector3.new(0.9, 0, 0), false, true)
 		end)
 
+		it("should stop short of a wall on the left side", function()
+			spawnWall(-2)
+			local delta = Vector3.new(-3, 0, 0)
+
+			local resolution = query:GetSweepResolution(delta)
+
+			expectResolution(resolution, Vector3.new(-0.9, 0, 0), false, true)
+		end)
+
 		it("should stop short of a floor by the skin width and flag hitFloor", function()
 			spawnFloor(-2) -- hitbox bottom at y = -1 -> 1 stud of gap
 			local delta = Vector3.new(0, -3, 0)
@@ -353,6 +357,42 @@ describe("CollisionQuery", function()
 			local resolution = query:GetSweepResolution(delta)
 
 			expectResolution(resolution, Vector3.new(0, -0.9, 0), true, false)
+		end)
+
+		it("should flag hitWall (not hitFloor) when sweeping up into a ceiling", function()
+			-- Ceiling underside at y = 2, hitbox top at y = 1 -> 1 stud of gap
+			world:SpawnPart({
+				Size = Vector3.new(20, 1, 20),
+				Position = Vector3.new(0, 2.5, 0),
+			})
+			local delta = Vector3.new(0, 3, 0)
+
+			local resolution = query:GetSweepResolution(delta)
+
+			-- Ceiling normal points down, so it isn't walkable
+			expectResolution(resolution, Vector3.new(0, 0.9, 0), false, true)
+		end)
+
+		it("should flag hitFloor when sweeping down onto a walkable slope", function()
+			spawnSlab(Vector3.new(0, -2, 0), 30)
+			local delta = Vector3.new(0, -3, 0)
+
+			local resolution = query:GetSweepResolution(delta)
+
+			expect(resolution.hitFloor).toBe(true)
+			expect(resolution.hitWall).toBe(false)
+			expect(resolution.safeDelta.Y).toBeLessThan(0)
+			expect(resolution.safeDelta.Magnitude).toBeLessThan(delta.Magnitude)
+		end)
+
+		it("should flag hitWall when sweeping down onto a too-steep slope", function()
+			spawnSlab(Vector3.new(0, -2, 0), 70)
+			local delta = Vector3.new(0, -3, 0)
+
+			local resolution = query:GetSweepResolution(delta)
+
+			expect(resolution.hitFloor).toBe(false)
+			expect(resolution.hitWall).toBe(true)
 		end)
 
 		it("should not move when the gap is smaller than the skin width", function()

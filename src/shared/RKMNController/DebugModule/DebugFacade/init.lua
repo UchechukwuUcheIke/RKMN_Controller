@@ -3,7 +3,6 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local RKMNControllerFolder = ReplicatedStorage.RKMNController
-local KinematicWorld = shared("KinematicWorld")
 local RKMNController: RKMNController = require(RKMNControllerFolder.RKMNController)
 local Signal = typeof(ReplicatedStorage.DevPackages.Signal)
 
@@ -17,7 +16,6 @@ type KinematicWorld = RKMNController
 type DebugInputHandler = DebugInputHandler.DebugInputHandler
 type DebugUI = DebugUI.DebugUI
 type DebugWorldVisualizer = DebugWorldVisualizer.DebugWorldVisualizer
-type RKMNController = RKMNController.RKMNController
 type Signal = typeof(Signal)
 
 local DebugFacade = {}
@@ -56,7 +54,7 @@ end
 
 function DebugFacade._instantiateSubModules(self: DebugFacade): ()
 	self.InputHandler = DebugInputHandler.new()
-	self.UI = DebugUI.new()
+	self.UI = DebugUI.new(self._kinematicController)
 	self.WorldVisualizer = DebugWorldVisualizer.new()
 end
 
@@ -141,8 +139,8 @@ function DebugFacade.Disable(self: DebugFacade): ()
 end
 
 function DebugFacade.Update(self: DebugFacade, dt: number): ()
-	self.UI:Render(RKMNController)
-	self.WorldVisualizer:Render(RKMNController)
+	self.UI:Render()
+	self.WorldVisualizer:Render()
 end
 
 function DebugFacade.Destroy(self: DebugFacade)

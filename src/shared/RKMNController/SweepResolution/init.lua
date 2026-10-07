@@ -20,11 +20,11 @@ export type SweepResolution = typeof(setmetatable(
 	{} :: SweepResolutionData,
     {} :: SweepResolutionPrototype))
 
-function SweepResolution.new(castRecord: DiagnosticCastRecord, safeDelta: Vector3?, hitFloor: boolean?, hitWall: boolean?) : SweepResolution
+function SweepResolution.new(castRecord: DiagnosticCastRecord?, safeDelta: Vector3?, hitFloor: boolean?, hitWall: boolean?) : SweepResolution
     assert(castRecord)
 
     local self = setmetatable({
-        CastRecord = castRecord,
+        CastRecord = castRecord or DiagnosticCastRecord.new(false, {Size = Vector3.zero, CFrame = CFrame.new()}),
 	    SafeDelta = safeDelta or Vector3.zero,
         HitFloor = hitFloor or false,
         HitWall = hitWall or false

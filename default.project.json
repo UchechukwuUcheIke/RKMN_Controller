@@ -4,20 +4,13 @@
     "$className": "DataModel",
 
     "ReplicatedStorage": {
-      "$path": "test/shared",
+      "$path": "src/shared",
+      "Tests": {
+        "$path": "test/shared"
+      },
       "DevPackages": {
         "$path": "DevPackages"
-      },
-      "RKMNController": {
-        "$path": "src/rkmncontroller"
-      },
-      "MockWorld": {
-        "$path": "src/mockworld"
       }
-
-    },
-    "ServerStorage": {
-      "$path": "src/server/ServerStorage"
     },
 
     "ServerScriptService": {
