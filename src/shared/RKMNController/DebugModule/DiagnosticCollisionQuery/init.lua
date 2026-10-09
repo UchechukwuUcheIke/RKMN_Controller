@@ -23,6 +23,7 @@ type CollisionConstants = CollisionConstants.CollisionConstants
 
 local DiagnosticCollisionQuery = setmetatable({}, { __index = CollisionQuery })
 DiagnosticCollisionQuery.__index = DiagnosticCollisionQuery
+DiagnosticCollisionQuery.ClassName = "DiagnosticCollisionQuery"
 
 type DiagnosticCollisionQueryData = CollisionQueryData & {
 	Snapshot: CollisionQuerySnapshot,
@@ -47,10 +48,8 @@ function DiagnosticCollisionQuery.GetSweepResolution(self: DiagnosticCollisionQu
 	local super: CollisionQuery = (self :: any) :: CollisionQuery
 	local sweepResolution: SweepResolution = CollisionQuery.GetSweepResolution(super, desiredDelta)
 	
-	if self.IsRecording then
-		local sweepHitResult = sweepResolution.HitResult
-		self.Snapshot.SweepResolution = sweepHitResult
-	end
+	local sweepHitResult = sweepResolution.HitResult
+	self.Snapshot.SweepResolution = sweepHitResult
 	
 	return sweepResolution
 end
@@ -59,9 +58,7 @@ function DiagnosticCollisionQuery.GetWallContact(self: DiagnosticCollisionQuery,
 	local super: CollisionQuery = (self :: any) :: CollisionQuery
 	local wallContactHitResult: DiagnosticCastRecord = CollisionQuery.CheckWallContact(super, direction)
 
-	if self.IsRecording then
-		self.Snapshot.WallContactCheck = wallContactHitResult
-	end
+	self.Snapshot.WallContactCheck = wallContactHitResult
 
 	return wallContactHitResult
 end

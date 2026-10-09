@@ -21,7 +21,6 @@ local MovementState = require(RKMNControllerFolder.MovementStateIDRegistry)
 -- TODO: Add Action FSM and AnimationController back
 type RKMNControllerData = {
     Character: Model,
-    IsRunning: boolean,
     InputEnabled: boolean,
     
     Constants: CollisionConstants.CollisionConstants,
@@ -30,8 +29,6 @@ type RKMNControllerData = {
     InputController: InputController.InputController,
     MovementStateMachine: MovementStateMachine.MovementStateMachine,
     PhysicsResolver: PhysicsResolver.PhysicsResolver,
-    _connections: {RBXScriptSignal},
-    _loopName: string
 }
 
 type FSMContext = FSMContext.FSMContext
@@ -43,7 +40,6 @@ function RKMNController.new(world: WorldRoot, characterModel: Model): RKMNContro
     local self = {}
 
     self.Character = characterModel
-    self.IsRunning = false
     self.InputEnabled = true
 
     self.Constants = CollisionConstants.new(characterModel)
@@ -62,11 +58,6 @@ function RKMNController.new(world: WorldRoot, characterModel: Model): RKMNContro
     local FSMContext: FSMContext = FSMContext.new(FSMContextDependencies)
     self.MovementStateMachine = MovementStateMachine.new(FSMContext)
 
-   
-
-    self._connections = {}
-    self._loopName = ""
-
     setmetatable(self, RKMNController)
     return self
 end
@@ -76,49 +67,6 @@ function RKMNController.Reset(self: RKMNController): ()
 	self.TimerUtility:FlushAll()
 end
 
-function RKMNController.Start(self: RKMNController): ()
-	if self.IsRunning then
-        return
-    end
-	self.IsRunning = true
-
-    self:Reset()
-	
-	-- TODO: Factor this logic out into a dedicated KinematicController
-    -- Which handles Runservice for all entities in game
-	local loopName = "RKMN_KinematicLoop_" .. self.Character.Name
-	
-	RunService:BindToRenderStep(
-		loopName, 
-		Enum.RenderPriority.Character.Value, 
-		function(dt)
-            local humanoidRootPart: BasePart? = self.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
-            if not humanoidRootPart then
-                return
-            end
-
-			self.TimerUtility:Step(dt)
-			self.InputController:Poll(dt)
-            self.CollisionQuery:UpdateState()
-
-			self.MovementStateMachine:Update(dt)
-			self.PhysicsResolver:Resolve(dt)
-
-		end
-	)
-	self._loopName = loopName
-
-end
-
-function RKMNController.Pause(self: RKMNController)
-	if not self.IsRunning then return end
-	self.IsRunning = false
-	
-	if self._loopName then
-		RunService:UnbindFromRenderStep(self._loopName)
-		self._loopName = ""
-	end
-end
 
 function RKMNController.SetInputEnabled(self: RKMNController, isEnabled: boolean)
 	self.InputEnabled = isEnabled
@@ -129,16 +77,12 @@ function RKMNController.SetInputEnabled(self: RKMNController, isEnabled: boolean
 	end
 end
 
-function RKMNController.Destroy(self: RKMNController)
-	self:Pause()
-	
+function RKMNController.Destroy(self: RKMNController)	
 	self.InputController:Destroy()
 	self.TimerUtility:Destroy()
 	self.PhysicsResolver:Destroy()
 	self.MovementStateMachine:Destroy()
 	self.CollisionQuery:Destroy()
-
-	table.clear(self._connections)
 end
 
 

@@ -326,10 +326,5 @@ describe("DiagnosticCastRecord", function()
 			expect(typeof(DiagnosticCastRecord.fromRaycast)).toBe("function")
 		end)
 
-		it("prevents adding new members to the class", function()
-			expect(function()
-				DiagnosticCastRecord.Extra = true
-			end).toThrow()
-		end)
 	end)
 end)

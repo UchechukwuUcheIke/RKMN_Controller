@@ -2,7 +2,6 @@
 local InputWidget = {}
 InputWidget.__index = InputWidget
 
-local RunService = game:GetService("RunService")
 local WidgetsFolder = script.Parent
 local DataRow = require(WidgetsFolder.DataRow)
 
@@ -46,7 +45,7 @@ function InputWidget.MountTo(self: InputWidget, layerCollector: Instance)
 end
 
 function InputWidget.Dismount(self: InputWidget)
-    self._canvas.Parent = mil
+    self._canvas.Parent = nil
     self.IsMounted = true
 end
 

@@ -1,6 +1,7 @@
 --!strict
 local CollisionQuery = {}
 CollisionQuery.__index = CollisionQuery
+CollisionQuery.ClassName = "CollisionQuery"
 
 local RKMNControllerFolder = script.Parent
 local DiagnosticCastRecord = require(RKMNControllerFolder.DiagnosticCastRecord)
@@ -26,7 +27,7 @@ export type CollisionQueryData = {
 	IsGrounded: boolean,
 }
 
-export type CollisionQueryPrototype = typeof(CollisionQuery)
+export type CollisionQueryPrototype = typeof({__index = CollisionQuery})
 
 export type CollisionQuery = typeof(setmetatable(
 	{} :: CollisionQueryData,

@@ -10,20 +10,44 @@ export type MockResult<T> = {
     Mocks: MethodMap
 }
 
-local function populateMethods(classBlueprint: any): MethodMap
-    local mockPrototype: MethodMap = {}
-    
-    local template = classBlueprint.__index or classBlueprint
-    
-    for key, originalFunc in pairs(template) do
-        local isClassMethod: boolean = type(originalFunc) == "function"
-        local isConstructor: boolean = key == "new"
-        
-        if not isClassMethod or isConstructor then
+local function collectClassMethods(source: any, mockPrototype: MethodMap)
+    for key, value in pairs(source) do
+        if type(value) ~= "function" or type(key) ~= "string" then
             continue
         end
-        
-        mockPrototype[key] = jest.fn()
+
+        local isConstructor: boolean = (key == "new")
+        local isMetamethod = string.sub(key, 1, 2) == "__"
+        if isConstructor or isMetamethod then
+            continue
+        end
+
+        if mockPrototype[key] == nil then
+            mockPrototype[key] = jest.fn()
+        end
+    end
+end
+
+local function populateMethods(classBlueprint: any): MethodMap
+    local mockPrototype: MethodMap = {}
+
+    local rawIndex = rawget(classBlueprint, "__index")
+    local currentClass = if type(rawIndex) == "table" then rawIndex else classBlueprint
+
+    local visitedClasses = {}
+    local isClass: boolean = type(currentClass) == "table"
+    local isVisitedClass: boolean? = visitedClasses[currentClass]
+    while isClass and not isVisitedClass do
+        visitedClasses[currentClass] = true
+        collectClassMethods(currentClass, mockPrototype)
+
+        local metatable = getmetatable(currentClass)
+        if type(metatable) ~= "table" then
+            break
+        end
+
+        local parentIndex = rawget(metatable, "__index")
+        currentClass = if type(parentIndex) == "table" then parentIndex else nil
     end
 
     return mockPrototype
