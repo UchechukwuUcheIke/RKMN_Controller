@@ -22,13 +22,13 @@ local DebugFacade = {}
 DebugFacade.__index = DebugFacade
 
 type DebugFacadeData = {
-	World: KinematicWorld,
-	IsActive: boolean,
+	_isActive: boolean,
+	_world: KinematicWorld,
 	_renderConnection: RBXScriptConnection?,
 	_kinematicController: RKMNController,
-	InputHandler: DebugInputHandler,
-	UI: DebugUI,
-	WorldVisualizer: DebugWorldVisualizer,
+	_inputHandler: DebugInputHandler,
+	_userInterface: DebugUI,
+	_worldVisualizer: DebugWorldVisualizer,
 	_connections: {Signal|RBXScriptConnection},
 }
 
@@ -42,7 +42,7 @@ export type DebugFacade = typeof(setmetatable(
 function DebugFacade.new(kinematicWorld: KinematicWorld, kinematicController: RKMNController): DebugFacade
 	local self = setmetatable({}, DebugFacade)
 	
-	self.World = kinematicWorld
+	self._world = kinematicWorld
 	self._kinematicController = kinematicController
 	self.IsActive = false
 	self._connections = {}
@@ -53,9 +53,9 @@ function DebugFacade.new(kinematicWorld: KinematicWorld, kinematicController: RK
 end
 
 function DebugFacade._instantiateSubModules(self: DebugFacade): ()
-	self.InputHandler = DebugInputHandler.new()
-	self.UI = DebugUI.new(self._kinematicController)
-	self.WorldVisualizer = DebugWorldVisualizer.new()
+	self._inputHandler = DebugInputHandler.new()
+	self._userInterface = DebugUI.new(self._kinematicController)
+	self._worldVisualizer = DebugWorldVisualizer.new()
 end
 
 function DebugFacade._handlePauseToggled(self: DebugFacade): ()
@@ -95,6 +95,10 @@ function DebugFacade.Toggle(self: DebugFacade): ()
 	end
 end
 
+function DebugFacade.IsActive(self: DebugFacade): ()
+	return self._isActive
+end
+
 function DebugFacade._enableSubmodules(self: DebugFacade): ()
 	self.InputHandler:Enable()
 	self.UI:Enable()
@@ -112,7 +116,7 @@ function DebugFacade.Enable(self: DebugFacade): ()
 		return 
 	end
 
-	self.IsActive = true
+	self._isActive = true
 	self.World:Disable() -- or turn off, or not do the step anymore
 
 	self:_bindInputSignals()
@@ -131,7 +135,7 @@ function DebugFacade.Disable(self: DebugFacade): ()
 		return
 	end
 	
-	self.IsActive = false
+	self._isActive = false
 	
 	self:_unbindSignals()
 	self:_disableSubmodules()
