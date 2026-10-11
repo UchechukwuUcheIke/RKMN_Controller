@@ -5,7 +5,6 @@ local BaseState = require(ParentDirectory.BaseState)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local FSMContext = require(ParentDirectory.FSMContext)
 local Signal = require(ReplicatedStorage:WaitForChild("DevPackages"):WaitForChild("goodsignal"))
-local Types = require(ParentDirectory.Types)
 local MovementStateID = require(ParentDirectory.MovementStateIDRegistry)
 local MovementStateRegistry = require(ParentDirectory.MovementStateRegistry)
 
@@ -24,7 +23,7 @@ export type MovementStateMachine = StateMachine & {
     _populateContextConnections: (MovementStateMachine, FSMContext) -> ()
 }
 
-function MovementStateMachine._handleOnJumpPressed(self: MovementStateMachine, context: FSMContext): ()
+function MovementStateMachine._handleJumpPressed(self: MovementStateMachine, context: FSMContext): ()
 	if context.CollisionQuery:IsGrounded() or context.InputController.HasBufferedJump then
 		context.InputController:ConsumeJumpBuffer()
 		self:ChangeState(MovementStateID.Jump)
@@ -54,7 +53,11 @@ function MovementStateMachine.new(context: FSMContext): MovementStateMachine
 end
 
 function MovementStateMachine.Destroy(self: MovementStateMachine): ()
-	self:Destroy()
+	for _, connection in ipairs(self._connections) do
+		connection:Disconnect()
+	end
+
+	StateMachine.Destroy(self)
 end
 
 table.freeze(MovementStateMachine)

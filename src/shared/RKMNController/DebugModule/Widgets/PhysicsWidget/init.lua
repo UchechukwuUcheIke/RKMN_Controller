@@ -44,10 +44,11 @@ function PhysicsWidget.MountTo(self: PhysicsWidget, layerCollector: LayerCollect
 	self.IsMounted = true
 end
 
-function PhysicsWidget.Render(self: PhysicsWidget, physicsResolver: any)
-	self._velocityXRow:UpdateValue(physicsResolver.Velocity.X)
-	self._velocityYRow:UpdateValue(physicsResolver.Velocity.Y)
-	self._facingDirectionRow:UpdateValue(physicsResolver.FacingDirection)
+function PhysicsWidget.Render(self: PhysicsWidget)
+	local physicsResolver: PhysicsResolver = self._physicsResolver
+	self._velocityXRow:UpdateValue(string.format("%.2f", physicsResolver.Velocity.X))
+	self._velocityYRow:UpdateValue(string.format("%.2f", physicsResolver.Velocity.Y))
+	self._facingDirectionRow:UpdateValue(tostring(physicsResolver.FacingDirection))
 end
 
 function PhysicsWidget:Destroy()

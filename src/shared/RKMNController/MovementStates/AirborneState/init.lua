@@ -11,7 +11,7 @@ type StateMachine = StateMachine.StateMachine
 export type AirborneState = BaseState & typeof(AirborneState)
 
 function AirborneState.new(name: string): AirborneState
-    local base = BaseState.new(MovementStateID.WallSlide) :: BaseState
+    local base = BaseState.new(name) :: BaseState
     local self = setmetatable(base, AirborneState)
     self.IsDashJumping = false
     self.HasCutJump = false
@@ -19,7 +19,7 @@ function AirborneState.new(name: string): AirborneState
 end
 
 function AirborneState._resolveAirborneVariables(self: AirborneState, stateMachine: StateMachine): ()
-    self.IsDashJumping = stateMachine.Context.PreviousStateID == MovementStateID.Dash
+    self.IsDashJumping = stateMachine.Context.PreviousStateId == MovementStateID.Dash
     self.HasCutJump = false
 end
 

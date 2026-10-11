@@ -64,6 +64,7 @@ function DebugFacade._instantiateSubModules(self: DebugFacade): ()
 	self._inputHandler = DebugInputHandler.new()
 	self._userInterface = DebugUI.new(self._layerCollector, self._kinematicController)
 
+	-- TODO: Add warning if the collision query grabbed isn't a diagnostic one
 	local collisionQuery: DiagnosticCollisionQuery = (self._kinematicController.CollisionQuery :: any) :: DiagnosticCollisionQuery
 	self._worldVisualizer = DebugWorldVisualizer.new(self._world, collisionQuery)
 end
@@ -71,7 +72,7 @@ end
 function DebugFacade._handlePauseToggled(self: DebugFacade): ()
 	local isRunning: boolean = self._kinematicWorld:IsRunning()
 	if isRunning then
-		self._kinematicWorld:Pause()
+		self._kinematicWorld:Stop()
 	else
 		self._kinematicWorld:Start()
 	end
@@ -99,17 +100,18 @@ function DebugFacade._unbindSignals(self: DebugFacade): ()
 	for _, connection: Signal in ipairs(self._connections) do
 		connection:Disconnect()
 	end
+	table.clear(self._connections)
 end
 
 function DebugFacade.Toggle(self: DebugFacade): ()
-	if self.IsActive then
+	if self._isActive then
 		self:Disable()
 	else
 		self:Enable()
 	end
 end
 
-function DebugFacade.IsActive(self: DebugFacade): ()
+function DebugFacade.IsActive(self: DebugFacade): boolean
 	return self._isActive
 end
 
@@ -126,13 +128,12 @@ function DebugFacade._bindRunserviceConnection(self: DebugFacade): ()
 end
 
 function DebugFacade.Enable(self: DebugFacade): ()
-	if self.IsActive then 
-		return 
+	if self._isActive then
+		return
 	end
 
 	self._isActive = true
-	self._kinematicWorld:Disable()
-
+	--self._kinematicWorld:Disable() uncle bob would be displeased
 	self:_bindInputSignals()
 	self:_enableSubmodules()
 	self:_bindRunserviceConnection()
@@ -145,7 +146,7 @@ function DebugFacade._disableSubmodules(self: DebugFacade): ()
 end
 
 function DebugFacade.Disable(self: DebugFacade): ()
-	if not self.IsActive then
+	if not self._isActive then
 		return
 	end
 	
@@ -153,7 +154,7 @@ function DebugFacade.Disable(self: DebugFacade): ()
 	
 	self:_unbindSignals()
 	self:_disableSubmodules()
-	self._kinematicWorld:Enable() -- or turn on the step again, or whatever
+	--self._kinematicWorld:Enable() -- or turn on the step again, or whatever
 end
 
 function DebugFacade.Update(self: DebugFacade, dt: number): ()

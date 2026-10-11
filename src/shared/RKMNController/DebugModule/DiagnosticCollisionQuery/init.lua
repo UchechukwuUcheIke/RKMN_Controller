@@ -48,13 +48,12 @@ function DiagnosticCollisionQuery.GetSweepResolution(self: DiagnosticCollisionQu
 	local super: CollisionQuery = (self :: any) :: CollisionQuery
 	local sweepResolution: SweepResolution = CollisionQuery.GetSweepResolution(super, desiredDelta)
 	
-	local sweepHitResult = sweepResolution.HitResult
-	self.Snapshot.SweepResolution = sweepHitResult
-	
+	self.Snapshot.SweepResolution = sweepResolution
+
 	return sweepResolution
 end
 
-function DiagnosticCollisionQuery.GetWallContact(self: DiagnosticCollisionQuery, direction: Direction): DiagnosticCastRecord
+function DiagnosticCollisionQuery.CheckWallContact(self: DiagnosticCollisionQuery, direction: Direction): DiagnosticCastRecord
 	local super: CollisionQuery = (self :: any) :: CollisionQuery
 	local wallContactHitResult: DiagnosticCastRecord = CollisionQuery.CheckWallContact(super, direction)
 
@@ -63,22 +62,20 @@ function DiagnosticCollisionQuery.GetWallContact(self: DiagnosticCollisionQuery,
 	return wallContactHitResult
 end
 
-function DiagnosticCollisionQuery.Update(self: DiagnosticCollisionQuery)
+function DiagnosticCollisionQuery.UpdateState(self: DiagnosticCollisionQuery)
 	self.Snapshot:Clear()
 
 	local super: CollisionQuery = (self :: any) :: CollisionQuery
-	local raycastResult: RaycastResult<BasePart>? = CollisionQuery._raycastToGround(super)
-	local canWalkOnGround: boolean = (raycastResult ~= nil) and CollisionQuery._isWalkable(super, raycastResult.Normal)
+	CollisionQuery.UpdateState(super)
 
-	if not canWalkOnGround then
-		CollisionQuery._updateStateToNotOnGround(super)
-		return
-	end
-
-	-- Putting this assert here to silence lua's strict typing; TODO: Look for a better fix
-	assert(raycastResult ~= nil)
-	raycastResult = raycastResult :: RaycastResult<BasePart>
-    CollisionQuery._updateStateToOnGround(super, raycastResult)
+	local constants: CollisionConstants = super._constants
+	local castDistance: number = constants.GroundCheckDistance + constants.SkinWidth
+	self.Snapshot.GroundContactCheck = DiagnosticCastRecord.fromBlockcast(
+		super:IsGrounded(),
+		constants:GetFootCFrame(),
+		constants.FootSize,
+		Vector3.new(0, -castDistance, 0)
+	)
 end
 
 return DiagnosticCollisionQuery

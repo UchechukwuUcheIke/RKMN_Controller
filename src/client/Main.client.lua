@@ -1,41 +1,101 @@
-local LocalPlayer = game.Players.LocalPlayer
 local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RKMNControllerFolder = ReplicatedStorage.RKMNController
 local DebugFacade = require(RKMNControllerFolder.DebugModule.DebugFacade)
 local RKMNController = require(RKMNControllerFolder.RKMNController)
 local KinematicWorld = require(ReplicatedStorage.KinematicWorld)
+local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
+local MovementStats = require(RKMNControllerFolder.MovementStats)
+local TimerUtility = require(RKMNControllerFolder.TimerUtility)
+local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
+local InputController = require(RKMNControllerFolder.InputController)
+local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
+local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
+local StateMachineContext = require(RKMNControllerFolder.FSMContext)
+local DiagnosticControllerQuery = require(RKMNControllerFolder.DebugModule.DiagnosticCollisionQuery)
+
+
+type CollisionConstants = CollisionConstants.CollisionConstants
+type TimerUtility = TimerUtility.TimerUtility
+type CollisionQuery = CollisionQuery.CollisionQuery
+type InputController = InputController.InputController
+type MovementStateMachine = MovementStateMachine.MovementStateMachine
+type PhysicsResolver = PhysicsResolver.PhysicsResolver
+type RKMNControllerDependencies = RKMNController.RKMNControllerDependencies
+type StateMachineContext = StateMachineContext.FSMContext
+type StateMachineContextDependencies = StateMachineContext.FSMContextDependencies
+type DiagnosticControllerQuery = DiagnosticControllerQuery.DiagnosticCollisionQuery
 
 
 local kinematicWorld = KinematicWorld.new()
 
-local function mountScreenGui()
+local function mountScreenGui(): ScreenGui
     local PlayerGui = LocalPlayer.PlayerGui
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Parent = PlayerGui
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Parent = PlayerGui
+    return screenGui
+end
+
+local function makeDependencies(character: Model, constants: CollisionConstants, collisionQuery: CollisionQuery): RKMNControllerDependencies
+    local movementStats = MovementStats.new()
+    local timerUtility = TimerUtility.new()
+    local inputController = InputController.new(timerUtility)
+    local physicsResolver = PhysicsResolver.new(character, movementStats, collisionQuery)
+
+    local FSMContextDependencies: StateMachineContextDependencies = {
+        InputController  = inputController,
+        CollisionQuery = collisionQuery,
+        PhysicsResolver = physicsResolver,
+        TimerUtility = timerUtility
+    }
+    local stateMachineContext = StateMachineContext.new(FSMContextDependencies)
+    local movementStateMachine = MovementStateMachine.new(stateMachineContext)
+
+    local dependencies: RKMNControllerDependencies = {
+        Constants = constants,
+        TimerUtility = timerUtility,
+        CollisionQuery = collisionQuery,
+        InputController = inputController,
+        MovementStateMachine = movementStateMachine,
+        PhysicsResolver = physicsResolver
+    }
+
+    return dependencies
+end
+
+local function makeDebugDependencies(character: Model): RKMNControllerDependencies
+    local world = game.Workspace
+    local constants = CollisionConstants.new(character)
+    local collisionQuery = DiagnosticControllerQuery.new(world, character, constants)
+    return makeDependencies(character, constants, collisionQuery)
+end
+
+local function _makeProdDependencies(character: Model): RKMNControllerDependencies
+    local world = game.Workspace
+    local constants = CollisionConstants.new(character)
+    local collisionQuery = CollisionQuery.new(world, character, constants)
+    return makeDependencies(character, constants, collisionQuery)
 end
 
 local function onCharacterAdded(character)
-    local world = game.Workspace
-    local kinematicController = RKMNController.new(world, character)
-    local ScreenGui = LocalPlayer.PlayerGui.ScreenGui
-    local _DebugTool = DebugFacade.new(world, ScreenGui, kinematicWorld, kinematicController)
-    kinematicWorld:Start()
-end
-
-local function onPlayerAdded(player)
-    mountScreenGui()
-    player.CharacterAdded:Connect(onCharacterAdded)
+    local screenGui = mountScreenGui()
     
-
-    -- If the character already exists when the script runs, handle it manually
-    if player.Character then
-        onCharacterAdded(player.Character)
-    end
+    wait(1)
+    local world = game.Workspace
+    local dependencies: RKMNControllerDependencies = makeDebugDependencies(character)
+    local kinematicController = RKMNController.new(dependencies)
+    kinematicController:SetInputEnabled(true)
+    -- TODO: Think of how to call debug render
+    local DebugTool = DebugFacade.new(world, screenGui, kinematicWorld, kinematicController)
+    kinematicWorld:RegisterPlayer(kinematicController)
+    kinematicWorld:Start()
+    DebugTool:Enable()
 end
 
-for _, player in Players:GetPlayers() do
-    onPlayerAdded(player)
-end
+LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
 
-Players.PlayerAdded:Connect(onPlayerAdded)
+-- If the character already exists when the script runs, handle it manually
+if LocalPlayer.Character then
+    onCharacterAdded(LocalPlayer.Character)
+end

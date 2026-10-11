@@ -74,7 +74,11 @@ end
 function PhysicsResolver._applyGravity(self: PhysicsResolver, dt: number): ()
 	local gravity = self._movementStats.Gravity
     local currentYVelocity = self.Velocity.Y
-	local newY = currentYVelocity - (gravity * dt)
+
+	local newY = 0
+	if not self._collisionQuery:IsGrounded() then
+		newY = currentYVelocity - (gravity * dt)
+	end
 	
 	newY = math.max(newY, -self._movementStats.MaxFallSpeed)
 	self.Velocity = Vector3.new(self.Velocity.X, newY, 0)
@@ -88,25 +92,24 @@ function PhysicsResolver._zeroYVelocity(self: PhysicsResolver): ()
     self.Velocity = Vector3.new(self.Velocity.X, 0, 0) 
 end
 
-function PhysicsResolver._resolveVelocity(self: PhysicsResolver, sweepResolution: SweepResolution)
-	if sweepResolution.hitWall then 
+function PhysicsResolver._resolvePosition(self: PhysicsResolver, sweepResolution: SweepResolution)
+	if sweepResolution.HitWall then 
 		self:_zeroXVelocity()
 	end
 	
-	local hitFloorOrCeiling: boolean = sweepResolution.hitFloor
+	local hitFloorOrCeiling: boolean = sweepResolution.HitFloor
 	if hitFloorOrCeiling then 
 		self:_zeroYVelocity()
 	end
 
     local currentCFrame = self._rootPart.CFrame
-    local nextPos = currentCFrame.Position + sweepResolution.safeDelta
+    local nextPos = currentCFrame.Position + sweepResolution.SafeDelta
 	local lookAtOffset = self.FacingDirection
 	self._rootPart.CFrame = CFrame.lookAt(nextPos, nextPos + lookAtOffset)
 end
 
 function PhysicsResolver._sweepForCollisions(self: PhysicsResolver, dt: number): SweepResolution
 	local desiredDelta = self.Velocity * dt
-	
 	local sweepResolution: SweepResolution = self._collisionQuery:GetSweepResolution(desiredDelta)
 
     return sweepResolution
@@ -116,7 +119,7 @@ function PhysicsResolver.Resolve(self: PhysicsResolver, dt: number): ()
 	self:_applyHorizontalMovement()
 	self._applyGravity(self, dt)
 	local sweepResolution: SweepResolution = self._sweepForCollisions(self, dt)
-    self:_resolveVelocity(sweepResolution)
+    self:_resolvePosition(sweepResolution)
 end
 
 function PhysicsResolver.Destroy(self: PhysicsResolver): ()

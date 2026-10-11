@@ -29,7 +29,6 @@ type InputControllerData = {
     OnShootEnded: Signal,
 
     _connections: {RBXScriptConnection},
-    _bindEvents: any,
 }
 
 export type InputController = typeof(setmetatable({} :: InputControllerData, InputController))
@@ -51,6 +50,7 @@ function InputController.new(TimerUtility: TimerUtilityModule.TimerUtility): Inp
     self.OnShootEnded = Signal.new()
 
     self._connections = {}
+    self:_bindEvents()
 
     return self :: InputController
 end
@@ -72,7 +72,7 @@ function InputController._handleJumpInput(self: InputController): ()
 	self.Timer:StartTimer(Timers.JumpBuffer, 0.1)
 end
 
-function isBindingPressed(binding: {Enum.KeyCode}, keycode: Enum.KeyCode): boolean
+local function isBindingPressed(binding: {Enum.KeyCode}, keycode: Enum.KeyCode): boolean
     return table.find(binding, keycode) ~= nil
 end
 
@@ -132,13 +132,12 @@ function InputController.Poll(self: InputController, dt: number): ()
         return
     end
 
-    if (self.HasBufferedJump and self.Timer.IsCompleted(Timers.JumpBuffer)) then
+    if (self.HasBufferedJump and self.Timer:IsComplete(Timers.JumpBuffer)) then
         self.HasBufferedJump = false
     end
 
     self:_resolveMoveDirection()
 
-    print(KEY_BINDINGS.Jump)
     self.IsHoldingJump = isActionHeld(KEY_BINDINGS.Jump)
     self.IsHoldingDash = isActionHeld(KEY_BINDINGS.Dash)
     self.IsCharging = isActionHeld(KEY_BINDINGS.Shoot)

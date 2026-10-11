@@ -44,8 +44,7 @@ function DebugUI.new(layerCollector: LayerCollector, kinematicController: RKMNCo
     } :: DebugUIData
 
 	local self = setmetatable(data, DebugUI)
-	
-	self:_createAndMountGUI()
+	self:_createAndMountSubwidgets()
 	return self
 end
 
@@ -72,19 +71,6 @@ function DebugUI:Destroy()
 	if self.ScreenGui then
 		self.ScreenGui:Destroy()
 	end
-end
-
-function DebugUI._createScreenGUI(self: DebugUI): ()
-    self._canvas = Instance.new("ScreenGui")
-	self._canvas.Name = "KinematicDebugHUD"
-	self._canvas.ResetOnSpawn = false
-	self._canvas.Enabled = false
-end
-
-function DebugUI._mountScreenGUIToPlayer(self: DebugUI): ()
-    local localPlayer: Player = game.Players.LocalPlayer
-    local playerGUI: PlayerGui = localPlayer:WaitForChild("PlayerGui") :: PlayerGui
-	self._canvas.Parent = playerGUI
 end
 
 function DebugUI._createAndMountPhysicsWidget(self: DebugUI): ()
@@ -116,12 +102,6 @@ function DebugUI._createAndMountSubwidgets(self: DebugUI): ()
 	self:_createAndMountPhysicsWidget()
 	self:_createAndMountMovementStateMachineWidget()
 	self:_createAndMountInputWidget()
-end
-
-function DebugUI._createAndMountGUI(self: DebugUI): ()
-	self:_createScreenGUI()
-	self:_mountScreenGUIToPlayer()
-	self:_createAndMountSubwidgets()
 end
 
 table.freeze(DebugUI)

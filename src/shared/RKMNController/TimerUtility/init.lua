@@ -3,13 +3,11 @@
 local TimerUtility = {}
 TimerUtility.__index = TimerUtility
 
-local Types = require(script.Parent.Types)
-
 type TimerUtilityData = {
     _ActiveTimers: {[string]: number},
 }
 
-export type TimerUtility = typeof(setmetatable({} :: Types.TimerUtilityData, TimerUtility))
+export type TimerUtility = typeof(setmetatable({} :: TimerUtilityData, TimerUtility))
 
 function TimerUtility.new(): TimerUtility
     local self = setmetatable({}, TimerUtility)
@@ -19,7 +17,7 @@ function TimerUtility.new(): TimerUtility
 end
 
 function TimerUtility:Step(dt: number): ()
-    for id: number, remainingTime: number in pairs(self._ActiveTimers) do
+    for id: string, remainingTime: number in pairs(self._ActiveTimers) do
         local newTime: number = remainingTime - dt
         if newTime <= 0 then
             self._ActiveTimers[id] = nil

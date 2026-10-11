@@ -14,7 +14,7 @@ type StateMachine = StateMachine.StateMachine
 export type DashState = BaseState
 
 function DashState.new()
-    local base = BaseState.new(MovementStateID.WallSlide) :: BaseState
+    local base = BaseState.new(MovementStateID.Dash) :: BaseState
     local self = setmetatable(base, DashState)
 	return self :: DashState
 end

@@ -24,7 +24,7 @@ export type CollisionQueryData = {
 	_constants: CollisionConstants,
 	_maxSlopeDot: number,
 	_raycastParams: RaycastParams,
-	IsGrounded: boolean,
+	_isGrounded: boolean,
 }
 
 export type CollisionQueryPrototype = typeof({__index = CollisionQuery})
@@ -50,7 +50,7 @@ function CollisionQuery.new(world: WorldRoot, characterModel: Model, collisionCo
 	local self = setmetatable({
 		CurrentFloorPart = nil,
 		FloorNormal = Vector3.zero,
-		IsGrounded = false,
+		_isGrounded = false,
 		_world = world,
 		_characterModel = characterModel,
 		_primaryPart = primaryPart,
@@ -67,7 +67,7 @@ function CollisionQuery._isWalkable(self: CollisionQuery, normal: Vector3): bool
 end
 
 function CollisionQuery._raycastToGround(self: CollisionQuery): RaycastResult<BasePart>?
-	local origin = self._constants.FootCFrame
+	local origin = self._constants:GetFootCFrame()
     local footSize = self._constants.FootSize
 	local castDistance = self._constants.GroundCheckDistance + self._constants.SkinWidth
 
@@ -81,13 +81,17 @@ function CollisionQuery._raycastToGround(self: CollisionQuery): RaycastResult<Ba
 	return raycastResult
 end
 
+function CollisionQuery.IsGrounded(self: CollisionQuery): boolean
+	return self._isGrounded
+end
+
 function CollisionQuery._updateStateToNotOnGround(self: CollisionQuery): ()
-    self.IsGrounded = false
+    self._isGrounded = false
 	self.FloorNormal = Vector3.zero
 end
 
 function CollisionQuery._updateStateToOnGround(self:CollisionQuery, raycastResult : RaycastResult<BasePart>): ()
-    self.IsGrounded = true
+    self._isGrounded = true
 	self.FloorNormal = raycastResult.Normal
 
 	local hitPart: BasePart = raycastResult.Instance :: BasePart
@@ -115,7 +119,7 @@ function CollisionQuery.CheckWallContact(
 
 	local halfWidth: number = self._constants.HalfWidth
 	local castDistance: number = self._constants.WallCheckDistance + self._constants.SkinWidth
-	local origin: Vector3 = self._constants.HitboxCFrame.Position
+	local origin: Vector3 = self._constants:GetHitboxCFrame().Position
 
 	local rayOrigin: Vector3 = origin + direction * halfWidth
 	local raycastResult: RaycastResult<BasePart>? = self._world:Raycast(rayOrigin, direction * castDistance, self._raycastParams)
@@ -139,7 +143,7 @@ end
 
 function CollisionQuery.GetSweepResolution(self: CollisionQuery, velocityDelta: Vector3
 ): SweepResolution
-    local origin = self._constants.HitboxCFrame
+    local origin = self._constants:GetHitboxCFrame()
 	local size = self._constants.HitboxSize
 	local raycastResult: RaycastResult<BasePart>? = self._world:Blockcast(
 		origin,

@@ -1,14 +1,9 @@
 --!strict
-
-local Types = require(script.Parent.Types)
-local RunService = game:GetService("RunService")
-
 local RKMNController = {}
 RKMNController.__index = RKMNController
 
 local RKMNControllerFolder = script.Parent
 local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
-local MovementStats = require(RKMNControllerFolder.MovementStats)
 local TimerUtility = require(RKMNControllerFolder.TimerUtility)
 local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
 local InputController = require(RKMNControllerFolder.InputController)
@@ -18,45 +13,50 @@ local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
 
 local MovementState = require(RKMNControllerFolder.MovementStateIDRegistry)
 
+
+type CollisionConstants = CollisionConstants.CollisionConstants
+type TimerUtility = TimerUtility.TimerUtility
+type CollisionQuery = CollisionQuery.CollisionQuery
+type InputController = InputController.InputController
+type MovementStateMachine = MovementStateMachine.MovementStateMachine
+type PhysicsResolver = PhysicsResolver.PhysicsResolver
+
 -- TODO: Add Action FSM and AnimationController back
 type RKMNControllerData = {
-    Character: Model,
-    InputEnabled: boolean,
+    _inputEnabled: boolean,
     
-    Constants: CollisionConstants.CollisionConstants,
-    TimerUtility: TimerUtility.TimerUtility,
-    CollisionQuery: CollisionQuery.CollisionQuery,
-    InputController: InputController.InputController,
-    MovementStateMachine: MovementStateMachine.MovementStateMachine,
-    PhysicsResolver: PhysicsResolver.PhysicsResolver,
+    Constants: CollisionConstants,
+    TimerUtility: TimerUtility,
+    CollisionQuery: CollisionQuery,
+    InputController: InputController,
+    MovementStateMachine: MovementStateMachine,
+    PhysicsResolver: PhysicsResolver,
 }
 
 type FSMContext = FSMContext.FSMContext
 type FSMContextDependencies = FSMContext.FSMContextDependencies
 
+export type RKMNControllerDependencies = {
+    Constants: CollisionConstants,
+    TimerUtility: TimerUtility,
+    CollisionQuery: CollisionQuery,
+    InputController: InputController,
+    MovementStateMachine: MovementStateMachine,
+    PhysicsResolver: PhysicsResolver
+}
+
 export type RKMNController = typeof(setmetatable({} :: RKMNControllerData, RKMNController))
 
-function RKMNController.new(world: WorldRoot, characterModel: Model): RKMNController
+function RKMNController.new(dependencies: RKMNControllerDependencies): RKMNController
     local self = {}
 
-    self.Character = characterModel
-    self.InputEnabled = true
-
-    self.Constants = CollisionConstants.new(characterModel)
-    self.MovementStats = MovementStats.new()
-    self.TimerUtility = TimerUtility.new()
-    self.CollisionQuery = CollisionQuery.new(world, characterModel, self.Constants)
-    self.InputController = InputController.new(self.TimerUtility)
-    self.PhysicsResolver = PhysicsResolver.new(characterModel, self.MovementStats, self.CollisionQuery)
-
-    local FSMContextDependencies: FSMContextDependencies = {
-        InputController  = self.InputController,
-        CollisionQuery = self.CollisionQuery,
-        PhysicsResolver = self.PhysicsResolver,
-        TimerUtility = self.TimerUtility
-    }
-    local FSMContext: FSMContext = FSMContext.new(FSMContextDependencies)
-    self.MovementStateMachine = MovementStateMachine.new(FSMContext)
+    self._inputEnabled = true
+    self.Constants = dependencies.Constants
+    self.TimerUtility = dependencies.TimerUtility
+    self.CollisionQuery = dependencies.CollisionQuery
+    self.InputController = dependencies.InputController
+    self.PhysicsResolver = dependencies.PhysicsResolver
+    self.MovementStateMachine = dependencies.MovementStateMachine
 
     setmetatable(self, RKMNController)
     return self
@@ -67,9 +67,13 @@ function RKMNController.Reset(self: RKMNController): ()
 	self.TimerUtility:FlushAll()
 end
 
+function RKMNController.IsInputEnabled(self: RKMNController): boolean
+    return self._inputEnabled
+end
+
 
 function RKMNController.SetInputEnabled(self: RKMNController, isEnabled: boolean)
-	self.InputEnabled = isEnabled
+	self._inputEnabled = isEnabled
 	self.InputController:SetEnabled(isEnabled)
 	
 	if not isEnabled then
