@@ -51,6 +51,17 @@ local function attemptExitToJumpState(stateMachine: StateMachine): boolean
     return true
 end
 
+local function attemptExitToDashState(stateMachine: StateMachine): boolean
+    local inputController = stateMachine.Context.InputController
+    if not inputController.HasBufferedDash then
+        return false
+    end
+
+    inputController:ConsumeDashBuffer()
+    stateMachine:ChangeState(MovementStateID.Dash)
+    return true
+end
+
 local function drivePlayerMovement(stateMachine: StateMachine): ()
     local context: StateMachineContext = stateMachine.Context
     local moveDirection = context.InputController.MoveDirection
@@ -63,7 +74,7 @@ function GroundedState.OnStep(self: GroundedState, stateMachine: StateMachine, d
         return
     end
 
-    if attemptExitToJumpState(stateMachine) then
+    if attemptExitToJumpState(stateMachine) or attemptExitToDashState(stateMachine) then
         return
     end
 

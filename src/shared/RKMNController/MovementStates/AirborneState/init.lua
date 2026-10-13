@@ -10,6 +10,7 @@ AirborneState.__index = AirborneState
 
 -- Stored on the context rather than the state: state instances are shared by every controller.
 local CUT_JUMP_FLAG = "HasCutJump"
+local DASH_JUMP_FLAG = "IsDashJumping"
 
 type BaseState = BaseState.BaseState
 type StateMachine = StateMachine.StateMachine
@@ -18,13 +19,16 @@ export type AirborneState = BaseState & typeof(AirborneState)
 function AirborneState.new(name: string): AirborneState
     local base = BaseState.new(name) :: BaseState
     local self = setmetatable(base, AirborneState)
-    self.IsDashJumping = false
 	return self :: AirborneState
 end
 
 function AirborneState._resolveAirborneVariables(self: AirborneState, stateMachine: StateMachine): ()
-    self.IsDashJumping = stateMachine.Context.PreviousStateId == MovementStateID.Dash
-    stateMachine.Context:ClearFlag(CUT_JUMP_FLAG)
+    local context = stateMachine.Context
+    context:ClearFlag(CUT_JUMP_FLAG)
+    context:ClearFlag(DASH_JUMP_FLAG)
+    if context.PreviousStateId == MovementStateID.Dash then
+        context:SetFlag(DASH_JUMP_FLAG)
+    end
 end
 
 function AirborneState.OnEnter(self: AirborneState, stateMachine: StateMachine)
@@ -77,7 +81,8 @@ end
 local function driveHorizontalMovement(stateMachine: StateMachine): ()
     local context = stateMachine.Context
     local moveDirection = context.InputController.MoveDirection
-    context.PhysicsResolver:MoveInDirection(moveDirection, MovementConfig.MoveSpeed)
+    local speed: number = if context:HasFlag(DASH_JUMP_FLAG) then MovementConfig.DashSpeed else MovementConfig.MoveSpeed
+    context.PhysicsResolver:MoveInDirection(moveDirection, speed)
 end
 
 function AirborneState.OnStep(self: AirborneState, stateMachine: StateMachine, dt: number): ()

@@ -19,53 +19,66 @@ function DashState.new()
 	return self :: DashState
 end
 
-function beginDash(stateMachine: StateMachine): ()
-    stateMachine.Context.Timers:StartTimer(TimerID.Dash, MovementConfig.MaxDashDuration)
-	stateMachine.Context.Physics:SetMaxSpeed(MovementConfig.DashSpeed)
-	-- TOOD: Should get moved in certain direction as long as dash is acctive
-	-- We need a way to hardcode the movement direction as long via InputController
-end
-
 function DashState.OnEnter(self: DashState, stateMachine: StateMachine): ()
-	beginDash(stateMachine)
+	local context = stateMachine.Context
+	context.TimerUtility:StartTimer(TimerID.Dash, MovementConfig.MaxDashDuration)
+	context.CollisionQuery:SetLedgeGuard(true)
 end
 
-local function applyDashPhysics(stateMachine: StateMachine): ()
-	-- Unsure if we should apply physics on step or just drive the physics mechanism via input
-	-- Leaning more to doing it via physics directly
+local function attemptExitToJumpState(stateMachine: StateMachine): boolean
+	local inputController = stateMachine.Context.InputController
+	if not inputController.HasBufferedJump then
+		return false
+	end
+
+	inputController:ConsumeJumpBuffer()
+	stateMachine:ChangeState(MovementStateID.Jump)
+	return true
 end
 
-local function attemptExitDashState(stateMachine: StateMachine, dt: number): boolean
-    local hasDashExpired: boolean = stateMachine.Context.Timers:IsComplete(TimerID.Dash)
-    if hasDashExpired then
+local function attemptExitDashState(stateMachine: StateMachine): boolean
+	local context = stateMachine.Context
+
+	if not context.CollisionQuery:IsGrounded() then
+		stateMachine:ChangeState(MovementStateID.Freefall)
+		return true
+	end
+
+	if attemptExitToJumpState(stateMachine) then
+		return true
+	end
+
+	-- The last sweep tells us whether we ran into a wall or reached a ledge.
+	local lastSweep = context.CollisionQuery.LastSweepResolution
+	local isBlocked: boolean = lastSweep ~= nil and (lastSweep.HitWall or lastSweep.HitLedge)
+	local isDashFinished: boolean = context.TimerUtility:IsComplete(TimerID.Dash)
+	local hasReleasedDash: boolean = not context.InputController.IsHoldingDash
+
+	if isBlocked or isDashFinished or hasReleasedDash then
 		stateMachine:ChangeState(MovementStateID.Idle)
 		return true
 	end
 
-    local isGrounded: boolean = stateMachine.Context.CollisionQuery:IsGrounded()
-	if not isGrounded then 		
-        stateMachine:ChangeState(MovementStateID.Freefall)
-        return true
-    end
+	return false
+end
 
-    return false
+local function driveDashMovement(stateMachine: StateMachine): ()
+	local physicsResolver = stateMachine.Context.PhysicsResolver
+	physicsResolver:MoveInDirection(physicsResolver.FacingDirection, MovementConfig.DashSpeed)
 end
 
 function DashState.OnStep(self: DashState, stateMachine: StateMachine, dt: number): ()
-	local success: boolean = attemptExitDashState(stateMachine, dt)
-    if success then
-        return
-    end
+	if attemptExitDashState(stateMachine) then
+		return
+	end
 
-	applyDashPhysics(stateMachine)
-end
-
-function resetDashPhysics(stateMachine: StateMachine)
-	stateMachine.Context.Physics:SetMaxSpeed(MovementConfig.WalkSpeed)
+	driveDashMovement(stateMachine)
 end
 
 function DashState.OnExit(self: DashState, stateMachine: StateMachine)
-	resetDashPhysics(stateMachine)
+	local context = stateMachine.Context
+	context.TimerUtility:Cancel(TimerID.Dash)
+	context.CollisionQuery:SetLedgeGuard(false)
 end
 
 table.freeze(DashState)

@@ -22,6 +22,7 @@ type InputControllerData = {
     IsHoldingDash: boolean,
     IsCharging: boolean,
     HasBufferedJump: boolean,
+    HasBufferedDash: boolean,
 
     OnJumpPressed: Signal,
     OnDashPressed: Signal,
@@ -43,6 +44,7 @@ function InputController.new(TimerUtility: TimerUtilityModule.TimerUtility): Inp
     self.IsHoldingDash = false
     self.IsCharging = false
     self.HasBufferedJump = false
+    self.HasBufferedDash = false
 
     self.OnJumpPressed = Signal.new()
     self.OnDashPressed = Signal.new()
@@ -72,6 +74,12 @@ function InputController._handleJumpInput(self: InputController): ()
 	self.Timer:StartTimer(Timers.JumpBuffer, 0.1)
 end
 
+function InputController._handleDashInput(self: InputController): ()
+    self.OnDashPressed:Fire()
+    self.HasBufferedDash = true
+    self.Timer:StartTimer(Timers.DashBuffer, 0.1)
+end
+
 local function isBindingPressed(binding: {Enum.KeyCode}, keycode: Enum.KeyCode): boolean
     return table.find(binding, keycode) ~= nil
 end
@@ -87,7 +95,7 @@ function InputController:_onInputBegan(input: InputObject, gameProcessed: boolea
         self:_handleJumpInput()
 
     elseif (isBindingPressed(KEY_BINDINGS.Dash, input.KeyCode)) then
-        self.OnDashPressed:Fire()
+        self:_handleDashInput()
     elseif (isBindingPressed(KEY_BINDINGS.Shoot, input.KeyCode)) then
         self.OnShootBegan:Fire()
     end
@@ -136,6 +144,10 @@ function InputController.Poll(self: InputController, dt: number): ()
         self.HasBufferedJump = false
     end
 
+    if (self.HasBufferedDash and self.Timer:IsComplete(Timers.DashBuffer)) then
+        self.HasBufferedDash = false
+    end
+
     self:_resolveMoveDirection()
 
     self.IsHoldingJump = isActionHeld(KEY_BINDINGS.Jump)
@@ -148,12 +160,18 @@ function InputController.ConsumeJumpBuffer(self: InputController): ()
     self.Timer:Cancel(Timers.JumpBuffer)
 end
 
+function InputController.ConsumeDashBuffer(self: InputController): ()
+    self.HasBufferedDash = false
+    self.Timer:Cancel(Timers.DashBuffer)
+end
+
 function InputController.FlushActiveInputs(self: InputController): ()
     self.MoveDirection = Direction.None
     self.IsHoldingJump = false
     self.IsCharging = false
     self.IsHoldingDash = false
     self:ConsumeJumpBuffer()
+    self:ConsumeDashBuffer()
 end
 
 function InputController.SetEnabled(self: InputController, isEnabled: boolean)

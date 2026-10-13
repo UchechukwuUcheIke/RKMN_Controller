@@ -2,6 +2,7 @@ local TimerIDregistry = {
     Dash = "Dash",
     Stun = "Stun",
     JumpBuffer = "JumpBuffer",
+    DashBuffer = "DashBuffer",
     JumpRise = "JumpRise"
 }
 
