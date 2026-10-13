@@ -2,7 +2,8 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RKMNControllerFolder = ReplicatedStorage.RKMNController
-local DebugFacade = require(RKMNControllerFolder.DebugModule.DebugFacade)
+local DebugModuleFolder = ReplicatedStorage.DebugModule
+local DebugFacade = require(DebugModuleFolder.DebugFacade)
 local RKMNController = require(RKMNControllerFolder.RKMNController)
 local KinematicWorld = require(ReplicatedStorage.KinematicWorld)
 local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
@@ -13,7 +14,7 @@ local InputController = require(RKMNControllerFolder.InputController)
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
 local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
 local StateMachineContext = require(RKMNControllerFolder.FSMContext)
-local DiagnosticControllerQuery = require(RKMNControllerFolder.DebugModule.DiagnosticCollisionQuery)
+local DiagnosticControllerQuery = require(DebugModuleFolder.DiagnosticCollisionQuery)
 
 
 type CollisionConstants = CollisionConstants.CollisionConstants
