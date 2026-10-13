@@ -6,6 +6,7 @@ local DebugModuleFolder = ReplicatedStorage.DebugModule
 local DebugFacade = require(DebugModuleFolder.DebugFacade)
 local RKMNController = require(RKMNControllerFolder.RKMNController)
 local KinematicWorld = require(ReplicatedStorage.KinematicWorld)
+local RunServiceAdapter = require(ReplicatedStorage.RunServiceAdapter)
 local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
 local MovementStats = require(RKMNControllerFolder.MovementStats)
 local TimerUtility = require(RKMNControllerFolder.TimerUtility)
@@ -30,6 +31,7 @@ type DiagnosticControllerQuery = DiagnosticControllerQuery.DiagnosticCollisionQu
 
 
 local kinematicWorld = KinematicWorld.new()
+local runServiceAdapter = RunServiceAdapter.new(kinematicWorld)
 
 local function mountScreenGui(): ScreenGui
     local PlayerGui = LocalPlayer.PlayerGui
@@ -87,16 +89,15 @@ local function onCharacterAdded(character)
     local dependencies: RKMNControllerDependencies = makeDebugDependencies(character)
     local kinematicController = RKMNController.new(dependencies)
     kinematicController:SetInputEnabled(true)
-    -- TODO: Think of how to call debug render
-    local DebugTool = DebugFacade.new(world, screenGui, kinematicWorld, kinematicController)
+    local DebugTool = DebugFacade.new(world, screenGui, kinematicWorld, kinematicController, runServiceAdapter)
     kinematicWorld:RegisterPlayer(kinematicController)
-    kinematicWorld:Start()
+    runServiceAdapter:Start()
     DebugTool:Enable()
 end
 
 LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
 
--- If the character already exists when the script runs, handle it manually
+
 if LocalPlayer.Character then
     onCharacterAdded(LocalPlayer.Character)
 end

@@ -13,6 +13,7 @@ DebugInputHandler.__index = DebugInputHandler
 type Signal = typeof(Signal)
 
 type InputHandlerData = {
+	OnDebugToggled: Signal,
 	OnPauseToggled: Signal,
     OnStepForward: Signal,
     _inputConnection: RBXScriptConnection?
@@ -30,6 +31,7 @@ export type InputHandler = typeof(setmetatable(
 function DebugInputHandler.new(): InputHandler
 	local self = setmetatable({}, DebugInputHandler)
 	
+	self.OnDebugToggled = Signal.new()
 	self.OnPauseToggled = Signal.new()
 	self.OnStepForward = Signal.new()
 	self._inputConnection = nil :: RBXScriptConnection?
@@ -46,7 +48,9 @@ function DebugInputHandler._handleInputBegan(self: InputHandler, input: InputObj
         return
     end
 		
-	if checkIsKeyPressed(input.KeyCode, KeyBindings.Pause) then
+	if checkIsKeyPressed(input.KeyCode, KeyBindings.ToggleDebug) then
+		self.OnDebugToggled:Fire()
+	elseif checkIsKeyPressed(input.KeyCode, KeyBindings.Pause) then
 		self.OnPauseToggled:Fire()
 	elseif checkIsKeyPressed(input.KeyCode, KeyBindings.StepForward) then
 		self.OnStepForward:Fire()
@@ -74,6 +78,7 @@ end
 
 function DebugInputHandler.Destroy(self: InputHandler): ()
 	self:Disable()
+	self.OnDebugToggled:Destroy()
 	self.OnPauseToggled:Destroy()
 	self.OnStepForward:Destroy()
 end

@@ -58,7 +58,6 @@ function KinematicWorld._processEntity(self: KinematicWorld, entityController: R
 end
 
 function KinematicWorld.Destroy(self: KinematicWorld): ()
-    self:Stop()
     table.clear(self._players)
     setmetatable(self :: any, nil)    
     table.freeze(self)

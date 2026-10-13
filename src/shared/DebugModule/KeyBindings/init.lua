@@ -1,4 +1,7 @@
 local KeyBindings = {
+    ToggleDebug = {
+        [Enum.KeyCode.BackSlash] = true
+    },
     Pause = {
         [Enum.KeyCode.P] = true
     },
