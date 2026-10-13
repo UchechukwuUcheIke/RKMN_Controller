@@ -8,6 +8,7 @@ local DiagnosticCastRecord = require(RKMNControllerFolder.DiagnosticCastRecord)
 local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
 local Direction = require(RKMNControllerFolder.Direction)
 local SweepResolution = require(RKMNControllerFolder.SweepResolution)
+local SurfaceHits = require(RKMNControllerFolder.SurfaceHits)
 
 type CollisionConstants = CollisionConstants.CollisionConstants
 type Direction = Direction.Direction
@@ -15,8 +16,8 @@ type SweepResolution = SweepResolution.SweepResolution
 type DiagnosticCastRecord = DiagnosticCastRecord.DiagnosticCastRecord
 type CastVolume = DiagnosticCastRecord.CastVolume
 
-local LEDGE_BISECT_STEPS = 5
-local MIN_LEDGE_CHECK_DISTANCE = 1e-4
+const LEDGE_BISECT_STEPS = 5
+const MIN_LEDGE_CHECK_DISTANCE = 1e-4
 
 export type CollisionQueryData = {
     CurrentFloorPart: BasePart?,
@@ -146,7 +147,7 @@ function CollisionQuery._clampSweepResolution(self: CollisionQuery, castRecord: 
 	local hitCeiling = velocityDelta.Y > 0 and (-normal):Dot(Vector3.yAxis) >= self._maxSlopeDot
 	local hitWall = not hitFloor and not hitCeiling
 
-	return SweepResolution.new(castRecord, safeDelta, hitFloor, hitWall, hitCeiling)
+	return SweepResolution.new(castRecord, safeDelta, SurfaceHits.new(hitFloor, hitWall, hitCeiling))
 end
 
 
@@ -159,20 +160,14 @@ function CollisionQuery._hasWalkableGroundAt(self: CollisionQuery, offset: Vecto
 	return raycastResult ~= nil and self:_isWalkable(raycastResult.Normal)
 end
 
--- While guarded and grounded, trims horizontal travel to the furthest point that still has ground underfoot.
-function CollisionQuery._applyLedgeGuard(self: CollisionQuery, resolution: SweepResolution): SweepResolution
-	if not (self._isLedgeGuardEnabled and self._isGrounded) then
-		return resolution
-	end
+function CollisionQuery._isLedgeGuardActive(self: CollisionQuery): boolean
+	return self._isLedgeGuardEnabled and self._isGrounded
+end
 
-	local safeDelta = resolution.SafeDelta
-	local horizontal = Vector3.new(safeDelta.X, 0, safeDelta.Z)
-	if horizontal.Magnitude < MIN_LEDGE_CHECK_DISTANCE or self:_hasWalkableGroundAt(horizontal) then
-		return resolution
-	end
-
+function CollisionQuery._findSupportedFraction(self: CollisionQuery, horizontal: Vector3): number
 	local supportedFraction = 0
 	local unsupportedFraction = 1
+
 	for _ = 1, LEDGE_BISECT_STEPS do
 		local midFraction = (supportedFraction + unsupportedFraction) / 2
 		if self:_hasWalkableGroundAt(horizontal * midFraction) then
@@ -182,15 +177,32 @@ function CollisionQuery._applyLedgeGuard(self: CollisionQuery, resolution: Sweep
 		end
 	end
 
-	local clampedDelta = Vector3.new(safeDelta.X * supportedFraction, safeDelta.Y, safeDelta.Z * supportedFraction)
+	return supportedFraction
+end
+
+local function withLedgeHit(resolution: SweepResolution, clampedDelta: Vector3): SweepResolution
+	local hits = resolution.SurfaceHits
 	return SweepResolution.new(
 		resolution.CastRecord,
 		clampedDelta,
-		resolution.HitFloor,
-		resolution.HitWall,
-		resolution.HitCeiling,
-		true
+		SurfaceHits.new(hits.HitFloor, hits.HitWall, hits.HitCeiling, true)
 	)
+end
+
+function CollisionQuery._applyLedgeGuard(self: CollisionQuery, resolution: SweepResolution): SweepResolution
+	if not self:_isLedgeGuardActive() then
+		return resolution
+	end
+
+	local safeDelta = resolution.SafeDelta
+	local horizontal = Vector3.new(safeDelta.X, 0, safeDelta.Z)
+	if horizontal.Magnitude < MIN_LEDGE_CHECK_DISTANCE or self:_hasWalkableGroundAt(horizontal) then
+		return resolution
+	end
+
+	local fraction = self:_findSupportedFraction(horizontal)
+	local clampedDelta = Vector3.new(safeDelta.X * fraction, safeDelta.Y, safeDelta.Z * fraction)
+	return withLedgeHit(resolution, clampedDelta)
 end
 
 function CollisionQuery._sweep(self: CollisionQuery, velocityDelta: Vector3): SweepResolution

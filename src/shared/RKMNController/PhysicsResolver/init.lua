@@ -87,7 +87,7 @@ end
 
 function PhysicsResolver.EndRise(self: PhysicsResolver): ()
 	if self.Velocity.Y > 0 then
-		self.Velocity = Vector3.new(self.Velocity.X, 0, 0)
+		self:_zeroYVelocity()
 	end
 end
 
@@ -111,15 +111,20 @@ function PhysicsResolver._zeroYVelocity(self: PhysicsResolver): ()
     self.Velocity = Vector3.new(self.Velocity.X, 0, 0) 
 end
 
-function PhysicsResolver._resolvePosition(self: PhysicsResolver, sweepResolution: SweepResolution)
-	if sweepResolution.HitWall then 
+function PhysicsResolver._resolveVelocity(self: PhysicsResolver, sweepResolution: SweepResolution): ()
+	local hits = sweepResolution.SurfaceHits
+	if hits.HitWall then
 		self:_zeroXVelocity()
 	end
 	
-	local hitFloorOrCeiling: boolean = sweepResolution.HitFloor or sweepResolution.HitCeiling
+	local hitFloorOrCeiling: boolean = hits.HitFloor or hits.HitCeiling
 	if hitFloorOrCeiling then
 		self:_zeroYVelocity()
 	end
+end
+
+function PhysicsResolver._resolvePosition(self: PhysicsResolver, sweepResolution: SweepResolution)
+	self:_resolveVelocity(sweepResolution)
 
     local currentCFrame = self._rootPart.CFrame
     local nextPos = currentCFrame.Position + sweepResolution.SafeDelta

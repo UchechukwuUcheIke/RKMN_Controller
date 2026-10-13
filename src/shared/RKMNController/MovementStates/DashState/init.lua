@@ -36,21 +36,10 @@ local function attemptExitToJumpState(stateMachine: StateMachine): boolean
 	return true
 end
 
-local function attemptExitDashState(stateMachine: StateMachine): boolean
+local function attemptExitToIdleState(stateMachine: StateMachine)
 	local context = stateMachine.Context
-
-	if not context.CollisionQuery:IsGrounded() then
-		stateMachine:ChangeState(MovementStateID.Freefall)
-		return true
-	end
-
-	if attemptExitToJumpState(stateMachine) then
-		return true
-	end
-
-	-- The last sweep tells us whether we ran into a wall or reached a ledge.
 	local lastSweep = context.CollisionQuery.LastSweepResolution
-	local isBlocked: boolean = lastSweep ~= nil and (lastSweep.HitWall or lastSweep.HitLedge)
+	local isBlocked: boolean = lastSweep ~= nil and (lastSweep.SurfaceHits.HitWall or lastSweep.SurfaceHits.HitLedge)
 	local isDashFinished: boolean = context.TimerUtility:IsComplete(TimerID.Dash)
 	local hasReleasedDash: boolean = not context.InputController.IsHoldingDash
 
@@ -59,6 +48,32 @@ local function attemptExitDashState(stateMachine: StateMachine): boolean
 		return true
 	end
 
+	return false
+end
+
+local function attemptExitToFreefallState(stateMachine: StateMachine): boolean
+	local context = stateMachine.Context
+	if not context.CollisionQuery:IsGrounded() then
+		stateMachine:ChangeState(MovementStateID.Freefall)
+		return true
+	end
+
+	return false
+end
+
+local EXIT_CHECKS = {
+	attemptExitToFreefallState,
+	attemptExitToJumpState,
+	attemptExitToIdleState,
+}
+
+local function attemptExitDashState(stateMachine: StateMachine): boolean
+	for _, check in ipairs(EXIT_CHECKS) do
+		if check(stateMachine) then
+			return true
+		end
+	end
+	
 	return false
 end
 
