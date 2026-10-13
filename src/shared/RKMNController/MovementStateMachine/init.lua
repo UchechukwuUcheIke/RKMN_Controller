@@ -18,25 +18,7 @@ type Signal = typeof(Signal)
 type FSMContext = FSMContext.FSMContext
 type MovementStateID = MovementStateID.MovementStateID
 
-export type MovementStateMachine = StateMachine & {
-    _handleJumpPressed: (MovementStateMachine, FSMContext) -> (),
-    _populateContextConnections: (MovementStateMachine, FSMContext) -> ()
-}
-
-function MovementStateMachine._handleJumpPressed(self: MovementStateMachine, context: FSMContext): ()
-	if context.CollisionQuery:IsGrounded() or context.InputController.HasBufferedJump then
-		context.InputController:ConsumeJumpBuffer()
-		self:ChangeState(MovementStateID.Jump)
-	end
-end
-
-function MovementStateMachine._populateContextConnections(self: MovementStateMachine, context: FSMContext): ()
-	local connection = context.InputController.OnJumpPressed:Connect(function()
-		self:_handleJumpPressed(context)
-	end)
-
-    table.insert(self._connections, connection)
-end
+export type MovementStateMachine = StateMachine
 
 function MovementStateMachine.new(context: FSMContext): MovementStateMachine	
 	assert(context)
@@ -44,8 +26,6 @@ function MovementStateMachine.new(context: FSMContext): MovementStateMachine
 	local self = StateMachine.new(context) :: MovementStateMachine
 	setmetatable(self, MovementStateMachine)
 	self:SetStates(MovementStateRegistry)
-	
-	self:_populateContextConnections(context)
 
 	self:ChangeState(MovementStateID.Idle)
 	

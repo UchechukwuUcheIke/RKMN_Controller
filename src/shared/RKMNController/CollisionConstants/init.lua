@@ -13,7 +13,10 @@ type CollisionConstantsData = {
 	WallCheckDistance: number,
 	MaxSlopeAngle: number,
 	SkinWidth: number,
-    _characterModel: Model
+    _characterModel: Model,
+    _rootPart: BasePart,
+    _hitboxOffset: CFrame,
+    _footOffset: CFrame,
 }
 
 export type CollisionConstants = typeof(setmetatable({} :: CollisionConstantsData, CollisionConstants))
@@ -24,12 +27,18 @@ function CollisionConstants.new(characterModel: Model): CollisionConstants
 
     local self = setmetatable({}, CollisionConstants)
 
+    local rootPart = characterModel:FindFirstChild("HumanoidRootPart") :: BasePart
+    assert(rootPart, "CollisionConstants requires a HumanoidRootPart")
+
     local hitboxCFrame: CFrame, hitboxSize: Vector3 = characterModel:GetBoundingBox()
     local footHeight = 0.1
     local footCFrame = hitboxCFrame - Vector3.new(0, (hitboxSize.Y - footHeight) / 2, 0)
     local footSize = Vector3.new(hitboxSize.X, footHeight, hitboxSize.Z)
 
     self._characterModel = characterModel
+    self._rootPart = rootPart
+    self._hitboxOffset = rootPart.CFrame:ToObjectSpace(hitboxCFrame)
+    self._footOffset = self._hitboxOffset * CFrame.new(0, -(hitboxSize.Y - footHeight) / 2, 0)
     self.HitboxSize = hitboxSize
     self.HitboxCFrame = hitboxCFrame
     self.FootCFrame = footCFrame
@@ -43,15 +52,13 @@ function CollisionConstants.new(characterModel: Model): CollisionConstants
     return self
 end
 
+-- Boxes are derived from the root part, not the live bounding box, which changes with animation pose.
 function CollisionConstants.GetHitboxCFrame(self: CollisionConstants): CFrame
-    local hitboxCFrame: CFrame, _: Vector3 = self._characterModel:GetBoundingBox()
-    return hitboxCFrame
+    return self._rootPart.CFrame * self._hitboxOffset
 end
 
 function CollisionConstants.GetFootCFrame(self: CollisionConstants): CFrame
-    local hitboxCFrame: CFrame, hitboxSize: Vector3 = self._characterModel:GetBoundingBox()
-    local footCFrame = hitboxCFrame - Vector3.new(0, (hitboxSize.Y - self.FootSize.Y) / 2, 0)
-    return footCFrame
+    return self._rootPart.CFrame * self._footOffset
 end
 
 return CollisionConstants

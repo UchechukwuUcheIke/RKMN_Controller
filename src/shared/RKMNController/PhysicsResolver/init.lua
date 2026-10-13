@@ -67,20 +67,39 @@ function PhysicsResolver.SetTargetXVelocity(self: PhysicsResolver, xVelocity: nu
 	end
 end
 
+function PhysicsResolver.MoveInDirection(self: PhysicsResolver, direction: Direction, speed: number): ()
+	self:SetTargetXVelocity(direction.X * speed, direction)
+end
+
+function PhysicsResolver.ApplyJumpImpulse(self: PhysicsResolver): ()
+	self.Velocity = Vector3.new(self.Velocity.X, self._movementStats.JumpVelocity, 0)
+end
+
+function PhysicsResolver.SetRiseSpeedFraction(self: PhysicsResolver, fraction: number): ()
+	if self.Velocity.Y > 0 then
+		self.Velocity = Vector3.new(self.Velocity.X, self._movementStats.JumpVelocity * fraction, 0)
+	end
+end
+
 function PhysicsResolver._applyHorizontalMovement(self: PhysicsResolver): ()
     self.Velocity = Vector3.new(self.TargetXVelocity, self.Velocity.Y, 0)
 end
 
-function PhysicsResolver._applyGravity(self: PhysicsResolver, dt: number): ()
-	local gravity = self._movementStats.Gravity
-    local currentYVelocity = self.Velocity.Y
+function PhysicsResolver.EndRise(self: PhysicsResolver): ()
+	if self.Velocity.Y > 0 then
+		self.Velocity = Vector3.new(self.Velocity.X, 0, 0)
+	end
+end
+
+function PhysicsResolver._applyGravity(self: PhysicsResolver): ()
+	if self.Velocity.Y > 0 then
+		return
+	end
 
 	local newY = 0
 	if not self._collisionQuery:IsGrounded() then
-		newY = currentYVelocity - (gravity * dt)
+		newY = -self._movementStats.FallSpeed
 	end
-	
-	newY = math.max(newY, -self._movementStats.MaxFallSpeed)
 	self.Velocity = Vector3.new(self.Velocity.X, newY, 0)
 end
 
@@ -97,8 +116,8 @@ function PhysicsResolver._resolvePosition(self: PhysicsResolver, sweepResolution
 		self:_zeroXVelocity()
 	end
 	
-	local hitFloorOrCeiling: boolean = sweepResolution.HitFloor
-	if hitFloorOrCeiling then 
+	local hitFloorOrCeiling: boolean = sweepResolution.HitFloor or sweepResolution.HitCeiling
+	if hitFloorOrCeiling then
 		self:_zeroYVelocity()
 	end
 
@@ -117,7 +136,7 @@ end
 
 function PhysicsResolver.Resolve(self: PhysicsResolver, dt: number): ()
 	self:_applyHorizontalMovement()
-	self._applyGravity(self, dt)
+	self:_applyGravity()
 	local sweepResolution: SweepResolution = self._sweepForCollisions(self, dt)
     self:_resolvePosition(sweepResolution)
 end

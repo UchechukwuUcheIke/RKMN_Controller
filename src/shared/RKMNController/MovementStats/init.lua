@@ -6,16 +6,16 @@ MovementStats.__index = MovementStats
 
 export type MovementStats = typeof(setmetatable(
 	{} :: {
-		Gravity: number,
-		MaxFallSpeed: number,
+		JumpVelocity: number,
+		FallSpeed: number,
 	},
 	{} :: typeof(MovementStats)
 ))
 
 function MovementStats.new(): MovementStats
 	return setmetatable({
-		Gravity = 1,
-		MaxFallSpeed = 120,
+		JumpVelocity = MovementConfig.JumpHeight / MovementConfig.TimeToApex,
+		FallSpeed = MovementConfig.FallSpeed,
 	}, MovementStats) :: MovementStats
 end
 

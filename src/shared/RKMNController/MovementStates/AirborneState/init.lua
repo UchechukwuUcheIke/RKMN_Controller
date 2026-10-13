@@ -2,9 +2,14 @@ local RKMNControllerFolder = script.Parent.Parent
 local BaseState = require(RKMNControllerFolder.BaseState)
 local MovementStateID = require(RKMNControllerFolder.MovementStateIDRegistry)
 local StateMachine = require(RKMNControllerFolder.StateMachine)
+local MovementConfig = require(RKMNControllerFolder.MovementConfig)
+local TimerID = require(RKMNControllerFolder.TimerIDRegistry)
 
 local AirborneState = setmetatable({}, BaseState)
 AirborneState.__index = AirborneState
+
+-- Stored on the context rather than the state: state instances are shared by every controller.
+local CUT_JUMP_FLAG = "HasCutJump"
 
 type BaseState = BaseState.BaseState
 type StateMachine = StateMachine.StateMachine
@@ -14,23 +19,36 @@ function AirborneState.new(name: string): AirborneState
     local base = BaseState.new(name) :: BaseState
     local self = setmetatable(base, AirborneState)
     self.IsDashJumping = false
-    self.HasCutJump = false
 	return self :: AirborneState
 end
 
 function AirborneState._resolveAirborneVariables(self: AirborneState, stateMachine: StateMachine): ()
     self.IsDashJumping = stateMachine.Context.PreviousStateId == MovementStateID.Dash
-    self.HasCutJump = false
+    stateMachine.Context:ClearFlag(CUT_JUMP_FLAG)
 end
 
 function AirborneState.OnEnter(self: AirborneState, stateMachine: StateMachine)
     self:_resolveAirborneVariables(stateMachine)
+
+    if self.Id == MovementStateID.Jump then
+        local context = stateMachine.Context
+        context.PhysicsResolver:ApplyJumpImpulse()
+        context.TimerUtility:StartTimer(TimerID.JumpRise, MovementConfig.TimeToApex)
+    end
+end
+
+local function attemptEndRise(stateMachine: StateMachine): ()
+    local context = stateMachine.Context
+    if context.TimerUtility:IsComplete(TimerID.JumpRise) then
+        context.PhysicsResolver:EndRise()
+    end
 end
 
 local function attemptExitAirborneState(stateMachine: StateMachine): boolean
-    -- Maybe also check if they're moving?
-    local isGrounded = stateMachine.Context.CollisionQuery:IsGrounded()
-    if not isGrounded  then
+    local context = stateMachine.Context
+    -- The grounded flag is stale on the first step of a jump, so ignore it while still rising.
+    local isRising: boolean = context.PhysicsResolver.Velocity.Y > 0
+    if isRising or not context.CollisionQuery:IsGrounded() then
         return false
     end
 
@@ -39,23 +57,38 @@ local function attemptExitAirborneState(stateMachine: StateMachine): boolean
 end
 
 local function attemptCutJumpEarly(stateMachine: StateMachine): ()
-    -- TODO: 
-    -- Get player's Y Velocity via physics
-    -- Check if they've cut the jump and they are currently rising
-    -- Reduce the vertical momentum
+    local context = stateMachine.Context
+    if context.InputController.IsHoldingJump or context:HasFlag(CUT_JUMP_FLAG) then
+        return
+    end
+
+    if context.PhysicsResolver.Velocity.Y <= 0 then
+        return
+    end
+
+    context:SetFlag(CUT_JUMP_FLAG)
+    context.PhysicsResolver:SetRiseSpeedFraction(MovementConfig.JumpCutSpeedFraction)
+
+    local timers = context.TimerUtility
+    local remaining: number = timers:GetTimeRemaining(TimerID.JumpRise)
+    timers:StartTimer(TimerID.JumpRise, math.min(remaining, MovementConfig.JumpCutDuration))
 end
 
 local function driveHorizontalMovement(stateMachine: StateMachine): ()
-    -- Check if the player is dash jumping
-    -- Get their relevant speed
-    -- Move the player via the physics engine based on their speed
-    --local speed: number = self.IsDashJumping and 
-
+    local context = stateMachine.Context
+    local moveDirection = context.InputController.MoveDirection
+    context.PhysicsResolver:MoveInDirection(moveDirection, MovementConfig.MoveSpeed)
 end
 
 function AirborneState.OnStep(self: AirborneState, stateMachine: StateMachine, dt: number): ()
-	attemptExitAirborneState(stateMachine)
-    attemptCutJumpEarly(stateMachine)
+	if attemptExitAirborneState(stateMachine) then
+        return
+    end
+
+    if self.Id == MovementStateID.Jump then
+        attemptCutJumpEarly(stateMachine)
+        attemptEndRise(stateMachine)
+    end
     driveHorizontalMovement(stateMachine)
 end
 

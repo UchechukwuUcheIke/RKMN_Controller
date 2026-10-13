@@ -4,6 +4,7 @@ local MovementStateID = require(RKMNControllerFolder.MovementStateIDRegistry)
 local StateMachine = require(RKMNControllerFolder.StateMachine)
 local StateMachineContext = require(RKMNControllerFolder.FSMContext)
 local Direction = require(RKMNControllerFolder.Direction)
+local MovementConfig = require(RKMNControllerFolder.MovementConfig)
 
 local GroundedState = setmetatable({}, BaseState)
 GroundedState.__index = GroundedState
@@ -39,22 +40,21 @@ local function attemptExitToIdleOrWalkState(stateMachine: StateMachine): ()
 end
 
 
+local function attemptExitToJumpState(stateMachine: StateMachine): boolean
+    local inputController = stateMachine.Context.InputController
+    if not inputController.HasBufferedJump then
+        return false
+    end
+
+    inputController:ConsumeJumpBuffer()
+    stateMachine:ChangeState(MovementStateID.Jump)
+    return true
+end
+
 local function drivePlayerMovement(stateMachine: StateMachine): ()
-    --TODO: Get player speed
-    -- Get player direction
-    -- Move player in that  direction
     local context: StateMachineContext = stateMachine.Context
     local moveDirection = context.InputController.MoveDirection
-
-    local xVelocity: number = 0
-    if moveDirection == Direction.Left then
-        xVelocity = -10
-    elseif moveDirection == Direction.Right then
-        xVelocity = 10
-    end
-    
-    -- There's a cleaner way to do this, my head just hurts
-    stateMachine.Context.PhysicsResolver:SetTargetXVelocity(xVelocity, moveDirection)
+    context.PhysicsResolver:MoveInDirection(moveDirection, MovementConfig.MoveSpeed)
 end
 
 function GroundedState.OnStep(self: GroundedState, stateMachine: StateMachine, dt: number): ()
@@ -62,6 +62,11 @@ function GroundedState.OnStep(self: GroundedState, stateMachine: StateMachine, d
     if success then
         return
     end
+
+    if attemptExitToJumpState(stateMachine) then
+        return
+    end
+
     drivePlayerMovement(stateMachine)
     attemptExitToIdleOrWalkState(stateMachine)
 end

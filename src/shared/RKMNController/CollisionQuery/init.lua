@@ -134,10 +134,12 @@ function CollisionQuery._clampSweepResolution(self: CollisionQuery, castRecord: 
 	local direction = velocityDelta.Unit
 	local safeDelta = direction * safeDistance
 
-	local hitFloor = self:_isWalkable(raycastResult.Normal)
-	local hitWall = not hitFloor
+	local normal = raycastResult.Normal
+	local hitFloor = self:_isWalkable(normal)
+	local hitCeiling = velocityDelta.Y > 0 and (-normal):Dot(Vector3.yAxis) >= self._maxSlopeDot
+	local hitWall = not hitFloor and not hitCeiling
 
-	return SweepResolution.new(castRecord, safeDelta, hitFloor, hitWall)
+	return SweepResolution.new(castRecord, safeDelta, hitFloor, hitWall, hitCeiling)
 end
 
 
