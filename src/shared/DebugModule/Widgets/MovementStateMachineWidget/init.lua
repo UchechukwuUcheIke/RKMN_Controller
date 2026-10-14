@@ -81,11 +81,11 @@ end
 
 function MovementStateMachineWidget._createListLayout(self: MovementStateMachineWidget): ()
     local listLayout = Instance.new("UIListLayout")
-    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	listLayout.Parent = self._canvas
     listLayout.FillDirection = Enum.FillDirection.Vertical
+    listLayout.ItemLineAlignment = Enum.ItemLineAlignment.Automatic
     listLayout.HorizontalFlex = Enum.UIFlexAlignment.Fill
-    listLayout.VerticalFlex = Enum.UIFlexAlignment.None
-    listLayout.Parent = self._canvas
+	listLayout.VerticalFlex = Enum.UIFlexAlignment.Fill
 end
 
 function MovementStateMachineWidget._createUI(self: MovementStateMachineWidget): ()

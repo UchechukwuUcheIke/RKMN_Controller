@@ -41,8 +41,9 @@ function FlagsWidget._createUI(self: FlagsWidget): ()
     listLayout.SortOrder = Enum.SortOrder.Name
     listLayout.Parent = self._canvas
     listLayout.FillDirection = Enum.FillDirection.Vertical
+    listLayout.ItemLineAlignment = Enum.ItemLineAlignment.Automatic
     listLayout.HorizontalFlex = Enum.UIFlexAlignment.Fill
-    listLayout.VerticalFlex = Enum.UIFlexAlignment.None
+    listLayout.VerticalFlex = Enum.UIFlexAlignment.Fill
 end
 
 function FlagsWidget.MountTo(self: FlagsWidget, layerCollector: Instance)

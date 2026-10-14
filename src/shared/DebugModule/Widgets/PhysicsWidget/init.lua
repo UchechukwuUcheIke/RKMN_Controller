@@ -73,12 +73,12 @@ function PhysicsWidget._createCanvas(self: PhysicsWidget): ()
 end
 
 function PhysicsWidget._createListLayout(self: PhysicsWidget): ()
-    local listLayout = Instance.new("UIListLayout")
-    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	local listLayout = Instance.new("UIListLayout")
+	listLayout.Parent = self._canvas
     listLayout.FillDirection = Enum.FillDirection.Vertical
+    listLayout.ItemLineAlignment = Enum.ItemLineAlignment.Automatic
     listLayout.HorizontalFlex = Enum.UIFlexAlignment.Fill
-    listLayout.VerticalFlex = Enum.UIFlexAlignment.None
-    listLayout.Parent = self._canvas
+	listLayout.VerticalFlex = Enum.UIFlexAlignment.Fill
 end
 
 function PhysicsWidget._createUI(self: PhysicsWidget): ()

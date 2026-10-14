@@ -22,6 +22,7 @@ type RKMNController = RKMNController.RKMNController
 type DebugUIData = {
 	_kinematicController: RKMNController,
 	_canvas: LayerCollector,
+	_frame: Frame,
 	physicsWidget: PhysicsWidget,
 	inputWidget: InputWidget,
 	movementStateMachineWidget: MovementStateMachineWidget,
@@ -44,8 +45,26 @@ function DebugUI.new(layerCollector: LayerCollector, kinematicController: RKMNCo
     } :: DebugUIData
 
 	local self = setmetatable(data, DebugUI)
+	self:_createFrame()
 	self:_createAndMountSubwidgets()
 	return self
+end
+
+function DebugUI._createFrame(self: DebugUI): ()
+	local frame = Instance.new("Frame")
+	frame.Name = "DebugUIFrame"
+	frame.Size = UDim2.fromOffset(300, 400)
+	frame.Position = UDim2.fromOffset(10, 10)
+	frame.BackgroundColor3 = Color3.new(0, 0, 0)
+	frame.BackgroundTransparency = 0.5
+	frame.Parent = self._canvas
+	self._frame = frame
+
+	local listLayout = Instance.new("UIListLayout")
+	listLayout.Parent = self._frame
+	listLayout.FillDirection = Enum.FillDirection.Vertical
+	listLayout.HorizontalFlex = Enum.UIFlexAlignment.Fill
+	listLayout.VerticalFlex = Enum.UIFlexAlignment.Fill
 end
 
 function DebugUI.Enable(self: DebugUI): ()
@@ -76,25 +95,25 @@ end
 function DebugUI._createAndMountPhysicsWidget(self: DebugUI): ()
 	local physicsWidget: PhysicsWidget = PhysicsWidget.new(self._kinematicController.PhysicsResolver)
 	self.physicsWidget = physicsWidget
-	self.physicsWidget:MountTo(self._canvas)
+	self.physicsWidget:MountTo(self._frame)
 end
 
 function DebugUI._createAndMountFlagWidget(self: DebugUI): ()
 	local flagsWidget: FlagsWidget = FlagsWidget.new()
 	self.flagsWidget = flagsWidget
-	self.flagsWidget:MountTo(self._canvas)
+	self.flagsWidget:MountTo(self._frame)
 end
 
 function DebugUI._createAndMountMovementStateMachineWidget(self: DebugUI): ()
 	local movementStateMachineWidget: MovementStateMachineWidget = MovementStateMachineWidget.new(self._kinematicController.MovementStateMachine)
 	self.movementStateMachineWidget = movementStateMachineWidget
-	self.movementStateMachineWidget:MountTo(self._canvas)
+	self.movementStateMachineWidget:MountTo(self._frame)
 end
 
 function DebugUI._createAndMountInputWidget(self: DebugUI): ()
 	local inputWidget: InputWidget = InputWidget.new(self._kinematicController.InputController)
 	self.inputWidget = inputWidget
-	self.inputWidget:MountTo(self._canvas)
+	self.inputWidget:MountTo(self._frame)
 end
 
 function DebugUI._createAndMountSubwidgets(self: DebugUI): ()

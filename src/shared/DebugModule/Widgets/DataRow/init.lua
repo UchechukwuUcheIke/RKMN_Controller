@@ -26,7 +26,15 @@ end
 function DataRow._createCanvas(self: DataRow, labelText: string): ()
     self._canvas = Instance.new("Frame")
     self._canvas.Name = "DataRow_" .. labelText
-    self._canvas.BackgroundTransparency = 1
+    self._canvas.BackgroundTransparency = 0
+    self._canvas.BackgroundColor3 = Color3.fromRGB(math.random(1, 255), 0, 0)
+
+    local listLayout = Instance.new("UIListLayout")
+	listLayout.Parent = self._canvas
+    listLayout.FillDirection = Enum.FillDirection.Horizontal
+    listLayout.ItemLineAlignment = Enum.ItemLineAlignment.Automatic
+    listLayout.HorizontalFlex = Enum.UIFlexAlignment.Fill
+	listLayout.VerticalFlex = Enum.UIFlexAlignment.Fill
 end
 
 function DataRow._createKeyLabel(self: DataRow, labelText: string): ()
@@ -35,6 +43,7 @@ function DataRow._createKeyLabel(self: DataRow, labelText: string): ()
     self._keyLabel.BackgroundTransparency = 1
     self._keyLabel.Font = Enum.Font.RobotoMono
     self._keyLabel.TextSize = 14
+    self._keyLabel.TextScaled = true
     self._keyLabel.TextXAlignment = Enum.TextXAlignment.Left
     self._keyLabel.Text = labelText
     self._keyLabel.Parent = self._canvas
@@ -46,6 +55,7 @@ function DataRow._createValueLabel(self: DataRow, initialValue: string): ()
     self._valueLabel.BackgroundTransparency = 1
     self._valueLabel.Font = Enum.Font.RobotoMono
     self._valueLabel.TextSize = 14
+    self._valueLabel.TextScaled = true
     self._valueLabel.TextColor3 = Color3.new(1, 1, 1)
     self._valueLabel.TextXAlignment = Enum.TextXAlignment.Right
     self._valueLabel.Text = initialValue
