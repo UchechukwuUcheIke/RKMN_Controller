@@ -42,6 +42,17 @@ local function attemptExitToIdleState(stateMachine: StateMachine): boolean
     return true
 end
 
+local function attemptExitToJumpState(stateMachine: StateMachine): boolean
+    local inputController = stateMachine.Context.InputController
+    if not inputController.HasBufferedJump then
+        return false
+    end
+
+    inputController:ConsumeJumpBuffer()
+    stateMachine:ChangeState(MovementStateID.Jump)
+    return true
+end
+
 local function attemptExitToFreefallState(stateMachine: StateMachine): boolean
     if isHoldingTowardWall(stateMachine) then
         return false
@@ -53,6 +64,7 @@ end
 
 local EXIT_CHECKS = {
     attemptExitToIdleState,
+    attemptExitToJumpState,
     attemptExitToFreefallState,
 }
 

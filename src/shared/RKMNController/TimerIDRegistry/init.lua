@@ -3,7 +3,7 @@ local TimerIDregistry = {
     Stun = "Stun",
     JumpBuffer = "JumpBuffer",
     DashBuffer = "DashBuffer",
-    JumpRise = "JumpRise"
+    JumpRise = "JumpRise",
 }
 
 export type TimerID = string

@@ -27,6 +27,14 @@ function AirborneState.new(name: string): AirborneState
 	return self :: AirborneState
 end
 
+local function isDashJumpEntry(context): boolean
+    if context.PreviousStateId == MovementStateID.Dash then
+        return true
+    end
+
+    return context.PreviousStateId == MovementStateID.WallSlide and context.InputController.IsHoldingDash
+end
+
 function AirborneState._resolveAirborneVariables(self: AirborneState, stateMachine: StateMachine): ()
     local context = stateMachine.Context
     if AIRBORNE_STATE_IDS[context.PreviousStateId] then
@@ -35,7 +43,7 @@ function AirborneState._resolveAirborneVariables(self: AirborneState, stateMachi
 
     context:ClearFlag(CUT_JUMP_FLAG)
     context:ClearFlag(DASH_JUMP_FLAG)
-    if context.PreviousStateId == MovementStateID.Dash then
+    if isDashJumpEntry(context) then
         context:SetFlag(DASH_JUMP_FLAG)
     end
 end
@@ -43,11 +51,13 @@ end
 function AirborneState.OnEnter(self: AirborneState, stateMachine: StateMachine)
     self:_resolveAirborneVariables(stateMachine)
 
-    if self.Id == MovementStateID.Jump then
-        local context = stateMachine.Context
-        context.PhysicsResolver:ApplyJumpImpulse()
-        context.TimerUtility:StartTimer(TimerID.JumpRise, MovementConfig.TimeToApex)
+    if self.Id ~= MovementStateID.Jump then
+        return
     end
+
+    local context = stateMachine.Context
+    context.PhysicsResolver:ApplyJumpImpulse()
+    context.TimerUtility:StartTimer(TimerID.JumpRise, MovementConfig.TimeToApex)
 end
 
 local function attemptEndRise(stateMachine: StateMachine): ()
