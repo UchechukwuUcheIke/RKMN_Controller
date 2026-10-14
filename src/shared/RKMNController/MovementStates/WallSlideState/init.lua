@@ -19,42 +19,70 @@ function WallSlideState.new(): WallSlideState
 	return self :: WallSlideState
 end
 
-local function beginWallSlide(stateMachine: StateMachine): ()
-    stateMachine.Context.PhysicsResolver:SetGravityMultiplier(MovementConfig.WallSlideGravity)
+function WallSlideState.OnEnter(self: WallSlideState, stateMachine: StateMachine): ()
+    stateMachine.Context.PhysicsResolver:SetFallSpeedOverride(MovementConfig.WallSlideSpeed)
 end
 
-function WallSlideState.OnEnter(self: WallSlideState, stateMachine: StateMachine)
-	beginWallSlide(stateMachine)
-end
-
-local function checkIsMovingTowardsWall(stateMachine: StateMachine): boolean
-    local movementDirection: Direction = stateMachine.Context.InputController.MovementDirection
-
-    local isMovingTowardsWall = stateMachine.Context.CollisionQuery:GetWallContact(movementDirection)
-
-    return isMovingTowardsWall
-end
-
-local function attemptEndWallSlide(stateMachine: StateMachine, dt: number): ()
-    local isMovingTowardsWall: boolean = checkIsMovingTowardsWall(stateMachine)
-    if not isMovingTowardsWall then
-        stateMachine:ChangeState(MovementStateID.Idle)
+local function isHoldingTowardWall(stateMachine: StateMachine): boolean
+    local context = stateMachine.Context
+    local moveDirection: Direction = context.InputController.MoveDirection
+    if moveDirection == Direction.None then
+        return false
     end
+
+    return context.CollisionQuery:CheckWallContact(moveDirection).Success
+end
+
+local function attemptExitToIdleState(stateMachine: StateMachine): boolean
+    if not stateMachine.Context.CollisionQuery:IsGrounded() then
+        return false
+    end
+
+    stateMachine:ChangeState(MovementStateID.Idle)
+    return true
+end
+
+local function attemptExitToFreefallState(stateMachine: StateMachine): boolean
+    if isHoldingTowardWall(stateMachine) then
+        return false
+    end
+
+    stateMachine:ChangeState(MovementStateID.Freefall)
+    return true
+end
+
+local EXIT_CHECKS = {
+    attemptExitToIdleState,
+    attemptExitToFreefallState,
+}
+
+local function attemptExitWallSlideState(stateMachine: StateMachine): boolean
+    for _, check in ipairs(EXIT_CHECKS) do
+        if check(stateMachine) then
+            return true
+        end
+    end
+
+    return false
+end
+
+-- No horizontal velocity while sliding: a diagonal sweep into the wall would stall the vertical movement.
+local function driveSlideMovement(stateMachine: StateMachine): ()
+    stateMachine.Context.PhysicsResolver:MoveInDirection(Direction.None, 0)
 end
 
 function WallSlideState.OnStep(self: WallSlideState, stateMachine: StateMachine, dt: number): ()
-	attemptEndWallSlide(stateMachine, dt)
+    if attemptExitWallSlideState(stateMachine) then
+        return
+    end
+
+    driveSlideMovement(stateMachine)
 end
 
-local function resetWallSlidePhysics(stateMachine: StateMachine): ()
-    stateMachine.Context.Physics:SetGravity(MovementConfig.NormalGravity)
-end
-
-function WallSlideState.OnExit(self: WallSlideState, stateMachine: StateMachine)
-	resetWallSlidePhysics(stateMachine)
+function WallSlideState.OnExit(self: WallSlideState, stateMachine: StateMachine): ()
+    stateMachine.Context.PhysicsResolver:SetFallSpeedOverride(nil)
 end
 
 table.freeze(WallSlideState)
 
 return WallSlideState
-

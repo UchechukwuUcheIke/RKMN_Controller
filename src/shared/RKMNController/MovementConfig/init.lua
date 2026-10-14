@@ -1,6 +1,5 @@
 local MovementConfig = {
-	WallSlideGravity = 0.15,
-	NormalGravity = 1,
+	WallSlideSpeed = 4,
 	WalkSpeed = 16,
 	MoveSpeed = 10,
 	DashSpeed = 30,

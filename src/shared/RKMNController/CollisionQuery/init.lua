@@ -125,7 +125,7 @@ function CollisionQuery.CheckWallContact(
 	self: CollisionQuery,
 	direction: Direction): DiagnosticCastRecord
 
-	local halfWidth: number = self._constants.HalfWidth
+	local halfWidth: number = self._constants:GetHalfExtentAlong(direction)
 	local castDistance: number = self._constants.WallCheckDistance + self._constants.SkinWidth
 	local origin: Vector3 = self._constants:GetHitboxCFrame().Position
 

@@ -16,6 +16,7 @@ type Signal = typeof(Signal)
 export type StateMachine = Types.StateMachine
 
 function StateMachine.new(context: FSMContext): StateMachine
+	assert(context)
 	local self = setmetatable({}, StateMachine)
 	
 	self.Context = context

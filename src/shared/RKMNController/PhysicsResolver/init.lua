@@ -23,6 +23,7 @@ type PhysicsResolverData = {
         -- I'll bite for now
         FacingDirection: Direction,
         TargetXVelocity: number,
+        _fallSpeedOverride: number?,
 	}
 
 type PhysicsResolverPrototype = typeof(PhysicsResolver)
@@ -85,6 +86,10 @@ function PhysicsResolver._applyHorizontalMovement(self: PhysicsResolver): ()
     self.Velocity = Vector3.new(self.TargetXVelocity, self.Velocity.Y, 0)
 end
 
+function PhysicsResolver.SetFallSpeedOverride(self: PhysicsResolver, speed: number?): ()
+	self._fallSpeedOverride = speed
+end
+
 function PhysicsResolver.EndRise(self: PhysicsResolver): ()
 	if self.Velocity.Y > 0 then
 		self:_zeroYVelocity()
@@ -98,7 +103,7 @@ function PhysicsResolver._applyGravity(self: PhysicsResolver): ()
 
 	local newY = 0
 	if not self._collisionQuery:IsGrounded() then
-		newY = -self._movementStats.FallSpeed
+		newY = -(self._fallSpeedOverride or self._movementStats.FallSpeed)
 	end
 	self.Velocity = Vector3.new(self.Velocity.X, newY, 0)
 end

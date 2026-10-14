@@ -4,13 +4,18 @@ local MovementStateID = require(RKMNControllerFolder.MovementStateIDRegistry)
 local StateMachine = require(RKMNControllerFolder.StateMachine)
 local MovementConfig = require(RKMNControllerFolder.MovementConfig)
 local TimerID = require(RKMNControllerFolder.TimerIDRegistry)
+local Direction = require(RKMNControllerFolder.Direction)
 
 local AirborneState = setmetatable({}, BaseState)
 AirborneState.__index = AirborneState
 
--- Stored on the context rather than the state: state instances are shared by every controller.
 local CUT_JUMP_FLAG = "HasCutJump"
 local DASH_JUMP_FLAG = "IsDashJumping"
+
+local AIRBORNE_STATE_IDS = {
+    [MovementStateID.Jump] = true,
+    [MovementStateID.Freefall] = true,
+}
 
 type BaseState = BaseState.BaseState
 type StateMachine = StateMachine.StateMachine
@@ -24,6 +29,10 @@ end
 
 function AirborneState._resolveAirborneVariables(self: AirborneState, stateMachine: StateMachine): ()
     local context = stateMachine.Context
+    if AIRBORNE_STATE_IDS[context.PreviousStateId] then
+        return
+    end
+
     context:ClearFlag(CUT_JUMP_FLAG)
     context:ClearFlag(DASH_JUMP_FLAG)
     if context.PreviousStateId == MovementStateID.Dash then
@@ -48,9 +57,8 @@ local function attemptEndRise(stateMachine: StateMachine): ()
     end
 end
 
-local function attemptExitAirborneState(stateMachine: StateMachine): boolean
+local function attemptExitToIdleState(stateMachine: StateMachine): boolean
     local context = stateMachine.Context
-    -- The grounded flag is stale on the first step of a jump, so ignore it while still rising.
     local isRising: boolean = context.PhysicsResolver.Velocity.Y > 0
     if isRising or not context.CollisionQuery:IsGrounded() then
         return false
@@ -58,6 +66,54 @@ local function attemptExitAirborneState(stateMachine: StateMachine): boolean
 
     stateMachine:ChangeState(MovementStateID.Idle)
     return true
+end
+
+local function attemptExitToWallSlideState(stateMachine: StateMachine): boolean
+    if stateMachine.CurrentStateId ~= MovementStateID.Freefall then
+        return false
+    end
+
+    local context = stateMachine.Context
+    local moveDirection = context.InputController.MoveDirection
+    if moveDirection == Direction.None then
+        return false
+    end
+
+    if not context.CollisionQuery:CheckWallContact(moveDirection).Success then
+        return false
+    end
+
+    stateMachine:ChangeState(MovementStateID.WallSlide)
+    return true
+end
+
+local function attemptExitToFreefallState(stateMachine: StateMachine): boolean
+    if stateMachine.CurrentStateId ~= MovementStateID.Jump then
+        return false
+    end
+
+    if stateMachine.Context.PhysicsResolver.Velocity.Y > 0 then
+        return false
+    end
+
+    stateMachine:ChangeState(MovementStateID.Freefall)
+    return true
+end
+
+local EXIT_CHECKS = {
+    attemptExitToIdleState,
+    attemptExitToFreefallState,
+    attemptExitToWallSlideState,
+}
+
+local function attemptExitAirborneState(stateMachine: StateMachine): boolean
+    for _, check in ipairs(EXIT_CHECKS) do
+        if check(stateMachine) then
+            return true
+        end
+    end
+
+    return false
 end
 
 local function attemptCutJumpEarly(stateMachine: StateMachine): ()

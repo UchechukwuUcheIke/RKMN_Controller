@@ -57,6 +57,15 @@ function CollisionConstants.GetHitboxCFrame(self: CollisionConstants): CFrame
     return self._rootPart.CFrame * self._hitboxOffset
 end
 
+-- The hitbox rotates with the character's facing, so its reach along a world direction depends on orientation.
+function CollisionConstants.GetHalfExtentAlong(self: CollisionConstants, direction: Vector3): number
+    local localDirection = self:GetHitboxCFrame():VectorToObjectSpace(direction)
+    local halfSize = self.HitboxSize / 2
+    return math.abs(localDirection.X) * halfSize.X
+        + math.abs(localDirection.Y) * halfSize.Y
+        + math.abs(localDirection.Z) * halfSize.Z
+end
+
 function CollisionConstants.GetFootCFrame(self: CollisionConstants): CFrame
     return self._rootPart.CFrame * self._footOffset
 end
