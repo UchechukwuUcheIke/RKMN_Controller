@@ -3,13 +3,11 @@ local BaseState = require(RKMNControllerFolder.BaseState)
 local MovementStateID = require(RKMNControllerFolder.MovementStateIDRegistry)
 local StateMachine = require(RKMNControllerFolder.StateMachine)
 local MovementConfig = require(RKMNControllerFolder.MovementConfig)
-local TimerID = require(RKMNControllerFolder.TimerIDRegistry)
 local Direction = require(RKMNControllerFolder.Direction)
 
 local AirborneState = setmetatable({}, BaseState)
 AirborneState.__index = AirborneState
 
-local CUT_JUMP_FLAG = "HasCutJump"
 local DASH_JUMP_FLAG = "IsDashJumping"
 
 local AIRBORNE_STATE_IDS = {
@@ -41,7 +39,6 @@ function AirborneState._resolveAirborneVariables(self: AirborneState, stateMachi
         return
     end
 
-    context:ClearFlag(CUT_JUMP_FLAG)
     context:ClearFlag(DASH_JUMP_FLAG)
     if isDashJumpEntry(context) then
         context:SetFlag(DASH_JUMP_FLAG)
@@ -57,14 +54,6 @@ function AirborneState.OnEnter(self: AirborneState, stateMachine: StateMachine)
 
     local context = stateMachine.Context
     context.PhysicsResolver:ApplyJumpImpulse()
-    context.TimerUtility:StartTimer(TimerID.JumpRise, MovementConfig.TimeToApex)
-end
-
-local function attemptEndRise(stateMachine: StateMachine): ()
-    local context = stateMachine.Context
-    if context.TimerUtility:IsComplete(TimerID.JumpRise) then
-        context.PhysicsResolver:EndRise()
-    end
 end
 
 local function attemptExitToIdleState(stateMachine: StateMachine): boolean
@@ -128,20 +117,11 @@ end
 
 local function attemptCutJumpEarly(stateMachine: StateMachine): ()
     local context = stateMachine.Context
-    if context.InputController.IsHoldingJump or context:HasFlag(CUT_JUMP_FLAG) then
+    if context.InputController.IsHoldingJump or context.PhysicsResolver.Velocity.Y <= 0 then
         return
     end
 
-    if context.PhysicsResolver.Velocity.Y <= 0 then
-        return
-    end
-
-    context:SetFlag(CUT_JUMP_FLAG)
-    context.PhysicsResolver:SetRiseSpeedFraction(MovementConfig.JumpCutSpeedFraction)
-
-    local timers = context.TimerUtility
-    local remaining: number = timers:GetTimeRemaining(TimerID.JumpRise)
-    timers:StartTimer(TimerID.JumpRise, math.min(remaining, MovementConfig.JumpCutDuration))
+    context.PhysicsResolver:CutRise()
 end
 
 local function driveHorizontalMovement(stateMachine: StateMachine): ()
@@ -158,7 +138,6 @@ function AirborneState.OnStep(self: AirborneState, stateMachine: StateMachine, d
 
     if self.Id == MovementStateID.Jump then
         attemptCutJumpEarly(stateMachine)
-        attemptEndRise(stateMachine)
     end
     driveHorizontalMovement(stateMachine)
 end

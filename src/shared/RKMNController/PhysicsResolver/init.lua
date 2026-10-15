@@ -24,6 +24,7 @@ type PhysicsResolverData = {
         FacingDirection: Direction,
         TargetXVelocity: number,
         _fallSpeedOverride: number?,
+        _isRiseCut: boolean,
 	}
 
 type PhysicsResolverPrototype = typeof(PhysicsResolver)
@@ -51,6 +52,7 @@ function PhysicsResolver.new(characterModel: Model, movementStats: MovementStats
     self.Velocity = Vector3.zero
     self.FacingDirection = Direction.Right
     self.TargetXVelocity = 0
+    self._isRiseCut = false
 	
 	self:_disableRobloxPhysics()
 	
@@ -73,13 +75,12 @@ function PhysicsResolver.MoveInDirection(self: PhysicsResolver, direction: Direc
 end
 
 function PhysicsResolver.ApplyJumpImpulse(self: PhysicsResolver): ()
+	self._isRiseCut = false
 	self.Velocity = Vector3.new(self.Velocity.X, self._movementStats.JumpVelocity, 0)
 end
 
-function PhysicsResolver.SetRiseSpeedFraction(self: PhysicsResolver, fraction: number): ()
-	if self.Velocity.Y > 0 then
-		self.Velocity = Vector3.new(self.Velocity.X, self._movementStats.JumpVelocity * fraction, 0)
-	end
+function PhysicsResolver.CutRise(self: PhysicsResolver): ()
+	self._isRiseCut = true
 end
 
 function PhysicsResolver._applyHorizontalMovement(self: PhysicsResolver): ()
@@ -90,21 +91,23 @@ function PhysicsResolver.SetFallSpeedOverride(self: PhysicsResolver, speed: numb
 	self._fallSpeedOverride = speed
 end
 
-function PhysicsResolver.EndRise(self: PhysicsResolver): ()
-	if self.Velocity.Y > 0 then
-		self:_zeroYVelocity()
+function PhysicsResolver._getGravity(self: PhysicsResolver): number
+	local stats = self._movementStats
+	if self.Velocity.Y <= 0 then
+		return stats.FallGravity
 	end
+
+	return if self._isRiseCut then stats.CutGravity else stats.RiseGravity
 end
 
-function PhysicsResolver._applyGravity(self: PhysicsResolver): ()
-	if self.Velocity.Y > 0 then
+function PhysicsResolver._applyGravity(self: PhysicsResolver, dt: number): ()
+	if self.Velocity.Y <= 0 and self._collisionQuery:IsGrounded() then
+		self:_zeroYVelocity()
 		return
 	end
 
-	local newY = 0
-	if not self._collisionQuery:IsGrounded() then
-		newY = -(self._fallSpeedOverride or self._movementStats.FallSpeed)
-	end
+	local fallSpeedCap: number = self._fallSpeedOverride or self._movementStats.FallSpeed
+	local newY = math.max(self.Velocity.Y - self:_getGravity() * dt, -fallSpeedCap)
 	self.Velocity = Vector3.new(self.Velocity.X, newY, 0)
 end
 
@@ -137,17 +140,20 @@ function PhysicsResolver._resolvePosition(self: PhysicsResolver, sweepResolution
 	self._rootPart.CFrame = CFrame.lookAt(nextPos, nextPos + lookAtOffset)
 end
 
-function PhysicsResolver._sweepForCollisions(self: PhysicsResolver, dt: number): SweepResolution
-	local desiredDelta = self.Velocity * dt
+-- Averaging the start and end Y velocity keeps jump height independent of framerate.
+function PhysicsResolver._sweepForCollisions(self: PhysicsResolver, dt: number, previousYVelocity: number): SweepResolution
+	local averageYVelocity = (previousYVelocity + self.Velocity.Y) / 2
+	local desiredDelta = Vector3.new(self.Velocity.X, averageYVelocity, 0) * dt
 	local sweepResolution: SweepResolution = self._collisionQuery:GetSweepResolution(desiredDelta)
 
     return sweepResolution
 end
 
 function PhysicsResolver.Resolve(self: PhysicsResolver, dt: number): ()
+	local previousYVelocity: number = self.Velocity.Y
 	self:_applyHorizontalMovement()
-	self:_applyGravity()
-	local sweepResolution: SweepResolution = self._sweepForCollisions(self, dt)
+	self:_applyGravity(dt)
+	local sweepResolution: SweepResolution = self:_sweepForCollisions(dt, previousYVelocity)
     self:_resolvePosition(sweepResolution)
 end
 

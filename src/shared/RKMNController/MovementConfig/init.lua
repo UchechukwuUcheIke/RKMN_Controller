@@ -5,10 +5,10 @@ local MovementConfig = {
 	DashSpeed = 30,
 	MaxDashDuration = 0.4,
 	JumpHeight = 12,
-	TimeToApex = 0.4,
+	TimeToApex = 0.3,
+	FallGravityMultiplier = 1,
+	JumpCutGravityMultiplier = 3,
 	FallSpeed = 30,
-	JumpCutSpeedFraction = 0.4,
-	JumpCutDuration = 0.08,
 }
 
 table.freeze(MovementConfig)
