@@ -14,6 +14,7 @@ local DebugWorldVisualizer = require(DebuggerFolder.DebugWorldVisualizer)
 local DiagnosticCollisionQuery = require(DebuggerFolder.DiagnosticCollisionQuery)
 local KinematicWorld = require(ReplicatedStorage.KinematicWorld)
 local RunServiceAdapter = require(ReplicatedStorage.RunServiceAdapter)
+local RenderPriorities = require(ReplicatedStorage.RenderPriorities)
 
 type KinematicWorld = KinematicWorld.KinematicWorld
 type RKMNController = RKMNController.RKMNController
@@ -25,8 +26,6 @@ type RunServiceAdapter = RunServiceAdapter.RunServiceAdapter
 type Connection = { Disconnect: (self: any) -> () }
 
 local RENDER_BIND_NAME = "DebugKinematicLoop"
--- Must match RunServiceAdapter so the world steps at the same point in the frame in both modes.
-local RENDER_PRIORITY = Enum.RenderPriority.Character.Value
 local SINGLE_STEP_DELTA = 1 / 60
 
 local DebugFacade = {}
@@ -140,7 +139,7 @@ function DebugFacade._enableSubmodules(self: DebugFacade): ()
 end
 
 function DebugFacade._bindRenderStep(self: DebugFacade): ()
-	RunService:BindToRenderStep(RENDER_BIND_NAME, RENDER_PRIORITY, function(deltaTime: number)
+	RunService:BindToRenderStep(RENDER_BIND_NAME, RenderPriorities.World, function(deltaTime: number)
 		if not self._isPaused then
 			self._kinematicWorld:StepWorld(deltaTime)
 		end

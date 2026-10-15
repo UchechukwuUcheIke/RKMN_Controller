@@ -7,6 +7,7 @@ local DebugFacade = require(DebugModuleFolder.DebugFacade)
 local RKMNController = require(RKMNControllerFolder.RKMNController)
 local KinematicWorld = require(ReplicatedStorage.KinematicWorld)
 local RunServiceAdapter = require(ReplicatedStorage.RunServiceAdapter)
+local RenderPriorities = require(ReplicatedStorage.RenderPriorities)
 local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
 local MovementStats = require(RKMNControllerFolder.MovementStats)
 local TimerUtility = require(RKMNControllerFolder.TimerUtility)
@@ -16,7 +17,6 @@ local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
 local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
 local StateMachineContext = require(RKMNControllerFolder.FSMContext)
 local DiagnosticControllerQuery = require(DebugModuleFolder.DiagnosticCollisionQuery)
-
 
 type CollisionConstants = CollisionConstants.CollisionConstants
 type TimerUtility = TimerUtility.TimerUtility
@@ -31,7 +31,9 @@ type DiagnosticControllerQuery = DiagnosticControllerQuery.DiagnosticCollisionQu
 
 
 local kinematicWorld = KinematicWorld.new()
-local runServiceAdapter = RunServiceAdapter.new(kinematicWorld)
+local runServiceAdapter = RunServiceAdapter.new("LiveKinematicLoop", RenderPriorities.World, function(dt: number)
+    kinematicWorld:StepWorld(dt)
+end)
 
 local function mountScreenGui(): ScreenGui
     local PlayerGui = LocalPlayer.PlayerGui

@@ -1,5 +1,4 @@
 local RunService = game:GetService("RunService")
-local KinematicWorld = require(script.Parent.KinematicWorld)
 
 local RunServiceAdapter = {}
 RunServiceAdapter.__index = RunServiceAdapter
@@ -8,10 +7,13 @@ RunServiceAdapter.Super = nil
 
 type RunServiceAdapterData = {
 	Class: typeof(RunServiceAdapter),
-	_world: KinematicWorld.KinematicWorld,
+	_onStep: StepCallback,
 	_isRunning: boolean,
 	_bindName: string,
+	_renderPriority: number,
 }
+
+export type StepCallback = (dt: number) -> ()
 
 type RunServiceAdapterPrototype = typeof(RunServiceAdapter)
 
@@ -20,13 +22,14 @@ export type RunServiceAdapter = typeof(setmetatable(
 	{} :: RunServiceAdapterPrototype
 ))
 
-function RunServiceAdapter.new(world: KinematicWorld.KinematicWorld): RunServiceAdapter
+function RunServiceAdapter.new(bindName: string, renderPriority: number, onStep: StepCallback): RunServiceAdapter
 	local self = setmetatable({}, RunServiceAdapter)
 	
 	self.Class = RunServiceAdapter
-	self._world = world
+	self._onStep = onStep
 	self._isRunning = false
-	self._bindName = "LiveKinematicLoop"
+	self._bindName = bindName
+	self._renderPriority = renderPriority
 	
 	return self
 end
@@ -50,13 +53,7 @@ function RunServiceAdapter.Start(self: RunServiceAdapter): ()
 	end
 	self._isRunning = true
 	
-	RunService:BindToRenderStep(
-		self._bindName,
-		Enum.RenderPriority.Character.Value, 
-		function(dt)
-			self._world:StepWorld(dt)
-		end
-	)
+	RunService:BindToRenderStep(self._bindName, self._renderPriority, self._onStep)
 end
 
 function RunServiceAdapter.Stop(self: RunServiceAdapter): ()
