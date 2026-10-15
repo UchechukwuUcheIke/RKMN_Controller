@@ -6,14 +6,12 @@ local CameraZoneType = require(RKMNCameraFolder.Data.CameraZoneType)
 
 local CameraTargetSolver = {}
 
--- Used when the player is outside every zone.
 local FALLBACK_CAMERA_OFFSET = Vector3.new(0, 4, 30)
 
 type CameraZone = CameraZone.CameraZone
 type RailCameraZone = CameraZone.RailCameraZone
 type LockedCameraZone = CameraZone.LockedCameraZone
 
--- Z is left unclamped: the offset sets the camera's depth, which usually sits outside a thin zone box.
 local function clampToZone(position: Vector3, zone: RailCameraZone): Vector3
 	local constraints = zone.RailConstraints
 	return Vector3.new(
