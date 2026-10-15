@@ -1,17 +1,10 @@
 --!strict
-local CameraZoneParser = {}
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CameraZone = require(ReplicatedStorage.RKMNCamera.Data.CameraZone)
 
--- Pulling in the type definition we established earlier
-export type CameraZone = {
-	Id: string,
-	Type: "Rail" | "Locked",
-	Center: Vector3,
-	Size: Vector3,
-	FocusCFrame: CFrame?,
-	CameraOffset: Vector3?,
-	ClampMin: Vector3?,
-	ClampMax: Vector3?
-}
+type CameraZone = CameraZone.CameraZone
+
+local CameraZoneParser = {}
 
 -- Takes the physical folder of parts and returns pure data
 function CameraZoneParser.ParseMap(zonesFolder: Folder): { [string]: CameraZone }
@@ -33,7 +26,11 @@ function CameraZoneParser.ParseMap(zonesFolder: Folder): { [string]: CameraZone 
             zoneData = CameraZone.createLocked(id, center, size, focusCFrame)
         else
             local cameraOffset = zonePart:GetAttribute("CameraOffset") :: Vector3
-            zoneData = CameraZone.createRail(id, center, size, cameraOffset)
+            zoneData = CameraZone.createRail(id, center, size, cameraOffset, {
+                VerticalFollow = zonePart:GetAttribute("VerticalFollow") :: CameraZone.VerticalFollow?,
+                DeadzoneFraction = zonePart:GetAttribute("DeadzoneFraction") :: number?,
+                GroundedScrollSpeed = zonePart:GetAttribute("GroundedScrollSpeed") :: number?,
+            })
         end
 
         parsedZones[id] = zoneData

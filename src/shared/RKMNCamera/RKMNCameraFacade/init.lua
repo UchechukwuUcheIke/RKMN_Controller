@@ -2,24 +2,30 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RKMNCameraFolder = ReplicatedStorage.RKMNCamera
 local CameraZoneTracker = require(RKMNCameraFolder.CameraZoneTracker)
-local CameraSpring = require(RKMNCameraFolder.CameraSpring)
+local CameraTargetSmoother = require(RKMNCameraFolder.CameraTargetSmoother)
 local CameraTargetSolver = require(RKMNCameraFolder.CameraTargetSolver)
 local CameraZone = require(RKMNCameraFolder.Data.CameraZone)
 
 type CameraZoneTracker = CameraZoneTracker.CameraZoneTracker
-type CameraSpring = CameraSpring.CameraSpring
+type Connection = CameraZoneTracker.Connection
+type CameraTargetSmoother = CameraTargetSmoother.CameraTargetSmoother
 type CameraZone = CameraZone.CameraZone
+type ViewParams = CameraTargetSolver.ViewParams
+type CameraState = CameraTargetSolver.CameraState
 
 local RKMNCameraFacade = {}
 RKMNCameraFacade.__index = RKMNCameraFacade
 
 type RKMNCameraFacadeData = {
-    Tracker: CameraZoneTracker,
-    Spring: CameraSpring,
-    Camera: Camera,
+    CameraZoneTracker: CameraZoneTracker,
+    Smoother: CameraTargetSmoother,
 
+    _camera: Camera,
     _isActive: boolean,
     _playerTarget: Model?,
+    _cameraState: CameraState?,
+    _viewParams: ViewParams,
+    _zoneChangedConnection: Connection,
 }
 
 type RKMNCameraFacadePrototype = typeof(RKMNCameraFacade)
@@ -29,17 +35,35 @@ export type RKMNCameraFacade = typeof(setmetatable(
     {} :: RKMNCameraFacadePrototype
 ))
 
-function RKMNCameraFacade.new(camera: Camera, tracker: CameraZoneTracker, spring: CameraSpring): RKMNCameraFacade
-    local data = {  
-        Tracker = tracker,
-        Spring = spring,
-        Camera = camera,
+function RKMNCameraFacade.new(camera: Camera, CameraZoneTracker: CameraZoneTracker, smoother: CameraTargetSmoother): RKMNCameraFacade
+    local viewportSize = camera.ViewportSize
+    local viewParams = {
+        VerticalFieldOfView = camera.FieldOfView,
+        Aspect = viewportSize.X / math.max(viewportSize.Y, 1),
+    }
+    
+    local self = {
+        CameraZoneTracker = CameraZoneTracker,
+        Smoother = smoother,
 
+        _camera = camera,
+        _viewParams = viewParams,
         _isActive = false,
         _playerTarget = nil,
+        _cameraState = nil,
     } :: RKMNCameraFacadeData
 
-    return setmetatable(data, RKMNCameraFacade)
+    setmetatable(self, RKMNCameraFacade)
+
+    self._zoneChangedConnection = CameraZoneTracker:OnZoneChanged(function()
+        self:_handleOnZoneChanged()
+    end)
+
+    return self
+end
+
+function RKMNCameraFacade._handleOnZoneChanged(self: RKMNCameraFacade): ()
+    self._cameraState = nil
 end
 
 function RKMNCameraFacade.SetPlayerTarget(self: RKMNCameraFacade, characterModel: Model): ()
@@ -56,8 +80,9 @@ function RKMNCameraFacade.Enable(self: RKMNCameraFacade): ()
     end
     self._isActive = true
 
-    self.Camera.CameraType = Enum.CameraType.Scriptable
-    self.Spring:SnapTo(self.Camera.CFrame)
+    self._cameraState = nil
+    self._camera.CameraType = Enum.CameraType.Scriptable
+    self.Smoother:SnapTo(self._camera.CFrame)
 end
 
 function RKMNCameraFacade.Disable(self: RKMNCameraFacade): ()
@@ -66,7 +91,7 @@ function RKMNCameraFacade.Disable(self: RKMNCameraFacade): ()
     end
     self._isActive = false
 
-    self.Camera.CameraType = Enum.CameraType.Custom
+    self._camera.CameraType = Enum.CameraType.Custom
 end
 
 function RKMNCameraFacade._getPlayerCFrame(self: RKMNCameraFacade): CFrame?
@@ -83,13 +108,28 @@ function RKMNCameraFacade._getPlayerCFrame(self: RKMNCameraFacade): CFrame?
     return rootPart.CFrame
 end
 
+function RKMNCameraFacade.GetViewParams(self: RKMNCameraFacade): ViewParams
+    return self._viewParams
+end
+
+-- NOTE: Camera has its own grounded check, but should ideally use RKMNController's Grounded logic
+function RKMNCameraFacade._isPlayerGrounded(self: RKMNCameraFacade): boolean
+    local playerTarget = self._playerTarget
+    local humanoid = playerTarget and playerTarget:FindFirstChildOfClass("Humanoid")
+    if not humanoid then
+        return false
+    end
+
+    return humanoid.FloorMaterial ~= Enum.Material.Air
+end
+
 function RKMNCameraFacade._getActiveZone(self: RKMNCameraFacade): CameraZone?
-    local activeZoneId: string? = self.Tracker:GetActiveCameraZoneId()
+    local activeZoneId: string? = self.CameraZoneTracker:GetActiveCameraZoneId()
     if not activeZoneId then
         return nil
     end
 
-    return self.Tracker:GetCameraZone(activeZoneId)
+    return self.CameraZoneTracker:GetCameraZone(activeZoneId)
 end
 
 function RKMNCameraFacade.Step(self: RKMNCameraFacade, dt: number): ()
@@ -98,16 +138,27 @@ function RKMNCameraFacade.Step(self: RKMNCameraFacade, dt: number): ()
         return
     end
 
-    self.Tracker:Update(playerCFrame.Position)
+    self.CameraZoneTracker:Update(playerCFrame.Position)
 
-    local zone: CameraZone? = self:_getActiveZone()
-    self.Spring:SetTarget(CameraTargetSolver.Solve(playerCFrame, zone))
-    self.Camera.CFrame = self.Spring:Update(dt)
+    local targetCFrame, nextState = CameraTargetSolver.Solve(
+        playerCFrame,
+        self:_getActiveZone(),
+        self:GetViewParams(),
+        self._cameraState,
+        self:_isPlayerGrounded(),
+        dt
+    )
+    self._cameraState = nextState
+
+    self.Smoother:SetTarget(targetCFrame)
+    self._camera.CFrame = self.Smoother:Update(dt)
 end
 
 function RKMNCameraFacade.Destroy(self: RKMNCameraFacade): ()
     self:Disable()
+    self._zoneChangedConnection:Disconnect()
     setmetatable(self :: any, nil)
+    table.freeze(self)
 end
 
 return RKMNCameraFacade

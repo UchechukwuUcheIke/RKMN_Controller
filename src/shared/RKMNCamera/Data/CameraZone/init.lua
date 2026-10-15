@@ -3,8 +3,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RKMNCameraFolder = ReplicatedStorage.RKMNCamera
 local DataFolder = RKMNCameraFolder.Data
 local CameraZoneType = require(DataFolder.CameraZoneType)
+local VerticalFollow = require(DataFolder.VerticalFollow)
 
 local CameraZone = {}
+
+type VerticalFollow = VerticalFollow.VerticalFollow
 
 export type ZoneType = CameraZoneType.CameraZoneType
 
@@ -15,8 +18,9 @@ export type SpatialBounds = {
 
 export type RailConstraints = {
     CameraOffset: Vector3,
-    ClampMin: Vector3,
-    ClampMax: Vector3
+    VerticalFollow: VerticalFollow,
+	DeadzoneFraction: number,
+	GroundedScrollSpeed: number,
 }
 
 export type FixedViewport = {
@@ -39,17 +43,36 @@ export type LockedCameraZone = {
 
 export type CameraZone = RailCameraZone | LockedCameraZone
 
-function CameraZone.createRail(id: string, center: Vector3, size: Vector3, cameraOffset: Vector3): CameraZone
+export type RailOptions = {
+    VerticalFollow: VerticalFollow?,
+    DeadzoneFraction: number?,
+    GroundedScrollSpeed: number?,
+}
+
+const DEFAULT_VERTICAL_FOLLOW: VerticalFollow = VerticalFollow.Tracking
+const DEFAULT_DEADZONE_FRACTION = 0.3
+const DEFAULT_GROUNDED_SCROLL_SPEED = 10
+
+function CameraZone.createRail(
+    id: string,
+    center: Vector3,
+    size: Vector3,
+    cameraOffset: Vector3,
+    options: RailOptions?
+): RailCameraZone
     local bounds: SpatialBounds = {
         Center = center,
         Size = size,
     }
 
-    local halfSize = size / 2
+    -- Rail cameras look down -Z, so the offset must put the camera in front of the player.
+    assert(cameraOffset.Z > 0, `Rail zone {id} needs a CameraOffset with positive Z`)
+    local resolvedOptions: RailOptions = options or {}
     local railConstraints: RailConstraints = {
         CameraOffset = cameraOffset,
-        ClampMin = center - halfSize,
-        ClampMax = center + halfSize,
+        VerticalFollow = resolvedOptions.VerticalFollow or DEFAULT_VERTICAL_FOLLOW,
+        DeadzoneFraction = resolvedOptions.DeadzoneFraction or DEFAULT_DEADZONE_FRACTION,
+        GroundedScrollSpeed = resolvedOptions.GroundedScrollSpeed or DEFAULT_GROUNDED_SCROLL_SPEED,
     }
 
     local zone : RailCameraZone = {
@@ -62,7 +85,7 @@ function CameraZone.createRail(id: string, center: Vector3, size: Vector3, camer
     return zone
 end
 
-function CameraZone.createLocked(id: string, center: Vector3, size: Vector3, focusCFrame: CFrame): CameraZone
+function CameraZone.createLocked(id: string, center: Vector3, size: Vector3, focusCFrame: CFrame): LockedCameraZone
     local bounds: SpatialBounds = {
         Center = center,
         Size = size,

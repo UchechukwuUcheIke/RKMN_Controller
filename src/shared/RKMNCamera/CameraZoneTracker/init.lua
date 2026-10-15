@@ -1,5 +1,4 @@
 --!strict
-local FlagStandService = game:GetService("FlagStandService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RKMNCameraFolder = ReplicatedStorage.RKMNCamera
 local DataFolder = RKMNCameraFolder.Data
@@ -15,6 +14,10 @@ type CameraZoneType = CameraZoneType.CameraZoneType
 type SpatialBounds = CameraZone.SpatialBounds
 type CameraZone = CameraZone.CameraZone
 type Signal = typeof(Signal)
+export type Connection = { Disconnect: (Connection) -> () }
+
+--TODO: CameraZoneTracker should hold its own state -- CameraState, which says where the focusY is
+-- This state should be reset upon changing camera zones.
 
 type CameraZoneTrackerData = {
 	_activeCameraZoneId: string?,
@@ -60,6 +63,11 @@ function CameraZoneTracker.GetActiveCameraZoneId(self: CameraZoneTracker): strin
     return self._activeCameraZoneId
 end
 
+-- Fires with the new active zone id, or nil when the player leaves every zone.
+function CameraZoneTracker.OnZoneChanged(self: CameraZoneTracker, callback: (zoneId: string?) -> ()): Connection
+    return self._zoneChangedEvent:Connect(callback)
+end
+
 function CameraZoneTracker.GetCameraZone(self: CameraZoneTracker, cameraZoneId: string): CameraZone?
     return self._zones[cameraZoneId]
 end
@@ -102,8 +110,10 @@ end
 
 function CameraZoneTracker._attemptUpdateActiveCameraZoneId(self: CameraZoneTracker, cameraZone: CameraZone?): ()
     if not cameraZone then
-        self._activeCameraZoneId = nil
-        self._zoneChangedEvent:Fire(nil)
+        if self._activeCameraZoneId ~= nil then
+            self._activeCameraZoneId = nil
+            self._zoneChangedEvent:Fire(nil)
+        end
         return
     end
 
