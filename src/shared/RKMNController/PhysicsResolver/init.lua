@@ -6,7 +6,7 @@ local RKMNControllerFolder = script.Parent
 local SweepResolution = require(RKMNControllerFolder.SweepResolution)
 local MovementStats = require(RKMNControllerFolder.MovementStats)
 local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
-local Direction = require(RKMNControllerFolder.Direction)
+local Direction = require(game:GetService("ReplicatedStorage").Data.Direction)
 
 type MovementStats = MovementStats.MovementStats
 type CollisionQuery = CollisionQuery.CollisionQuery

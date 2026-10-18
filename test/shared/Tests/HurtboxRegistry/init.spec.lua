@@ -6,27 +6,28 @@ local describe = JestGlobals.describe
 local it = JestGlobals.it
 local expect = JestGlobals.expect
 
-local Bounds = require(ReplicatedStorage.Combat.Bounds)
-local HitResult = require(ReplicatedStorage.Combat.HitResult)
-local HurtboxRegistry = require(ReplicatedStorage.Combat.HurtboxRegistry)
-local Team = require(ReplicatedStorage.Combat.Team)
+local Bounds = require(ReplicatedStorage.Combat.Data.Bounds)
+local HitResult = require(ReplicatedStorage.Combat.Hurtbox.HitResult)
+local Hurtbox = require(ReplicatedStorage.Combat.Hurtbox.Hurtbox)
+local HurtboxRegistry = require(ReplicatedStorage.Combat.Hurtbox.HurtboxRegistry)
+local Team = require(ReplicatedStorage.Combat.Data.Team)
 
 local function makeHurtbox(ownerId, team, x, enabled)
-	return {
+	return Hurtbox.new({
 		OwnerId = ownerId,
 		Team = team,
 		Enabled = enabled ~= false,
-		GetBounds = function()
-			return Bounds.new(Vector2.new(x, 0), Vector2.new(4, 4))
-		end,
+		Center = Vector2.new(x, 0),
+		Size = Vector2.new(4, 4),
 		Receive = function()
 			return HitResult.Applied
 		end,
-	}
+	})
 end
 
-local function queryAround(registry, x, filter)
-	return registry:Query(Bounds.new(Vector2.new(x, 0), Vector2.new(2, 2)), filter)
+-- Queries as the player, who can hurt enemies and neutral objects but not other players.
+local function queryAround(registry, x, attackerTeam)
+	return registry:Query(Bounds.new(Vector2.new(x, 0), Vector2.new(2, 2)), attackerTeam or Team.Player)
 end
 
 describe("HurtboxRegistry", function()
@@ -68,36 +69,68 @@ describe("HurtboxRegistry", function()
 		expect(#queryAround(registry, 0)).toBe(1)
 	end)
 
-	it("applies the filter", function()
+	it("only returns hurtboxes of teams the attacker can hurt", function()
 		local registry = HurtboxRegistry.new()
 		local enemy = makeHurtbox(1, Team.Enemy, 0)
 		registry:Register(enemy)
 		registry:Register(makeHurtbox(2, Team.Player, 0))
 
-		local found = queryAround(registry, 0, function(hurtbox)
-			return Team.canHurt(Team.Player, hurtbox.Team)
-		end)
+		local found = queryAround(registry, 0, Team.Player)
 		expect(#found).toBe(1)
 		expect(found[1]).toBe(enemy)
 	end)
 
-	it("reads bounds fresh so hurtboxes follow their owners", function()
+	it("answers differently for different attacking teams", function()
 		local registry = HurtboxRegistry.new()
-		local x = 100
-		registry:Register({
-			OwnerId = 1,
-			Team = Team.Enemy,
-			Enabled = true,
-			GetBounds = function()
-				return Bounds.new(Vector2.new(x, 0), Vector2.new(4, 4))
-			end,
-			Receive = function()
-				return HitResult.Applied
-			end,
-		})
+		local player = makeHurtbox(1, Team.Player, 0)
+		registry:Register(makeHurtbox(2, Team.Enemy, 0))
+		registry:Register(player)
+
+		local found = queryAround(registry, 0, Team.Enemy)
+		expect(#found).toBe(1)
+		expect(found[1]).toBe(player)
+	end)
+
+	it("returns nothing for a team that can hurt no one", function()
+		local registry = HurtboxRegistry.new()
+		registry:Register(makeHurtbox(1, Team.Enemy, 0))
+		registry:Register(makeHurtbox(2, Team.Player, 0))
+
+		expect(#queryAround(registry, 0, Team.Neutral)).toBe(0)
+	end)
+
+	it("returns teams in the order they first registered", function()
+		local registry = HurtboxRegistry.new()
+		local neutral = makeHurtbox(1, Team.Neutral, 0)
+		local enemy = makeHurtbox(2, Team.Enemy, 0)
+		local laterNeutral = makeHurtbox(3, Team.Neutral, 0)
+		registry:Register(neutral)
+		registry:Register(enemy)
+		registry:Register(laterNeutral)
+
+		local found = queryAround(registry, 0, Team.Player)
+		expect(found[1]).toBe(neutral)
+		expect(found[2]).toBe(laterNeutral)
+		expect(found[3]).toBe(enemy)
+	end)
+
+	it("follows a hurtbox as its owner moves it", function()
+		local registry = HurtboxRegistry.new()
+		local hurtbox = makeHurtbox(1, Team.Enemy, 100)
+		registry:Register(hurtbox)
 
 		expect(#queryAround(registry, 0)).toBe(0)
-		x = 0
+		hurtbox:MoveTo(Vector2.new(0, 0))
+		expect(#queryAround(registry, 0)).toBe(1)
+	end)
+
+	it("follows a hurtbox as its owner resizes it", function()
+		local registry = HurtboxRegistry.new()
+		local hurtbox = makeHurtbox(1, Team.Enemy, 10)
+		registry:Register(hurtbox)
+
+		expect(#queryAround(registry, 0)).toBe(0)
+		hurtbox:Resize(Vector2.new(40, 4))
 		expect(#queryAround(registry, 0)).toBe(1)
 	end)
 

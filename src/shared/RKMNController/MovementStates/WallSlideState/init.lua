@@ -3,7 +3,7 @@ local BaseState = require(RKMNControllerFolder.BaseState)
 local MovementStateID = require(RKMNControllerFolder.MovementStateIDRegistry)
 local StateMachine = require(RKMNControllerFolder.StateMachine)
 local MovementConfig = require(RKMNControllerFolder.MovementConfig)
-local Direction = require(RKMNControllerFolder.Direction)
+local Direction = require(game:GetService("ReplicatedStorage").Data.Direction)
 
 local WallSlideState = setmetatable({}, BaseState)
 WallSlideState.__index = WallSlideState

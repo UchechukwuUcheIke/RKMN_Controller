@@ -10,7 +10,6 @@ export type Team = "Player" | "Enemy" | "Neutral"
 local HURTS: { [Team]: { [Team]: boolean } } = {
 	Player = { Enemy = true, Neutral = true },
 	Enemy = { Player = true },
-	Hazard = { Player = true, Enemy = true },
 	Neutral = {},
 }
 

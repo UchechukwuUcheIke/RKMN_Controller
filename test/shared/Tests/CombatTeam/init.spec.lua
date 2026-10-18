@@ -6,7 +6,7 @@ local describe = JestGlobals.describe
 local it = JestGlobals.it
 local expect = JestGlobals.expect
 
-local Team = require(ReplicatedStorage.Combat.Team)
+local Team = require(ReplicatedStorage.Combat.Data.Team)
 
 describe("Team.canHurt", function()
 	it("lets the player hurt enemies and destructibles", function()
@@ -21,11 +21,6 @@ describe("Team.canHurt", function()
 	it("lets enemies hurt the player but not each other", function()
 		expect(Team.canHurt(Team.Enemy, Team.Player)).toBe(true)
 		expect(Team.canHurt(Team.Enemy, Team.Enemy)).toBe(false)
-	end)
-
-	it("lets hazards hurt both the player and enemies", function()
-		expect(Team.canHurt(Team.Hazard, Team.Player)).toBe(true)
-		expect(Team.canHurt(Team.Hazard, Team.Enemy)).toBe(true)
 	end)
 
 	it("never lets neutral objects hurt anyone", function()
