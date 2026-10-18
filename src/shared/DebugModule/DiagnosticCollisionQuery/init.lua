@@ -9,7 +9,7 @@ local DiagnosticCastRecord = require(RKMNControllerFolder.DiagnosticCastRecord)
 local DebugFolder = script.Parent
 local DebugDataFolder = DebugFolder.Data
 local CollisionQuerySnapshot = require(DebugDataFolder.CollisionQuerySnapshot)
-local Direction = require(RKMNControllerFolder.Direction)
+local Direction = require(ReplicatedStorage.Data.Direction)
 local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
 
 type SweepResolution = SweepResolution.SweepResolution

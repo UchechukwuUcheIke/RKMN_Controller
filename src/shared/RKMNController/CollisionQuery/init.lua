@@ -6,7 +6,7 @@ CollisionQuery.ClassName = "CollisionQuery"
 local RKMNControllerFolder = script.Parent
 local DiagnosticCastRecord = require(RKMNControllerFolder.DiagnosticCastRecord)
 local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
-local Direction = require(RKMNControllerFolder.Direction)
+local Direction = require(game:GetService("ReplicatedStorage").Data.Direction)
 local SweepResolution = require(RKMNControllerFolder.SweepResolution)
 local SurfaceHits = require(RKMNControllerFolder.SurfaceHits)
 

@@ -4,7 +4,7 @@ InputController.__index = InputController
 
 local RKMNControllerFolder = script.Parent
 local UserInputService = game:GetService("UserInputService")
-local Direction = require(RKMNControllerFolder.Direction)
+local Direction = require(game:GetService("ReplicatedStorage").Data.Direction)
 local Signal = require(game:GetService("ReplicatedStorage"):WaitForChild("DevPackages"):WaitForChild("goodsignal"))
 local TimerUtilityModule = require(RKMNControllerFolder.TimerUtility)
 local KEY_BINDINGS = require(RKMNControllerFolder.KeyBindings)

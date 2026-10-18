@@ -12,7 +12,7 @@ local MockWorld = require(ReplicatedStorage.MockWorld.MockWorld)
 local RKMNControllerFolder = ReplicatedStorage.RKMNController
 local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
 local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
-local Direction = require(RKMNControllerFolder.Direction)
+local Direction = require(ReplicatedStorage.Data.Direction)
 
 local function makeConstants(character)
 	local constants = CollisionConstants.new(character)

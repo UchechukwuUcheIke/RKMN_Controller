@@ -6,7 +6,7 @@ local describe = JestGlobals.describe
 local it = JestGlobals.it
 local expect = JestGlobals.expect
 
-local Bounds = require(ReplicatedStorage.Combat.Bounds)
+local Bounds = require(ReplicatedStorage.Combat.Data.Bounds)
 
 local function box(x: number, y: number, width: number, height: number)
 	return Bounds.new(Vector2.new(x, y), Vector2.new(width, height))
