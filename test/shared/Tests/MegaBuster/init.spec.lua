@@ -31,9 +31,11 @@ describe("MegaBuster", function()
 	beforeEach(function()
 		registry = HurtboxRegistry.new()
 		local hitboxes = HitboxRegistry.new()
-		simulation = ProjectileSimulation.new(hitboxes, function()
-			return nil
-		end)
+		simulation = ProjectileSimulation.new(hitboxes, {
+			FindFractionToWall = function()
+				return nil
+			end,
+		})
 		resolver = HitResolver.new(hitboxes, registry)
 		muzzle = { Position = Vector2.new(0, 0), Direction = Direction.Right }
 		buster = MegaBuster.new(simulation, OWNER_ID, Team.Player, function()

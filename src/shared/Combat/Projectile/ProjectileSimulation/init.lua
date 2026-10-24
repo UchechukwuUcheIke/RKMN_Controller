@@ -21,7 +21,7 @@ type Team = Team.Team
 local ProjectileSimulation = {}
 ProjectileSimulation.__index = ProjectileSimulation
 
-export type WallCast = Projectile.WallCast
+export type WallCaster = Projectile.WallCaster
 
 type ProjectileSimulationData = {
 	-- Fired with (projectile)
@@ -32,7 +32,7 @@ type ProjectileSimulationData = {
 	Despawned: SignalInstance,
 
 	_hitboxes: HitboxRegistry.HitboxRegistry,
-	_wallCast: WallCast,
+	_walls: WallCaster,
 	_active: { Projectile },
 }
 
@@ -45,14 +45,14 @@ export type ProjectileSimulation = typeof(setmetatable(
 
 -- Projectiles register their hitboxes in `hitboxes`, which the frame's hit pass (a HitResolver
 -- over the same registry) delivers hits for.
-function ProjectileSimulation.new(hitboxes: HitboxRegistry.HitboxRegistry, wallCast: WallCast): ProjectileSimulation
+function ProjectileSimulation.new(hitboxes: HitboxRegistry.HitboxRegistry, walls: WallCaster): ProjectileSimulation
 	local data: ProjectileSimulationData = {
 		Spawned = Signal.new(),
 		Hit = Signal.new(),
 		Despawned = Signal.new(),
 
 		_hitboxes = hitboxes,
-		_wallCast = wallCast,
+		_walls = walls,
 		_active = {},
 	}
 
@@ -88,7 +88,7 @@ function ProjectileSimulation.Advance(self: ProjectileSimulation, dt: number): (
 	-- Snapshot, so shots spawned or removed by callbacks don't disturb this pass.
 	for _, projectile in table.clone(self._active) do
 		if table.find(self._active, projectile) then
-			projectile:Advance(dt, self._wallCast)
+			projectile:Advance(dt, self._walls)
 		end
 	end
 end

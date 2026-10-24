@@ -70,9 +70,11 @@ describe("ProjectileSimulation", function()
 		registry = HurtboxRegistry.new()
 		hitboxes = HitboxRegistry.new()
 		wallT = nil
-		simulation = ProjectileSimulation.new(hitboxes, function()
-			return wallT
-		end)
+		simulation = ProjectileSimulation.new(hitboxes, {
+			FindFractionToWall = function()
+				return wallT
+			end,
+		})
 		resolver = HitResolver.new(hitboxes, registry)
 	end)
 

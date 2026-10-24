@@ -22,9 +22,12 @@ type ProjectileStepOutcome = ProjectileStepOutcome.ProjectileStepOutcome
 local Projectile = {}
 Projectile.__index = Projectile
 
--- Casts a segment against level geometry. Returns how far along it (0 to 1) the first
--- obstruction is, or nil when the way is clear. Injected so projectiles never touch Workspace.
-export type WallCast = (from: Vector2, to: Vector2) -> number?
+-- What a projectile needs to know about level geometry. Injected so projectiles never touch Workspace.
+export type WallCaster = {
+	-- Looks along a segment for walls. Returns how far along it (0 to 1) the first
+	-- obstruction is, or nil when the way is clear.
+	FindFractionToWall: (self: any, from: Vector2, to: Vector2) -> number?,
+}
 
 -- Told about every hit the projectile's hitbox delivers, including ones the target ignored.
 export type HitObserver = (projectile: Projectile, hurtbox: Hurtbox, result: HitResult) -> ()
@@ -140,11 +143,11 @@ end
 
 -- Starts this frame's move: sweeps the hitbox over it, and keeps it from reaching past a wall.
 -- The hits themselves are delivered by the hit pass, then Settle finishes the move.
-function Projectile.Advance(self: Projectile, dt: number, wallCast: WallCast): ()
+function Projectile.Advance(self: Projectile, dt: number, walls: WallCaster): ()
 	local stepDt = math.min(dt, self.TimeLeft)
 	local from = self.Position
 	local to = self:Project(stepDt)
-	local wallFraction = wallCast(from, to)
+	local wallFraction = walls:FindFractionToWall(from, to)
 
 	self._isAdvanced = true
 	self._stepDt = stepDt

@@ -66,9 +66,11 @@ local function modelOf(index)
 end
 
 beforeEach(function()
-	simulation = ProjectileSimulation.new(HitboxRegistry.new(), function()
-		return nil
-	end)
+	simulation = ProjectileSimulation.new(HitboxRegistry.new(), {
+		FindFractionToWall = function()
+			return nil
+		end,
+	})
 	folder = Instance.new("Folder")
 	requestedIds = {}
 	placer = ProjectileModelPlacer.new(simulation, createModel, folder)
@@ -84,9 +86,11 @@ describe("ProjectileModelPlacer", function()
 	end)
 
 	it("shows models for shots that were already flying", function()
-		local other = ProjectileSimulation.new(HitboxRegistry.new(), function()
-			return nil
-		end)
+		local other = ProjectileSimulation.new(HitboxRegistry.new(), {
+			FindFractionToWall = function()
+				return nil
+			end,
+		})
 		other:Spawn(makeDefinition(), OWNER_ID, Team.Player, Vector2.new(4, 4), Direction.Right)
 		local parent = Instance.new("Folder")
 
