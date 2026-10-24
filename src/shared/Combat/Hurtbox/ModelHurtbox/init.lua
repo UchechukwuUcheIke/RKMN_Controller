@@ -54,7 +54,6 @@ function ModelHurtbox.new(model: Model, config: ModelHurtboxConfig): ModelHurtbo
 	return setmetatable(data, ModelHurtbox)
 end
 
--- Moves the hurtbox to where the model is now. Call it every frame, after the model has moved.
 function ModelHurtbox.Update(self: ModelHurtbox): ()
 	self.Hurtbox:MoveTo(self._box:GetCenter())
 end
