@@ -30,7 +30,7 @@ local function isDashJumpEntry(context): boolean
         return true
     end
 
-    return context.PreviousStateId == MovementStateID.WallSlide and context.InputController.IsHoldingDash
+    return context.PreviousStateId == MovementStateID.WallSlide and context.PlayerInput:IsHoldingDash()
 end
 
 function AirborneState._resolveAirborneVariables(self: AirborneState, stateMachine: StateMachine): ()
@@ -73,7 +73,7 @@ local function attemptExitToWallSlideState(stateMachine: StateMachine): boolean
     end
 
     local context = stateMachine.Context
-    local moveDirection = context.InputController.MoveDirection
+    local moveDirection = context.PlayerInput:GetMoveDirection()
     if moveDirection == Direction.None then
         return false
     end
@@ -117,7 +117,7 @@ end
 
 local function attemptCutJumpEarly(stateMachine: StateMachine): ()
     local context = stateMachine.Context
-    if context.InputController.IsHoldingJump or context.PhysicsResolver.Velocity.Y <= 0 then
+    if context.PlayerInput:IsHoldingJump() or context.PhysicsResolver.Velocity.Y <= 0 then
         return
     end
 
@@ -126,7 +126,7 @@ end
 
 local function driveHorizontalMovement(stateMachine: StateMachine): ()
     local context = stateMachine.Context
-    local moveDirection = context.InputController.MoveDirection
+    local moveDirection = context.PlayerInput:GetMoveDirection()
     local speed: number = if context:HasFlag(DASH_JUMP_FLAG) then MovementConfig.DashSpeed else MovementConfig.MoveSpeed
     context.PhysicsResolver:MoveInDirection(moveDirection, speed)
 end

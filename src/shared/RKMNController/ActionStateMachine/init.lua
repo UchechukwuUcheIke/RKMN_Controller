@@ -4,11 +4,11 @@ local ActionStateMachine = {}
 ActionStateMachine.__index = ActionStateMachine
 
 local Types = require(script.Parent.Types)
-local InputControllerModule = require(script.Parent.InputController)
+local PlayerInputFacadeModule = require(game:GetService("ReplicatedStorage").PlayerInput.PlayerInputFacade)
 
 export type ActionStateMachine = typeof(setmetatable({} :: Types.ActionStateMachineData, ActionStateMachine))
 
-function ActionStateMachine.new(InputController: InputControllerModule.InputController): ActionStateMachine
+function ActionStateMachine.new(PlayerInput: PlayerInputFacadeModule.PlayerInputFacade): ActionStateMachine
     local self = setmetatable({}, ActionStateMachine)
 
     return self

@@ -33,7 +33,7 @@ end
 
 local function attemptExitToIdleOrWalkState(stateMachine: StateMachine): ()
     local context: StateMachineContext = stateMachine.Context
-    local moveDirection = context.InputController.MoveDirection
+    local moveDirection = context.PlayerInput:GetMoveDirection()
     local isMoving: boolean = moveDirection ~= Direction.None
     local newStateID: string = if isMoving then MovementStateID.Walk else MovementStateID.Idle 
     stateMachine:ChangeState(newStateID)
@@ -41,30 +41,30 @@ end
 
 
 local function attemptExitToJumpState(stateMachine: StateMachine): boolean
-    local inputController = stateMachine.Context.InputController
-    if not inputController.HasBufferedJump then
+    local playerInput = stateMachine.Context.PlayerInput
+    if not playerInput:HasBufferedJump() then
         return false
     end
 
-    inputController:ConsumeJumpBuffer()
+    playerInput:ConsumeJumpBuffer()
     stateMachine:ChangeState(MovementStateID.Jump)
     return true
 end
 
 local function attemptExitToDashState(stateMachine: StateMachine): boolean
-    local inputController = stateMachine.Context.InputController
-    if not inputController.HasBufferedDash then
+    local playerInput = stateMachine.Context.PlayerInput
+    if not playerInput:HasBufferedDash() then
         return false
     end
 
-    inputController:ConsumeDashBuffer()
+    playerInput:ConsumeDashBuffer()
     stateMachine:ChangeState(MovementStateID.Dash)
     return true
 end
 
 local function drivePlayerMovement(stateMachine: StateMachine): ()
     local context: StateMachineContext = stateMachine.Context
-    local moveDirection = context.InputController.MoveDirection
+    local moveDirection = context.PlayerInput:GetMoveDirection()
     context.PhysicsResolver:MoveInDirection(moveDirection, MovementConfig.MoveSpeed)
 end
 
@@ -83,7 +83,7 @@ function GroundedState.OnStep(self: GroundedState, stateMachine: StateMachine, d
 end
 
 local function restorePlayerControls(stateMachine: StateMachine): ()
-    stateMachine.Context.InputController:SetEnabled(true)
+    stateMachine.Context.PlayerInput:SetEnabled(true)
 end
 
 function GroundedState.OnExit(self: GroundedState, stateMachine: StateMachine): ()

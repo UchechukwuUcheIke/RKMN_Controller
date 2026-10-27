@@ -40,8 +40,8 @@ function KinematicWorld._processEntity(self: KinematicWorld, entityController: R
         entityController.TimerUtility:Step(deltaTime) 
     end
 
-	if entityController.InputController then 
-        entityController.InputController:Poll(deltaTime)
+	if entityController.PlayerInput then 
+        entityController.PlayerInput:Poll(deltaTime)
     end
 	
 	if entityController.CollisionQuery then

@@ -25,7 +25,7 @@ end
 
 local function isHoldingTowardWall(stateMachine: StateMachine): boolean
     local context = stateMachine.Context
-    local moveDirection: Direction = context.InputController.MoveDirection
+    local moveDirection: Direction = context.PlayerInput:GetMoveDirection()
     if moveDirection == Direction.None then
         return false
     end
@@ -43,12 +43,12 @@ local function attemptExitToIdleState(stateMachine: StateMachine): boolean
 end
 
 local function attemptExitToJumpState(stateMachine: StateMachine): boolean
-    local inputController = stateMachine.Context.InputController
-    if not inputController.HasBufferedJump then
+    local playerInput = stateMachine.Context.PlayerInput
+    if not playerInput:HasBufferedJump() then
         return false
     end
 
-    inputController:ConsumeJumpBuffer()
+    playerInput:ConsumeJumpBuffer()
     stateMachine:ChangeState(MovementStateID.Jump)
     return true
 end

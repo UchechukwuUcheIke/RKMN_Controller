@@ -14,7 +14,7 @@ local RKMNController = require(RKMNControllerFolder.RKMNController)
 local KinematicWorld = require(ReplicatedStorage.KinematicWorld)
 
 local TimerUtility = require(RKMNControllerFolder.TimerUtility)
-local InputController = require(RKMNControllerFolder.InputController)
+local PlayerInputFacade = require(ReplicatedStorage.PlayerInput.PlayerInputFacade)
 local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
 local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
@@ -23,7 +23,7 @@ local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
 -- `method` is the method the world calls; `takesDt` is whether it receives deltaTime.
 local SUBSYSTEMS = {
 	{ field = "TimerUtility", class = TimerUtility, method = "Step", takesDt = true },
-	{ field = "InputController", class = InputController, method = "Poll", takesDt = true },
+	{ field = "PlayerInput", class = PlayerInputFacade, method = "Poll", takesDt = true },
 	{ field = "CollisionQuery", class = CollisionQuery, method = "UpdateState", takesDt = false },
 	{ field = "MovementStateMachine", class = MovementStateMachine, method = "Update", takesDt = true },
 	{ field = "PhysicsResolver", class = PhysicsResolver, method = "Resolve", takesDt = true },
@@ -293,14 +293,14 @@ describe("KinematicWorld", function()
 		end
 
 		it("should keep stepping other players when one has a missing subsystem", function()
-			local incomplete = makeController("1", { InputController = true })
+			local incomplete = makeController("1", { PlayerInput = true })
 			local complete = makeController("2")
 			world:RegisterPlayer(incomplete.Instance)
 			world:RegisterPlayer(complete.Instance)
 
 			world:StepWorld(1 / 60)
 
-			local expected = expectedLog({ "1" }, "InputController")
+			local expected = expectedLog({ "1" }, "PlayerInput")
 			for _, entry in ipairs(expectedLog({ "2" })) do
 				table.insert(expected, entry)
 			end

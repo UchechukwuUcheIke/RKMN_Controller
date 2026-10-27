@@ -26,12 +26,12 @@ function DashState.OnEnter(self: DashState, stateMachine: StateMachine): ()
 end
 
 local function attemptExitToJumpState(stateMachine: StateMachine): boolean
-	local inputController = stateMachine.Context.InputController
-	if not inputController.HasBufferedJump then
+	local playerInput = stateMachine.Context.PlayerInput
+	if not playerInput:HasBufferedJump() then
 		return false
 	end
 
-	inputController:ConsumeJumpBuffer()
+	playerInput:ConsumeJumpBuffer()
 	stateMachine:ChangeState(MovementStateID.Jump)
 	return true
 end
@@ -41,7 +41,7 @@ local function attemptExitToIdleState(stateMachine: StateMachine)
 	local lastSweep = context.CollisionQuery.LastSweepResolution
 	local isBlocked: boolean = lastSweep ~= nil and (lastSweep.SurfaceHits.HitWall or lastSweep.SurfaceHits.HitLedge)
 	local isDashFinished: boolean = context.TimerUtility:IsComplete(TimerID.Dash)
-	local hasReleasedDash: boolean = not context.InputController.IsHoldingDash
+	local hasReleasedDash: boolean = not context.PlayerInput:IsHoldingDash()
 
 	if isBlocked or isDashFinished or hasReleasedDash then
 		stateMachine:ChangeState(MovementStateID.Idle)

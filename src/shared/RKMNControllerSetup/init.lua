@@ -12,7 +12,10 @@ local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
 local MovementStats = require(RKMNControllerFolder.MovementStats)
 local TimerUtility = require(RKMNControllerFolder.TimerUtility)
 local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
-local InputController = require(RKMNControllerFolder.InputController)
+local PlayerInputFolder = ReplicatedStorage.PlayerInput
+local InputMapper = require(PlayerInputFolder.InputMapper)
+local InputSchemeRegistry = require(PlayerInputFolder.InputSchemeRegistry)
+local PlayerInputFacade = require(PlayerInputFolder.PlayerInputFacade)
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
 local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
 local StateMachineContext = require(RKMNControllerFolder.FSMContext)
@@ -21,7 +24,7 @@ local DiagnosticControllerQuery = require(DebugModuleFolder.DiagnosticCollisionQ
 type CollisionConstants = CollisionConstants.CollisionConstants
 type TimerUtility = TimerUtility.TimerUtility
 type CollisionQuery = CollisionQuery.CollisionQuery
-type InputController = InputController.InputController
+type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type MovementStateMachine = MovementStateMachine.MovementStateMachine
 type PhysicsResolver = PhysicsResolver.PhysicsResolver
 type RKMNController = RKMNController.RKMNController
@@ -47,11 +50,13 @@ end
 local function makeDependencies(character: Model, constants: CollisionConstants, collisionQuery: CollisionQuery): RKMNControllerDependencies
     local movementStats = MovementStats.new()
     local timerUtility = TimerUtility.new()
-    local inputController = InputController.new(timerUtility)
+    local inputMapper = InputMapper.new()
+    inputMapper:LoadControlScheme(InputSchemeRegistry.Standard)
+    local playerInput = PlayerInputFacade.new(timerUtility, inputMapper)
     local physicsResolver = PhysicsResolver.new(character, movementStats, collisionQuery)
 
     local FSMContextDependencies: StateMachineContextDependencies = {
-        InputController  = inputController,
+        PlayerInput = playerInput,
         CollisionQuery = collisionQuery,
         PhysicsResolver = physicsResolver,
         TimerUtility = timerUtility
@@ -63,7 +68,7 @@ local function makeDependencies(character: Model, constants: CollisionConstants,
         Constants = constants,
         TimerUtility = timerUtility,
         CollisionQuery = collisionQuery,
-        InputController = inputController,
+        PlayerInput = playerInput,
         MovementStateMachine = movementStateMachine,
         PhysicsResolver = physicsResolver
     }

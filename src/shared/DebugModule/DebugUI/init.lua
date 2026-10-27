@@ -111,7 +111,7 @@ function DebugUI._createAndMountMovementStateMachineWidget(self: DebugUI): ()
 end
 
 function DebugUI._createAndMountInputWidget(self: DebugUI): ()
-	local inputWidget: InputWidget = InputWidget.new(self._kinematicController.InputController)
+	local inputWidget: InputWidget = InputWidget.new(self._kinematicController.PlayerInput)
 	self.inputWidget = inputWidget
 	self.inputWidget:MountTo(self._frame)
 end

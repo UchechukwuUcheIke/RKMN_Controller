@@ -6,15 +6,14 @@ local WidgetsFolder = script.Parent
 local DataRow = require(WidgetsFolder.DataRow)
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RKMNControllerFolder = ReplicatedStorage.RKMNController
-local InputController = require(RKMNControllerFolder.InputController) 
+local PlayerInputFacade = require(ReplicatedStorage.PlayerInput.PlayerInputFacade)
 
-type InputController = InputController.InputController
+type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type DataRow = DataRow.DataRow
 
 type InputWidgetData = {
     IsMounted: boolean,
-    _inputController: InputController,
+    _playerInput: PlayerInputFacade,
     _canvas: Frame,
     _moveDirectionRow: DataRow,
     _isHoldingJumpRow: DataRow
@@ -27,10 +26,10 @@ export type InputWidget = typeof(setmetatable(
     {} :: InputWidgetPrototype
 ))
 
-function InputWidget.new(inputController: InputController): InputWidget
+function InputWidget.new(playerInput: PlayerInputFacade): InputWidget
     local data = {
         IsMounted = false,
-        _inputController = inputController,
+        _playerInput = playerInput,
     } :: InputWidgetData
 
     local self = setmetatable(data, InputWidget)
@@ -50,8 +49,8 @@ function InputWidget.Dismount(self: InputWidget)
 end
 
 function InputWidget.Render(self: InputWidget)
-    self._moveDirectionRow:UpdateValue(tostring(self._inputController.MoveDirection))
-    self._isHoldingJumpRow:UpdateValue(tostring(self._inputController.IsHoldingJump))
+    self._moveDirectionRow:UpdateValue(tostring(self._playerInput:GetMoveDirection()))
+    self._isHoldingJumpRow:UpdateValue(tostring(self._playerInput:IsHoldingJump()))
 end
 
 function InputWidget.Destroy(self: InputWidget)

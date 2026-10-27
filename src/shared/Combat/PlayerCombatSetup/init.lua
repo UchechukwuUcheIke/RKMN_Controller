@@ -71,11 +71,11 @@ function PlayerCombatSetup.Setup(controller: RKMNController, character: Model): 
 	end)
 	weapons:Register(weapon)
 
-	local inputController = controller.InputController
-	local pressConnection = inputController.OnShootBegan:Connect(function()
+	local playerInput = controller.PlayerInput
+	local pressConnection = playerInput.OnTriggerPressed:Connect(function()
 		weapon:PressTrigger()
 	end)
-	local releaseConnection = inputController.OnShootEnded:Connect(function()
+	local releaseConnection = playerInput.OnTriggerReleased:Connect(function()
 		weapon:ReleaseTrigger()
 	end)
 

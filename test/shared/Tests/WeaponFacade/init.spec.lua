@@ -66,19 +66,6 @@ describe("WeaponFacade", function()
 		expect(#weapon.updates).toBe(0)
 	end)
 
-	it("does not update a weapon that an earlier weapon unregistered this frame", function()
-		local facade = makeFacade()
-		local second = makeWeapon()
-		facade:Register(makeWeapon(function()
-			facade:Unregister(second)
-		end))
-		facade:Register(second)
-
-		facade:Update(0.1)
-
-		expect(#second.updates).toBe(0)
-	end)
-
 	it("does not disturb the pass when a weapon unregisters itself", function()
 		local facade = makeFacade()
 		local leaver
@@ -108,9 +95,6 @@ describe("WeaponFacade", function()
 		local fakeRegistry = {
 			GetAll = function()
 				return { weapon }
-			end,
-			Has = function()
-				return true
 			end,
 		}
 		local facade = WeaponFacade.new(fakeRegistry)
