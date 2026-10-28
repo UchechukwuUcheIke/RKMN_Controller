@@ -138,6 +138,10 @@ function PlayerInputFacade.BindVirtualButton(self: PlayerInputFacade, actionName
     self._rawInputObserver:BindVirtualButton(actionName, button)
 end
 
+function PlayerInputFacade.ReleaseVirtualHolds(self: PlayerInputFacade): ()
+    self._rawInputObserver:ReleaseAllVirtual()
+end
+
 function PlayerInputFacade.GetMoveDirection(self: PlayerInputFacade): Direction
     return self._directionResolver:GetDirection()
 end

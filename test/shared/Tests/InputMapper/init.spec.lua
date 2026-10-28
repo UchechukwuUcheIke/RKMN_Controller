@@ -7,7 +7,8 @@ local it = JestGlobals.it
 local expect = JestGlobals.expect
 
 local InputMapper = require(ReplicatedStorage.PlayerInput.InputMapper)
-local InputSchemeRegistry = require(ReplicatedStorage.PlayerInput.InputSchemeRegistry)
+local KeyboardSchemes = require(ReplicatedStorage.PlayerInput.KeyboardSchemes)
+local GamepadSchemes = require(ReplicatedStorage.PlayerInput.GamepadSchemes)
 
 local function makeMapper()
 	local mapper = InputMapper.new()
@@ -36,13 +37,15 @@ describe("InputMapper", function()
 	end)
 
 	it("loads every registered scheme", function()
-		for name, scheme in pairs(InputSchemeRegistry) do
-			local ok, message = pcall(function()
-				InputMapper.new():LoadControlScheme(scheme)
-			end)
-			expect(ok).toBe(true)
-			if not ok then
-				error(`{name}: {message}`)
+		for deviceName, schemes in pairs({ Keyboard = KeyboardSchemes, Gamepad = GamepadSchemes }) do
+			for name, scheme in pairs(schemes) do
+				local ok, message = pcall(function()
+					InputMapper.new():LoadControlScheme(scheme)
+				end)
+				if not ok then
+					error(`{deviceName}.{name}: {message}`)
+				end
+				expect(ok).toBe(true)
 			end
 		end
 	end)

@@ -180,6 +180,13 @@ function RawInputObserver._releaseVirtual(self: RawInputObserver, actionName: Ac
     end
 end
 
+-- For when the buttons stop being usable (hidden or destroyed) mid-hold and no release will arrive.
+function RawInputObserver.ReleaseAllVirtual(self: RawInputObserver): ()
+    for actionName in pairs(self._virtualHolds) do
+        self:_releaseVirtual(actionName)
+    end
+end
+
 local function isPointerPress(input: InputObject): boolean
     return input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1
 end

@@ -9,14 +9,14 @@ local expect = JestGlobals.expect
 local Direction = require(ReplicatedStorage.Data.Direction)
 local TimerUtility = require(ReplicatedStorage.RKMNController.TimerUtility)
 local InputMapper = require(ReplicatedStorage.PlayerInput.InputMapper)
-local InputSchemeRegistry = require(ReplicatedStorage.PlayerInput.InputSchemeRegistry)
+local KeyboardSchemes = require(ReplicatedStorage.PlayerInput.KeyboardSchemes)
 local PlayerInputFacade = require(ReplicatedStorage.PlayerInput.PlayerInputFacade)
 
 -- Real keyboard state can't be driven from a test, so actions are fed through the observer's signals.
 local function makeFacade()
 	local timer = TimerUtility.new()
 	local mapper = InputMapper.new()
-	mapper:LoadControlScheme(InputSchemeRegistry.Standard)
+	mapper:LoadControlScheme(KeyboardSchemes.Standard)
 	local facade = PlayerInputFacade.new(timer, mapper)
 
 	local events = { jump = 0, dash = 0, pressed = 0, released = 0 }

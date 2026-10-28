@@ -31,7 +31,6 @@ function InputMapper.new(): InputMapper
     return self :: InputMapper
 end
 
--- Errors without changing anything if two actions share a binding.
 function InputMapper.LoadControlScheme(self: InputMapper, newScheme: InputScheme): ()
     local scheme: InputScheme = {}
     local keyToActionMap: {[InputBinding]: ActionID} = {}
