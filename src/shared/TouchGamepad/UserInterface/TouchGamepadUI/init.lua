@@ -8,6 +8,7 @@ local ActionButtonModule = require(script.Parent.ActionButton)
 
 type ActionID = InputAction.ActionID
 type ActionButton = ActionButtonModule.ActionButton
+type ButtonShape = ActionButtonModule.ButtonShape
 
 type TouchGamepadUIData = {
     _screenGui: ScreenGui,
@@ -23,6 +24,15 @@ local BUTTON_LABELS: {[ActionID]: string} = {
     [InputAction.Dash] = "Dash",
     [InputAction.Shoot] = "Shoot",
 }
+
+local BUTTON_SHAPES: {[ActionID]: ButtonShape} = {
+    [InputAction.Left] = "Rounded",
+    [InputAction.Right] = "Rounded",
+    [InputAction.Jump] = "Circle",
+    [InputAction.Dash] = "Circle",
+    [InputAction.Shoot] = "Circle",
+}
+
 -- Builds its own ScreenGui under `parent`, so nothing has to exist in Studio beforehand.
 function TouchGamepadUI.new(parent: Instance): TouchGamepadUI
     local self = setmetatable({}, TouchGamepadUI)
@@ -37,7 +47,12 @@ function TouchGamepadUI.new(parent: Instance): TouchGamepadUI
     self._buttons = {}
 
     for _, actionName in pairs(InputAction) do
-        self._buttons[actionName] = ActionButtonModule.new(actionName, BUTTON_LABELS[actionName], screenGui)
+        self._buttons[actionName] = ActionButtonModule.new(
+            actionName,
+            BUTTON_LABELS[actionName],
+            screenGui,
+            BUTTON_SHAPES[actionName]
+        )
     end
 
     return self :: TouchGamepadUI

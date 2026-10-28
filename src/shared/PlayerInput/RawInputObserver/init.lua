@@ -18,7 +18,6 @@ type Connection = { Disconnect: (self: any) -> () }
 type RawInputObserverData = {
     _mapper: InputMapper,
     _connections: {Connection},
-    -- Bindings whose press was accepted, so a release is only reported for a press we reported.
     _acceptedBindings: {[InputBinding]: ActionID},
     _virtualHolds: {[ActionID]: boolean},
     OnActionBegan: Signal,

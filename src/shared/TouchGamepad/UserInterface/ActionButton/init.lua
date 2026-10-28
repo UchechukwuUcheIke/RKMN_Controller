@@ -8,6 +8,13 @@ type ButtonTransform = TouchGamepadLayoutRegistry.ButtonTransform
 local RESTING_TRANSPARENCY = 0.5
 local PRESSED_TRANSPARENCY = 0.2
 
+export type ButtonShape = "Circle" | "Rounded"
+
+local CORNER_RADII: {[ButtonShape]: UDim} = {
+    Circle = UDim.new(0.5, 0),
+    Rounded = UDim.new(0, 12),
+}
+
 type ActionButtonData = {
     _button: TextButton,
     _connections: {RBXScriptConnection}
@@ -19,7 +26,8 @@ local function isPointerPress(input: InputObject): boolean
     return input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1
 end
 
-function ActionButton.new(name: string, label: string, parent: Instance?): ActionButton
+-- A circle only reads as one when the button's size is square.
+function ActionButton.new(name: string, label: string, parent: Instance?, shape: ButtonShape?): ActionButton
     local self = setmetatable({}, ActionButton)
 
     local button = Instance.new("TextButton")
@@ -27,6 +35,11 @@ function ActionButton.new(name: string, label: string, parent: Instance?): Actio
     button.Text = label
     button.BackgroundTransparency = RESTING_TRANSPARENCY
     button.AutoButtonColor = false
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = CORNER_RADII[shape or "Rounded"]
+    corner.Parent = button
+
     button.Parent = parent
 
     self._button = button
