@@ -9,6 +9,9 @@ local expect = JestGlobals.expect
 local Signal = require(ReplicatedStorage.DevPackages.goodsignal)
 local InputMapper = require(ReplicatedStorage.PlayerInput.InputMapper)
 local DeviceDetector = require(ReplicatedStorage.PlayerInput.DeviceDetector)
+local ControlProfile = require(ReplicatedStorage.PlayerInput.ControlProfile)
+local KeyboardSchemes = require(ReplicatedStorage.PlayerInput.KeyboardSchemes)
+local GamepadSchemes = require(ReplicatedStorage.PlayerInput.GamepadSchemes)
 
 -- Stands in for UserInputService, whose last input type can't be driven from a test.
 local function makeFakeInputService(startingInputType)
@@ -26,7 +29,8 @@ end
 local function makeDetector(startingInputType)
 	local service = makeFakeInputService(startingInputType)
 	local mapper = InputMapper.new()
-	return DeviceDetector.new(service, mapper), service, mapper
+	local profile = ControlProfile.new(KeyboardSchemes.Standard, GamepadSchemes.Standard)
+	return DeviceDetector.new(service, mapper, profile), service, mapper, profile
 end
 
 describe("DeviceDetector", function()
@@ -77,6 +81,34 @@ describe("DeviceDetector", function()
 		service:Switch(Enum.UserInputType.Gamepad2)
 
 		expect(announced).toBe(0)
+	end)
+
+	it("loads the player's edited scheme for the device in use", function()
+		local _, service, mapper, profile = makeDetector(Enum.UserInputType.Keyboard)
+		profile:BindKey("Keyboard", "Jump", Enum.KeyCode.J)
+
+		expect(mapper:GetActionForKey(Enum.KeyCode.J)).toBe("Jump")
+
+		service:Switch(Enum.UserInputType.Gamepad1)
+		service:Switch(Enum.UserInputType.Keyboard)
+
+		expect(mapper:GetActionForKey(Enum.KeyCode.J)).toBe("Jump")
+	end)
+
+	it("applies an edit to the device in use straight away", function()
+		local _, _, mapper, profile = makeDetector(Enum.UserInputType.Gamepad1)
+
+		profile:BindKey("Gamepad", "Jump", Enum.KeyCode.ButtonY)
+
+		expect(mapper:GetActionForKey(Enum.KeyCode.ButtonY)).toBe("Jump")
+	end)
+
+	it("leaves the mapper alone when a different device is edited", function()
+		local _, _, mapper, profile = makeDetector(Enum.UserInputType.Keyboard)
+
+		profile:BindKey("Gamepad", "Jump", Enum.KeyCode.ButtonY)
+
+		expect(mapper:GetActionForKey(Enum.KeyCode.ButtonY)).toBeNil()
 	end)
 
 	it("stops reacting once destroyed", function()

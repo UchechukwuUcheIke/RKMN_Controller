@@ -47,6 +47,20 @@ describe("PlayerInputFacade", function()
 		expect(facade:HasBufferedJump()).toBe(false)
 	end)
 
+	it("announces a menu press whether or not gameplay input is enabled", function()
+		local facade, _, _, press = makeFacade()
+		local menuPresses = 0
+		facade.OnMenuPressed:Connect(function()
+			menuPresses += 1
+		end)
+
+		press("Menu")
+		facade:SetEnabled(true)
+		press("Menu")
+
+		expect(menuPresses).toBe(2)
+	end)
+
 	it("buffers and announces a jump press", function()
 		local facade, _, events, press = makeFacade()
 		facade:SetEnabled(true)

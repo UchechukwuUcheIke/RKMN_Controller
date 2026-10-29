@@ -23,6 +23,7 @@ local BUTTON_LABELS: {[ActionID]: string} = {
     [InputAction.Jump] = "Jump",
     [InputAction.Dash] = "Dash",
     [InputAction.Shoot] = "Shoot",
+    [InputAction.Menu] = "Menu",
 }
 
 local BUTTON_SHAPES: {[ActionID]: ButtonShape} = {
@@ -31,6 +32,7 @@ local BUTTON_SHAPES: {[ActionID]: ButtonShape} = {
     [InputAction.Jump] = "Circle",
     [InputAction.Dash] = "Circle",
     [InputAction.Shoot] = "Circle",
+    [InputAction.Menu] = "Rounded",
 }
 
 -- Builds its own ScreenGui under `parent`, so nothing has to exist in Studio beforehand.

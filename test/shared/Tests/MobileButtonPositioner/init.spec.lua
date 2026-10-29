@@ -10,7 +10,7 @@ local MobileButtonPositioner = require(ReplicatedStorage.TouchGamepad.MobileButt
 local ActionButton = require(ReplicatedStorage.TouchGamepad.UserInterface.ActionButton)
 local TouchGamepadLayoutRegistry = require(ReplicatedStorage.TouchGamepad.TouchGamepadLayoutRegistry)
 
-local ACTIONS = { "Left", "Right", "Jump", "Dash", "Shoot" }
+local ACTIONS = { "Left", "Right", "Jump", "Dash", "Shoot", "Menu" }
 
 describe("MobileButtonPositioner", function()
 	it("applies a layout's position, size and anchor to each registered button", function()

@@ -15,6 +15,9 @@ local TimerUtility = require(RKMNControllerFolder.TimerUtility)
 local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
 local PlayerInputFolder = ReplicatedStorage.PlayerInput
 local InputMapper = require(PlayerInputFolder.InputMapper)
+local ControlProfile = require(PlayerInputFolder.ControlProfile)
+local KeyboardSchemes = require(PlayerInputFolder.KeyboardSchemes)
+local GamepadSchemes = require(PlayerInputFolder.GamepadSchemes)
 local DeviceDetector = require(PlayerInputFolder.DeviceDetector)
 local PlayerInputFacade = require(PlayerInputFolder.PlayerInputFacade)
 local TouchGamepadFolder = ReplicatedStorage.TouchGamepad
@@ -103,6 +106,9 @@ local function makeTouchGamepad(deviceDetector: DeviceDetector, playerInput: Pla
     return TouchGamepadPresenter.new(deviceDetector, playerInput, gamepadUI, positioner, TouchGamepadLayoutRegistry.Standard)
 end
 
+-- The player's controls outlive any one character, so the profile is created once rather than per Setup.
+local controlProfile = ControlProfile.new(KeyboardSchemes.Standard, GamepadSchemes.Standard)
+
 -- Setup runs per character, so the previous character's device tracking and touch controls are torn down first.
 -- The touch controls must go before their PlayerInputFacade does.
 local activeDeviceDetector: DeviceDetector? = nil
@@ -123,9 +129,9 @@ function RKMNControllerSetup.Setup(character: Model): RKMNController
     local screenGui = mountScreenGui()
     local world = game.Workspace
 
-    -- The detector loads the keyboard or gamepad scheme into the mapper for the device in use.
+    -- The detector loads the profile's scheme for the device in use into the mapper.
     local inputMapper = InputMapper.new()
-    local deviceDetector = DeviceDetector.new(UserInputService, inputMapper)
+    local deviceDetector = DeviceDetector.new(UserInputService, inputMapper, controlProfile)
 
     local dependencies: RKMNControllerDependencies = makeDebugDependencies(character, inputMapper)
     local kinematicController = RKMNController.new(dependencies)

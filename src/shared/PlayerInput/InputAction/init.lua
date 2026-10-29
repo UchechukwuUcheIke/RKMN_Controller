@@ -1,5 +1,5 @@
 --!strict
-export type ActionID = "Left" | "Right" | "Jump" | "Dash" | "Shoot"
+export type ActionID = "Left" | "Right" | "Jump" | "Dash" | "Shoot" | "Menu"
 
 local InputAction = {
     Left = "Left" :: ActionID,
@@ -7,6 +7,7 @@ local InputAction = {
     Jump = "Jump" :: ActionID,
     Dash = "Dash" :: ActionID,
     Shoot = "Shoot" :: ActionID,
+    Menu = "Menu" :: ActionID,
 }
 
 table.freeze(InputAction)

@@ -48,6 +48,11 @@ TouchGamepadLayoutRegistry.Standard = freezeLayout({
         Size = UDim2.new(0, 70, 0, 70),
         AnchorPoint = CENTERED
     },
+    [InputAction.Menu] = {
+        Position = UDim2.new(1, -50, 0, 50),
+        Size = UDim2.new(0, 70, 0, 40),
+        AnchorPoint = CENTERED
+    },
 })
 
 table.freeze(TouchGamepadLayoutRegistry)

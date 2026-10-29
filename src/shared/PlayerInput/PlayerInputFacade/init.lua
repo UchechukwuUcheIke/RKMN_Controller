@@ -39,6 +39,7 @@ type PlayerInputFacadeData = {
     OnDashPressed: Signal,
     OnTriggerPressed: Signal,
     OnTriggerReleased: Signal,
+    OnMenuPressed: Signal,
 
     _actionConnectionBegan: Connection,
     _actionConnectionEnded: Connection
@@ -63,6 +64,7 @@ function PlayerInputFacade.new(timerUtility: TimerUtility, inputMapper: InputMap
     self.OnDashPressed = Signal.new()
     self.OnTriggerPressed = Signal.new()
     self.OnTriggerReleased = Signal.new()
+    self.OnMenuPressed = Signal.new()
 
     self._actionConnectionBegan = self._rawInputObserver.OnActionBegan:Connect(function(actionName: ActionID)
         self:_handleActionBegan(actionName)
@@ -76,6 +78,12 @@ function PlayerInputFacade.new(timerUtility: TimerUtility, inputMapper: InputMap
 end
 
 function PlayerInputFacade._handleActionBegan(self: PlayerInputFacade, actionName: ActionID): ()
+    -- The menu has to open while gameplay input is disabled, which is when it is most likely to be open.
+    if actionName == InputAction.Menu then
+        self.OnMenuPressed:Fire()
+        return
+    end
+
     if not self._isEnabled then
         return
     end
@@ -185,6 +193,7 @@ function PlayerInputFacade.Destroy(self: PlayerInputFacade): ()
     self.OnDashPressed:DisconnectAll()
     self.OnTriggerPressed:DisconnectAll()
     self.OnTriggerReleased:DisconnectAll()
+    self.OnMenuPressed:DisconnectAll()
     setmetatable(self :: any, nil)
     table.freeze(self)
 end
