@@ -142,6 +142,85 @@ describe("PlayerInputFacade", function()
 		expect(facade:IsCharging()).toBe(false)
 	end)
 
+	it("ignores gameplay presses while suspended, then listens again on resume", function()
+		local facade, _, events, press = makeFacade()
+		facade:SetEnabled(true)
+
+		facade:SuspendGameplayInput()
+		press("Jump")
+		expect(events.jump).toBe(0)
+
+		facade:ResumeGameplayInput()
+		press("Jump")
+		expect(events.jump).toBe(1)
+	end)
+
+	it("clears buffers, direction and held state when suspended", function()
+		local facade, _, events, press = makeFacade()
+		facade:SetEnabled(true)
+		press("Jump")
+		press("Shoot")
+
+		facade:SuspendGameplayInput()
+
+		expect(facade:HasBufferedJump()).toBe(false)
+		expect(facade:GetMoveDirection()).toBe(Direction.None)
+		expect(facade:IsHoldingJump()).toBe(false)
+		expect(facade:IsCharging()).toBe(false)
+		expect(events.released).toBe(1)
+	end)
+
+	it("keeps gameplay off after resume when the game has disabled it", function()
+		local facade, _, events, press = makeFacade()
+		facade:SetEnabled(true)
+
+		facade:SuspendGameplayInput()
+		facade:SetEnabled(false)
+		facade:ResumeGameplayInput()
+		press("Jump")
+
+		expect(events.jump).toBe(0)
+	end)
+
+	it("keeps gameplay off when the game re-enables it while suspended", function()
+		local facade, _, events, press = makeFacade()
+
+		facade:SuspendGameplayInput()
+		facade:SetEnabled(true)
+		press("Jump")
+
+		expect(events.jump).toBe(0)
+	end)
+
+	it("announces a menu press while gameplay input is suspended", function()
+		local facade, _, _, press = makeFacade()
+		local menuPresses = 0
+		facade.OnMenuPressed:Connect(function()
+			menuPresses += 1
+		end)
+
+		facade:SuspendGameplayInput()
+		press("Menu")
+
+		expect(menuPresses).toBe(1)
+	end)
+
+	it("does not announce a menu press while the menu key is muted", function()
+		local facade, _, _, press = makeFacade()
+		local menuPresses = 0
+		facade.OnMenuPressed:Connect(function()
+			menuPresses += 1
+		end)
+
+		facade:MuteMenuKey()
+		press("Menu")
+		expect(menuPresses).toBe(0)
+
+		facade:UnmuteMenuKey()
+		press("Menu")
+		expect(menuPresses).toBe(1)
+	end)
+
 	it("stops reacting once destroyed", function()
 		local facade, _, events = makeFacade()
 		facade:SetEnabled(true)

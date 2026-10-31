@@ -33,6 +33,8 @@ type PlayerInputFacadeData = {
     _directionResolver: DirectionResolver,
 
     _isEnabled: boolean,
+    _isSuspended: boolean,
+    _isMenuKeyMuted: boolean,
     _isTriggerHeld: boolean,
 
     OnJumpPressed: Signal,
@@ -53,6 +55,8 @@ function PlayerInputFacade.new(timerUtility: TimerUtility, inputMapper: InputMap
     local self = setmetatable({}, PlayerInputFacade)
 
     self._isEnabled = false
+    self._isSuspended = false
+    self._isMenuKeyMuted = false
     self._isTriggerHeld = false
 
     self._rawInputObserver = RawInputObserver.new(inputMapper)
@@ -77,30 +81,46 @@ function PlayerInputFacade.new(timerUtility: TimerUtility, inputMapper: InputMap
     return self :: PlayerInputFacade
 end
 
+function PlayerInputFacade._handleMenuButtonPressed(self: PlayerInputFacade): ()
+    if not self._isMenuKeyMuted then
+            self.OnMenuPressed:Fire()
+    end
+end
+
+function PlayerInputFacade._handleJumpButtonPressed(self: PlayerInputFacade): ()
+    self._jumpBuffer:Fill()
+    self.OnJumpPressed:Fire()
+end
+
+function PlayerInputFacade._handleDashButtonPressed(self: PlayerInputFacade): ()
+    self._dashBuffer:Fill()
+    self.OnDashPressed:Fire()
+end
+
+function PlayerInputFacade._handleTriggerButtonPressed(self: PlayerInputFacade): ()
+    self._isTriggerHeld = true
+    self.OnTriggerPressed:Fire()
+end
+
 function PlayerInputFacade._handleActionBegan(self: PlayerInputFacade, actionName: ActionID): ()
-    -- The menu has to open while gameplay input is disabled, which is when it is most likely to be open.
     if actionName == InputAction.Menu then
-        self.OnMenuPressed:Fire()
+        self:_handleMenuButtonPressed()
         return
     end
 
-    if not self._isEnabled then
+    if not self:_isGameplayActive() then
         return
     end
 
     if actionName == InputAction.Jump then
-        self._jumpBuffer:Fill()
-        self.OnJumpPressed:Fire()
+        self:_handleJumpButtonPressed()
     elseif actionName == InputAction.Dash then
-        self._dashBuffer:Fill()
-        self.OnDashPressed:Fire()
+        self:_handleDashButtonPressed()
     elseif actionName == InputAction.Shoot then
-        self._isTriggerHeld = true
-        self.OnTriggerPressed:Fire()
+        self:_handleTriggerButtonPressed()
     end
 end
 
--- Handled while disabled too, so a trigger pressed while enabled is always released.
 function PlayerInputFacade._handleActionEnded(self: PlayerInputFacade, actionName: ActionID): ()
     if actionName == InputAction.Shoot then
         self:_releaseTrigger()
@@ -122,24 +142,54 @@ function PlayerInputFacade._resolveMovement(self: PlayerInputFacade): ()
     self._directionResolver:Resolve(isLeft, isRight)
 end
 
+function PlayerInputFacade._isGameplayActive(self: PlayerInputFacade): boolean
+    return self._isEnabled and not self._isSuspended
+end
+
+function PlayerInputFacade._clearGameplayState(self: PlayerInputFacade): ()
+    self._jumpBuffer:Consume()
+    self._dashBuffer:Consume()
+    self._directionResolver:Resolve(false, false)
+    self:_releaseTrigger()
+end
+
 function PlayerInputFacade.Poll(self: PlayerInputFacade, _deltaTime: number): ()
-    if not self._isEnabled then
+    if not self:_isGameplayActive() then
         return
     end
 
     self:_resolveMovement()
 end
 
+-- TODO: SetEnabled and SuspendGameplayInput both gate gameplay input, kept as separate flags so the game
+-- (hurt, dead, stunned) and the menu cannot re-enable each other. If more event-driven sources appear
+-- (cutscenes, dialogue), replace the suspended flag with a count of suspensions, so input resumes only
+-- when every Suspend has had its Resume. Callers would not change.
+
+-- The game-state gate (hurt, dead, stunned), set from player state. The menu uses SuspendGameplayInput.
 function PlayerInputFacade.SetEnabled(self: PlayerInputFacade, isEnabled: boolean): ()
     self._isEnabled = isEnabled
-    if isEnabled then
-        return
+    if not isEnabled then
+        self:_clearGameplayState()
     end
+end
 
-    self._jumpBuffer:Consume()
-    self._dashBuffer:Consume()
-    self._directionResolver:Resolve(false, false)
-    self:_releaseTrigger()
+-- For the menu: gameplay input stays off until Resume, whatever SetEnabled is told in the meantime.
+function PlayerInputFacade.SuspendGameplayInput(self: PlayerInputFacade): ()
+    self._isSuspended = true
+    self:_clearGameplayState()
+end
+
+function PlayerInputFacade.ResumeGameplayInput(self: PlayerInputFacade): ()
+    self._isSuspended = false
+end
+
+function PlayerInputFacade.MuteMenuKey(self: PlayerInputFacade): ()
+    self._isMenuKeyMuted = true
+end
+
+function PlayerInputFacade.UnmuteMenuKey(self: PlayerInputFacade): ()
+    self._isMenuKeyMuted = false
 end
 
 function PlayerInputFacade.BindVirtualButton(self: PlayerInputFacade, actionName: ActionID, button: GuiButton): ()
@@ -163,15 +213,15 @@ function PlayerInputFacade.HasBufferedDash(self: PlayerInputFacade): boolean
 end
 
 function PlayerInputFacade.IsHoldingJump(self: PlayerInputFacade): boolean
-    return self._isEnabled and self._rawInputObserver:IsActionHeld(InputAction.Jump)
+    return self:_isGameplayActive() and self._rawInputObserver:IsActionHeld(InputAction.Jump)
 end
 
 function PlayerInputFacade.IsHoldingDash(self: PlayerInputFacade): boolean
-    return self._isEnabled and self._rawInputObserver:IsActionHeld(InputAction.Dash)
+    return self:_isGameplayActive() and self._rawInputObserver:IsActionHeld(InputAction.Dash)
 end
 
 function PlayerInputFacade.IsCharging(self: PlayerInputFacade): boolean
-    return self._isEnabled and self._rawInputObserver:IsActionHeld(InputAction.Shoot)
+    return self:_isGameplayActive() and self._rawInputObserver:IsActionHeld(InputAction.Shoot)
 end
 
 function PlayerInputFacade.ConsumeJumpBuffer(self: PlayerInputFacade): ()
@@ -182,18 +232,26 @@ function PlayerInputFacade.ConsumeDashBuffer(self: PlayerInputFacade): ()
     self._dashBuffer:Consume()
 end
 
-function PlayerInputFacade.Destroy(self: PlayerInputFacade): ()
-    self._actionConnectionBegan:Disconnect()
-    self._actionConnectionEnded:Disconnect()
+function PlayerInputFacade._destroySubcomponents(self: PlayerInputFacade): ()
     self._rawInputObserver:Destroy()
     self._jumpBuffer:Destroy()
     self._dashBuffer:Destroy()
     self._directionResolver:Destroy()
+end
+
+function PlayerInputFacade._unbindEvents(self: PlayerInputFacade): ()
+    self._actionConnectionBegan:Disconnect()
+    self._actionConnectionEnded:Disconnect()
     self.OnJumpPressed:DisconnectAll()
     self.OnDashPressed:DisconnectAll()
     self.OnTriggerPressed:DisconnectAll()
     self.OnTriggerReleased:DisconnectAll()
     self.OnMenuPressed:DisconnectAll()
+end
+
+function PlayerInputFacade.Destroy(self: PlayerInputFacade): ()
+    self:_destroySubcomponents()
+    self:_unbindEvents()
     setmetatable(self :: any, nil)
     table.freeze(self)
 end
