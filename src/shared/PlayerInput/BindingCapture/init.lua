@@ -103,6 +103,12 @@ function BindingCapture._handleInput(self: BindingCapture, device: InputDevice, 
         return
     end
 
+    -- A gamepad-only player has no Escape to press, so Select cancels a gamepad capture, and cannot be bound there.
+    if device == InputDevice.Gamepad and isGamepadInput(input.UserInputType) and input.KeyCode == Enum.KeyCode.ButtonSelect then
+        self:_finish(nil)
+        return
+    end
+
     local binding = toBinding(device, input, gameProcessed)
     if binding then
         self:_finish(binding)

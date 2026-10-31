@@ -77,6 +77,24 @@ describe("BindingCapture", function()
 		expect(results).toEqual({ "cancelled" })
 	end)
 
+	it("cancels on Select while capturing a gamepad button", function()
+		local capture, service, results, record = makeCapture()
+		capture:Begin("Gamepad", record)
+
+		service:Press(Enum.UserInputType.Gamepad1, Enum.KeyCode.ButtonSelect)
+
+		expect(results).toEqual({ "cancelled" })
+	end)
+
+	it("reports other gamepad buttons while capturing a gamepad button", function()
+		local capture, service, results, record = makeCapture()
+		capture:Begin("Gamepad", record)
+
+		service:Press(Enum.UserInputType.Gamepad1, Enum.KeyCode.ButtonA)
+
+		expect(results).toEqual({ Enum.KeyCode.ButtonA })
+	end)
+
 	it("reports a mouse button only when the GUI did not handle the click", function()
 		local capture, service, results, record = makeCapture()
 		capture:Begin("Keyboard", record)

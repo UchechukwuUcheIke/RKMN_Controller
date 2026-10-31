@@ -34,7 +34,7 @@ type PlayerInputFacadeData = {
 
     _isEnabled: boolean,
     _isSuspended: boolean,
-    _isMenuKeyMuted: boolean,
+    _isMenuKeyDisabled: boolean,
     _isTriggerHeld: boolean,
 
     OnJumpPressed: Signal,
@@ -56,7 +56,7 @@ function PlayerInputFacade.new(timerUtility: TimerUtility, inputMapper: InputMap
 
     self._isEnabled = false
     self._isSuspended = false
-    self._isMenuKeyMuted = false
+    self._isMenuKeyDisabled = false
     self._isTriggerHeld = false
 
     self._rawInputObserver = RawInputObserver.new(inputMapper)
@@ -82,7 +82,7 @@ function PlayerInputFacade.new(timerUtility: TimerUtility, inputMapper: InputMap
 end
 
 function PlayerInputFacade._handleMenuButtonPressed(self: PlayerInputFacade): ()
-    if not self._isMenuKeyMuted then
+    if not self._isMenuKeyDisabled then
             self.OnMenuPressed:Fire()
     end
 end
@@ -184,12 +184,12 @@ function PlayerInputFacade.ResumeGameplayInput(self: PlayerInputFacade): ()
     self._isSuspended = false
 end
 
-function PlayerInputFacade.MuteMenuKey(self: PlayerInputFacade): ()
-    self._isMenuKeyMuted = true
+function PlayerInputFacade.DisableMenuKey(self: PlayerInputFacade): ()
+    self._isMenuKeyDisabled = true
 end
 
-function PlayerInputFacade.UnmuteMenuKey(self: PlayerInputFacade): ()
-    self._isMenuKeyMuted = false
+function PlayerInputFacade.EnableMenuKey(self: PlayerInputFacade): ()
+    self._isMenuKeyDisabled = false
 end
 
 function PlayerInputFacade.BindVirtualButton(self: PlayerInputFacade, actionName: ActionID, button: GuiButton): ()

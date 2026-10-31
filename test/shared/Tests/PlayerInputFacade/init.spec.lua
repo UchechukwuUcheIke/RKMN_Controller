@@ -205,18 +205,18 @@ describe("PlayerInputFacade", function()
 		expect(menuPresses).toBe(1)
 	end)
 
-	it("does not announce a menu press while the menu key is muted", function()
+	it("does not announce a menu press while the menu key is disabled", function()
 		local facade, _, _, press = makeFacade()
 		local menuPresses = 0
 		facade.OnMenuPressed:Connect(function()
 			menuPresses += 1
 		end)
 
-		facade:MuteMenuKey()
+		facade:DisableMenuKey()
 		press("Menu")
 		expect(menuPresses).toBe(0)
 
-		facade:UnmuteMenuKey()
+		facade:EnableMenuKey()
 		press("Menu")
 		expect(menuPresses).toBe(1)
 	end)
