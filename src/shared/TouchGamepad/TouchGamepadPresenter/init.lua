@@ -94,8 +94,11 @@ function TouchGamepadPresenter._initializeButtons(self: TouchGamepadPresenter): 
     for _, actionName in pairs(InputAction) do
         local button = self._gamepadUI:GetButton(actionName)
 
-        self._positioner:RegisterButton(actionName, button)
         self._playerInput:BindVirtualButton(actionName, button:GetInstance())
+    end
+
+    for controlID, control in pairs(self._gamepadUI:GetPositionableControls()) do
+        self._positioner:RegisterControl(controlID, control)
     end
 
     self._positioner:ApplyLayout(self._layout)

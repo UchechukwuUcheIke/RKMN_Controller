@@ -77,14 +77,12 @@ function ControlProfile.new(keyboardDefault: InputScheme, gamepadDefault: InputS
     return self :: ControlProfile
 end
 
--- Returns the live table: read it, never mutate it. Touch has no key bindings, so its scheme is always empty.
 function ControlProfile.GetScheme(self: ControlProfile, device: InputDevice): InputScheme
     return self._customSchemes[device] or self._defaultSchemes[device]
 end
 
--- Assigning a binding takes it from whichever action had it, leaving that action with one fewer binding.
 function ControlProfile.BindKey(self: ControlProfile, device: InputDevice, actionName: ActionID, binding: InputBinding): ()
-    self:_assertEditable(device)
+    self:_assertDeviceSchemeIsEditable(device)
 
     local currentBindings = self:GetScheme(device)[actionName]
     if currentBindings and currentBindings[binding] then
@@ -109,7 +107,7 @@ function ControlProfile.BindKey(self: ControlProfile, device: InputDevice, actio
 end
 
 function ControlProfile.UnbindKey(self: ControlProfile, device: InputDevice, actionName: ActionID, binding: InputBinding): ()
-    self:_assertEditable(device)
+    self:_assertDeviceSchemeIsEditable(device)
 
     local currentBindings = self:GetScheme(device)[actionName]
     if not currentBindings or not currentBindings[binding] then
@@ -132,7 +130,7 @@ function ControlProfile.ResetDevice(self: ControlProfile, device: InputDevice): 
     self.SchemeChanged:Fire(device)
 end
 
-function ControlProfile._assertEditable(self: ControlProfile, device: InputDevice): ()
+function ControlProfile._assertDeviceSchemeIsEditable(self: ControlProfile, device: InputDevice): ()
     if device == InputDevice.Touch then
         error("Touch has no key bindings to edit")
     end

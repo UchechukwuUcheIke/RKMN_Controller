@@ -20,6 +20,10 @@ local KeyboardSchemes = require(PlayerInputFolder.KeyboardSchemes)
 local GamepadSchemes = require(PlayerInputFolder.GamepadSchemes)
 local DeviceDetector = require(PlayerInputFolder.DeviceDetector)
 local PlayerInputFacade = require(PlayerInputFolder.PlayerInputFacade)
+local BindingCapture = require(PlayerInputFolder.BindingCapture)
+local ControlCustomizationFolder = ReplicatedStorage.ControlCustomization
+local ControlCustomizationUI = require(ControlCustomizationFolder.ControlCustomizationUI)
+local ControlCustomizationView = require(ControlCustomizationFolder.ControlCustomizationView)
 local TouchGamepadFolder = ReplicatedStorage.TouchGamepad
 local TouchGamepadPresenter = require(TouchGamepadFolder.TouchGamepadPresenter)
 local TouchGamepadUI = require(TouchGamepadFolder.UserInterface.TouchGamepadUI)
@@ -37,6 +41,7 @@ type InputMapper = InputMapper.InputMapper
 type DeviceDetector = DeviceDetector.DeviceDetector
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type TouchGamepadPresenter = TouchGamepadPresenter.TouchGamepadPresenter
+type ControlCustomizationUI = ControlCustomizationUI.ControlCustomizationUI
 type MovementStateMachine = MovementStateMachine.MovementStateMachine
 type PhysicsResolver = PhysicsResolver.PhysicsResolver
 type RKMNController = RKMNController.RKMNController
@@ -106,6 +111,12 @@ local function makeTouchGamepad(deviceDetector: DeviceDetector, playerInput: Pla
     return TouchGamepadPresenter.new(deviceDetector, playerInput, gamepadUI, positioner, TouchGamepadLayoutRegistry.Standard)
 end
 
+local function makeControlCustomization(screenGui: ScreenGui, deviceDetector: DeviceDetector, playerInput: PlayerInputFacade): ControlCustomizationUI
+    local bindingCapture = BindingCapture.new(UserInputService)
+    local view = ControlCustomizationView.new(screenGui)
+    return ControlCustomizationUI.new(deviceDetector, controlProfile, playerInput, bindingCapture, view, task.defer)
+end
+
 -- The player's controls outlive any one character, so the profile is created once rather than per Setup.
 local controlProfile = ControlProfile.new(KeyboardSchemes.Standard, GamepadSchemes.Standard)
 
@@ -113,6 +124,14 @@ local controlProfile = ControlProfile.new(KeyboardSchemes.Standard, GamepadSchem
 -- The touch controls must go before their PlayerInputFacade does.
 local activeDeviceDetector: DeviceDetector? = nil
 local activeTouchGamepad: TouchGamepadPresenter? = nil
+local activeControlCustomization: ControlCustomizationUI? = nil
+
+local function replaceControlCustomization(controlCustomization: ControlCustomizationUI): ()
+    if activeControlCustomization then
+        activeControlCustomization:Destroy()
+    end
+    activeControlCustomization = controlCustomization
+end
 
 local function replaceTouchControls(deviceDetector: DeviceDetector, touchGamepad: TouchGamepadPresenter): ()
     if activeTouchGamepad then
@@ -140,6 +159,10 @@ function RKMNControllerSetup.Setup(character: Model): RKMNController
     local touchGamepad = makeTouchGamepad(deviceDetector, dependencies.PlayerInput)
     replaceTouchControls(deviceDetector, touchGamepad)
     touchGamepad:Enable()
+
+    local controlCustomization = makeControlCustomization(screenGui, deviceDetector, dependencies.PlayerInput)
+    replaceControlCustomization(controlCustomization)
+    controlCustomization:Enable()
     local debugTool = DebugFacade.new(world, screenGui, kinematicWorld, kinematicController, runServiceAdapter)
     kinematicWorld:RegisterPlayer(kinematicController)
     runServiceAdapter:Start()

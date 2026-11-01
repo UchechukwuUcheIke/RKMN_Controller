@@ -1,18 +1,25 @@
 --!strict
 local InputAction = require(game:GetService("ReplicatedStorage").PlayerInput.InputAction)
 
+export type ControlID = "DPad" | InputAction.ActionID
+
 export type ButtonTransform = {
     Position: UDim2,
-    Size: UDim2,
-    AnchorPoint: Vector2
+    BaseSize: UDim2,
+    AnchorPoint: Vector2,
+    Scale: number,
+    Transparency: number
 }
 
--- Every action needs a transform; MobileButtonPositioner errors on a missing one.
-export type TouchGamepadLayout = {[InputAction.ActionID]: ButtonTransform}
+export type TouchGamepadLayout = {[ControlID]: ButtonTransform}
 
 local TouchGamepadLayoutRegistry = {}
 
 local CENTERED = Vector2.new(0.5, 0.5)
+local DEFAULT_SCALE = 1
+local DEFAULT_TRANSPARENCY = 0.5
+
+TouchGamepadLayoutRegistry.DPad = "DPad" :: ControlID
 
 local function freezeLayout(layout: TouchGamepadLayout): TouchGamepadLayout
     for _, transform in pairs(layout) do
@@ -21,37 +28,41 @@ local function freezeLayout(layout: TouchGamepadLayout): TouchGamepadLayout
     return table.freeze(layout)
 end
 
--- Default "Two Thumb" layout: movement on the left, actions on the right
 TouchGamepadLayoutRegistry.Standard = freezeLayout({
-    [InputAction.Left] = {
-        Position = UDim2.new(0, 90, 1, -90),
-        Size = UDim2.new(0, 80, 0, 80),
-        AnchorPoint = CENTERED
-    },
-    [InputAction.Right] = {
-        Position = UDim2.new(0, 200, 1, -90),
-        Size = UDim2.new(0, 80, 0, 80),
-        AnchorPoint = CENTERED
+    [TouchGamepadLayoutRegistry.DPad] = {
+        Position = UDim2.new(0, 145, 1, -90),
+        BaseSize = UDim2.new(0, 190, 0, 80),
+        AnchorPoint = CENTERED,
+        Scale = DEFAULT_SCALE,
+        Transparency = DEFAULT_TRANSPARENCY
     },
     [InputAction.Jump] = {
         Position = UDim2.new(1, -120, 1, -120),
-        Size = UDim2.new(0, 80, 0, 80),
-        AnchorPoint = CENTERED
+        BaseSize = UDim2.new(0, 80, 0, 80),
+        AnchorPoint = CENTERED,
+        Scale = DEFAULT_SCALE,
+        Transparency = DEFAULT_TRANSPARENCY
     },
     [InputAction.Dash] = {
         Position = UDim2.new(1, -220, 1, -90),
-        Size = UDim2.new(0, 70, 0, 70),
-        AnchorPoint = CENTERED
+        BaseSize = UDim2.new(0, 70, 0, 70),
+        AnchorPoint = CENTERED,
+        Scale = DEFAULT_SCALE,
+        Transparency = DEFAULT_TRANSPARENCY
     },
     [InputAction.Shoot] = {
         Position = UDim2.new(1, -210, 1, -190),
-        Size = UDim2.new(0, 70, 0, 70),
-        AnchorPoint = CENTERED
+        BaseSize = UDim2.new(0, 70, 0, 70),
+        AnchorPoint = CENTERED,
+        Scale = DEFAULT_SCALE,
+        Transparency = DEFAULT_TRANSPARENCY
     },
     [InputAction.Menu] = {
         Position = UDim2.new(1, -50, 0, 50),
-        Size = UDim2.new(0, 70, 0, 40),
-        AnchorPoint = CENTERED
+        BaseSize = UDim2.new(0, 70, 0, 40),
+        AnchorPoint = CENTERED,
+        Scale = DEFAULT_SCALE,
+        Transparency = DEFAULT_TRANSPARENCY
     },
 })
 

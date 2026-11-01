@@ -4,22 +4,31 @@ TouchGamepadUI.__index = TouchGamepadUI
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local InputAction = require(ReplicatedStorage.PlayerInput.InputAction)
+local TouchGamepadLayoutRegistry = require(script.Parent.Parent.TouchGamepadLayoutRegistry)
 local ActionButtonModule = require(script.Parent.ActionButton)
+local DPadModule = require(script.Parent.DPad)
 
 type ActionID = InputAction.ActionID
+type ControlID = TouchGamepadLayoutRegistry.ControlID
+type ButtonTransform = TouchGamepadLayoutRegistry.ButtonTransform
 type ActionButton = ActionButtonModule.ActionButton
 type ButtonShape = ActionButtonModule.ButtonShape
+type DPad = DPadModule.DPad
+
+-- Anything the layout can place: a lone button, or the pad holding Left and Right.
+export type PositionableControl = {
+    SetTransform: (self: any, transform: ButtonTransform) -> ()
+}
 
 type TouchGamepadUIData = {
     _screenGui: ScreenGui,
+    _dPad: DPad,
     _buttons: {[ActionID]: ActionButton}
 }
 
 export type TouchGamepadUI = typeof(setmetatable({} :: TouchGamepadUIData, TouchGamepadUI))
 
 local BUTTON_LABELS: {[ActionID]: string} = {
-    [InputAction.Left] = "<",
-    [InputAction.Right] = ">",
     [InputAction.Jump] = "Jump",
     [InputAction.Dash] = "Dash",
     [InputAction.Shoot] = "Shoot",
@@ -27,8 +36,6 @@ local BUTTON_LABELS: {[ActionID]: string} = {
 }
 
 local BUTTON_SHAPES: {[ActionID]: ButtonShape} = {
-    [InputAction.Left] = "Rounded",
-    [InputAction.Right] = "Rounded",
     [InputAction.Jump] = "Circle",
     [InputAction.Dash] = "Circle",
     [InputAction.Shoot] = "Circle",
@@ -46,15 +53,14 @@ function TouchGamepadUI.new(parent: Instance): TouchGamepadUI
     screenGui.Parent = parent
 
     self._screenGui = screenGui
-    self._buttons = {}
+    self._dPad = DPadModule.new(screenGui)
+    self._buttons = {
+        [InputAction.Left] = self._dPad:GetLeftButton(),
+        [InputAction.Right] = self._dPad:GetRightButton(),
+    }
 
-    for _, actionName in pairs(InputAction) do
-        self._buttons[actionName] = ActionButtonModule.new(
-            actionName,
-            BUTTON_LABELS[actionName],
-            screenGui,
-            BUTTON_SHAPES[actionName]
-        )
+    for actionName, label in pairs(BUTTON_LABELS) do
+        self._buttons[actionName] = ActionButtonModule.new(actionName, label, screenGui, BUTTON_SHAPES[actionName])
     end
 
     return self :: TouchGamepadUI
@@ -62,6 +68,19 @@ end
 
 function TouchGamepadUI.GetButton(self: TouchGamepadUI, actionName: ActionID): ActionButton
     return self._buttons[actionName]
+end
+
+-- What the layout places: the pad as one control, and every other button on its own.
+function TouchGamepadUI.GetPositionableControls(self: TouchGamepadUI): {[ControlID]: PositionableControl}
+    local controls: {[ControlID]: PositionableControl} = {
+        [TouchGamepadLayoutRegistry.DPad] = self._dPad
+    }
+
+    for actionName in pairs(BUTTON_LABELS) do
+        controls[actionName] = self._buttons[actionName]
+    end
+
+    return controls
 end
 
 function TouchGamepadUI.SetVisible(self: TouchGamepadUI, isVisible: boolean): ()
@@ -75,8 +94,9 @@ function TouchGamepadUI.SetVisible(self: TouchGamepadUI, isVisible: boolean): ()
 end
 
 function TouchGamepadUI.Destroy(self: TouchGamepadUI): ()
-    for _, button in pairs(self._buttons) do
-        button:Destroy()
+    self._dPad:Destroy()
+    for actionName in pairs(BUTTON_LABELS) do
+        self._buttons[actionName]:Destroy()
     end
     table.clear(self._buttons)
     self._screenGui:Destroy()

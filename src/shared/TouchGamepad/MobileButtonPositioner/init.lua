@@ -2,45 +2,43 @@
 local MobileButtonPositioner = {}
 MobileButtonPositioner.__index = MobileButtonPositioner
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local InputAction = require(ReplicatedStorage.PlayerInput.InputAction)
 local TouchGamepadLayoutRegistry = require(script.Parent.TouchGamepadLayoutRegistry)
-local ActionButtonModule = require(script.Parent.UserInterface.ActionButton)
+local TouchGamepadUI = require(script.Parent.UserInterface.TouchGamepadUI)
 
-type ActionID = InputAction.ActionID
-type ActionButton = ActionButtonModule.ActionButton
+type ControlID = TouchGamepadLayoutRegistry.ControlID
+type PositionableControl = TouchGamepadUI.PositionableControl
 type TouchGamepadLayout = TouchGamepadLayoutRegistry.TouchGamepadLayout
 
 type MobileButtonPositionerData = {
-    _buttons: {[ActionID]: ActionButton}
+    _controls: {[ControlID]: PositionableControl}
 }
 
 export type MobileButtonPositioner = typeof(setmetatable({} :: MobileButtonPositionerData, MobileButtonPositioner))
 
 function MobileButtonPositioner.new(): MobileButtonPositioner
     local self = setmetatable({}, MobileButtonPositioner)
-    self._buttons = {}
+    self._controls = {}
     return self :: MobileButtonPositioner
 end
 
-function MobileButtonPositioner.RegisterButton(self: MobileButtonPositioner, actionName: ActionID, button: ActionButton): ()
-    self._buttons[actionName] = button
+function MobileButtonPositioner.RegisterControl(self: MobileButtonPositioner, controlID: ControlID, control: PositionableControl): ()
+    self._controls[controlID] = control
 end
 
 function MobileButtonPositioner.ApplyLayout(self: MobileButtonPositioner, layout: TouchGamepadLayout): ()
-    for actionName in pairs(self._buttons) do
-        if not layout[actionName] then
-            error(`Layout has no transform for {actionName}`)
+    for controlID in pairs(self._controls) do
+        if not layout[controlID] then
+            error(`Layout has no transform for {controlID}`)
         end
     end
 
-    for actionName, button in pairs(self._buttons) do
-        button:SetTransform(layout[actionName])
+    for controlID, control in pairs(self._controls) do
+        control:SetTransform(layout[controlID])
     end
 end
 
 function MobileButtonPositioner.Destroy(self: MobileButtonPositioner): ()
-    table.clear(self._buttons)
+    table.clear(self._controls)
     setmetatable(self :: any, nil)
     table.freeze(self)
 end

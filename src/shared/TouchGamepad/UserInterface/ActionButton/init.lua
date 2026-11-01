@@ -3,10 +3,12 @@ local ActionButton = {}
 ActionButton.__index = ActionButton
 
 local TouchGamepadLayoutRegistry = require(script.Parent.Parent.TouchGamepadLayoutRegistry)
+local ButtonTransformRules = require(script.Parent.Parent.ButtonTransformRules)
 type ButtonTransform = TouchGamepadLayoutRegistry.ButtonTransform
 
-local RESTING_TRANSPARENCY = 0.5
-local PRESSED_TRANSPARENCY = 0.2
+local DEFAULT_RESTING_TRANSPARENCY = 0.5
+-- A press makes the button this much more solid than its resting look, whatever the player set that to.
+local PRESSED_TRANSPARENCY_DROP = 0.3
 
 export type ButtonShape = "Circle" | "Rounded"
 
@@ -17,6 +19,7 @@ local CORNER_RADII: {[ButtonShape]: UDim} = {
 
 type ActionButtonData = {
     _button: TextButton,
+    _restingTransparency: number,
     _connections: {RBXScriptConnection}
 }
 
@@ -26,14 +29,13 @@ local function isPointerPress(input: InputObject): boolean
     return input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1
 end
 
--- A circle only reads as one when the button's size is square.
 function ActionButton.new(name: string, label: string, parent: Instance?, shape: ButtonShape?): ActionButton
     local self = setmetatable({}, ActionButton)
 
     local button = Instance.new("TextButton")
     button.Name = name
     button.Text = label
-    button.BackgroundTransparency = RESTING_TRANSPARENCY
+    button.BackgroundTransparency = DEFAULT_RESTING_TRANSPARENCY
     button.AutoButtonColor = false
 
     local corner = Instance.new("UICorner")
@@ -43,6 +45,7 @@ function ActionButton.new(name: string, label: string, parent: Instance?, shape:
     button.Parent = parent
 
     self._button = button
+    self._restingTransparency = DEFAULT_RESTING_TRANSPARENCY
     self._connections = {}
 
     self:_bindVisualFeedback()
@@ -53,7 +56,7 @@ end
 function ActionButton._bindVisualFeedback(self: ActionButton): ()
     table.insert(self._connections, self._button.InputBegan:Connect(function(input)
         if isPointerPress(input) then
-            self._button.BackgroundTransparency = PRESSED_TRANSPARENCY
+            self._button.BackgroundTransparency = math.max(0, self._restingTransparency - PRESSED_TRANSPARENCY_DROP)
         end
     end))
 
@@ -70,8 +73,10 @@ end
 
 function ActionButton.SetTransform(self: ActionButton, transform: ButtonTransform): ()
     self._button.Position = transform.Position
-    self._button.Size = transform.Size
+    self._button.Size = ButtonTransformRules.GetEffectiveSize(transform)
     self._button.AnchorPoint = transform.AnchorPoint
+    self._restingTransparency = transform.Transparency
+    self:ResetVisual()
 end
 
 function ActionButton.SetParent(self: ActionButton, parent: Instance?): ()
@@ -79,7 +84,7 @@ function ActionButton.SetParent(self: ActionButton, parent: Instance?): ()
 end
 
 function ActionButton.ResetVisual(self: ActionButton): ()
-    self._button.BackgroundTransparency = RESTING_TRANSPARENCY
+    self._button.BackgroundTransparency = self._restingTransparency
 end
 
 function ActionButton.GetInstance(self: ActionButton): GuiButton
