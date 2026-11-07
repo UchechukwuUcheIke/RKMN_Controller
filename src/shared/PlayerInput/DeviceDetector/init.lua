@@ -14,18 +14,23 @@ type Signal = typeof(Signal)
 type ControlProfile = ControlProfile.ControlProfile
 type InputMapper = InputMapper.InputMapper
 type InputDevice = InputDevice.InputDevice
-type Connection = { Disconnect: (self: any) -> () }
 
 type DeviceDetectorData = {
     _mapper: InputMapper,
     _controlProfile: ControlProfile,
     _currentDevice: InputDevice,
-    _connections: {Connection},
+    _connections: {RBXScriptConnection},
     _userInputService: UserInputService,
     OnContextChanged: Signal
 }
 
 export type DeviceDetector = typeof(setmetatable({} :: DeviceDetectorData, DeviceDetector))
+
+local DEVICE_BY_PREFERRED_INPUT: {[Enum.PreferredInput]: InputDevice} = {
+    [Enum.PreferredInput.KeyboardAndMouse] = InputDevice.Keyboard,
+    [Enum.PreferredInput.Gamepad] = InputDevice.Gamepad,
+    [Enum.PreferredInput.Touch] = InputDevice.Touch,
+}
 
 function DeviceDetector.new(userInputService: UserInputService, mapper: InputMapper, controlProfile: ControlProfile): DeviceDetector
     local self = setmetatable({}, DeviceDetector)
@@ -44,45 +49,30 @@ function DeviceDetector.new(userInputService: UserInputService, mapper: InputMap
 end
 
 function DeviceDetector._resolveDevice(self: DeviceDetector): InputDevice
-    local inputType = self._userInputService:GetLastInputType()
-
-    local isKeyboard = inputType == Enum.UserInputType.Keyboard
-    if isKeyboard then
-        return InputDevice.Keyboard
-    end
-
-    local isTouchScreen = inputType == Enum.UserInputType.Touch
-    if isTouchScreen then
-        return InputDevice.Touch
-    end
-
-    local isGamepad = inputType.Name:match("Gamepad")
-    if isGamepad then
-        return InputDevice.Gamepad
-    end
-
-    return InputDevice.Keyboard
+    return DEVICE_BY_PREFERRED_INPUT[self._userInputService.PreferredInput]
 end
 
 function DeviceDetector._applySchemeForDevice(self: DeviceDetector): ()
     self._mapper:LoadControlScheme(self._controlProfile:GetScheme(self._currentDevice))
 end
 
-function DeviceDetector._bindEvents(self: DeviceDetector): ()
-    local function handleInputTypeChanged(_lastInputType)
-        local newDevice = self:_resolveDevice()
+function DeviceDetector._handlePreferredInputChanged(self: DeviceDetector): ()
+    local newDevice: InputDevice = self:_resolveDevice()
 
-        if newDevice ~= self._currentDevice then
-            self._currentDevice = newDevice
-            self:_applySchemeForDevice()
-            self.OnContextChanged:Fire(newDevice)
-        end
+    if newDevice ~= self._currentDevice then
+        self._currentDevice = newDevice
+        self:_applySchemeForDevice()
+        self.OnContextChanged:Fire(newDevice)
     end
+end
 
-    local connection = self._userInputService.LastInputTypeChanged:Connect(handleInputTypeChanged)
+function DeviceDetector._bindEvents(self: DeviceDetector): ()
+    local connection = self._userInputService:GetPropertyChangedSignal("PreferredInput"):Connect(function(...)
+        self:_handlePreferredInputChanged()
+    end)
+    
     table.insert(self._connections, connection)
 
-    -- Edits to the device in use take effect immediately; edits to another device wait until it is switched to.
     local profileConnection = self._controlProfile.SchemeChanged:Connect(function(editedDevice: InputDevice)
         if editedDevice == self._currentDevice then
             self:_applySchemeForDevice()
