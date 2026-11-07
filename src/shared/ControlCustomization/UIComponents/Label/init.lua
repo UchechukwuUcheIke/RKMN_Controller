@@ -3,8 +3,9 @@ local Label = {}
 Label.__index = Label
 
 local UITheme = require(script.Parent.UITheme)
+local LabelStyle = require(script.Parent.LabelStyle)
 
-export type LabelStyle = "Body" | "Title"
+type LabelStyle = LabelStyle.LabelStyle
 
 export type LabelProps = {
     Name: string?,
@@ -50,12 +51,12 @@ local function applyStylingFromProperties(textLabel: TextLabel, props: LabelProp
 end
 
 local function createTextLabel(props: LabelProps): TextLabel
-    local style = props.Style or "Body"
+    local style = props.Style or LabelStyle.Body
 
     local textLabel = Instance.new("TextLabel")
     applyStylingFromProperties(textLabel, props)
 
-    if style == "Title" then
+    if style == LabelStyle.Title then
         applyTitleStyling(textLabel)
     else
         applyBodyStyling(textLabel)

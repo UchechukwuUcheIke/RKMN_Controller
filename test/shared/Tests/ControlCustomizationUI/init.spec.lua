@@ -36,7 +36,9 @@ end
 local function makeFakeBindingsScreen()
 	local screen = {
 		OnRebindRequested = Signal.new(),
+		OnUnbindRequested = Signal.new(),
 		OnResetRequested = Signal.new(),
+		OnExitRequested = Signal.new(),
 		isVisible = nil,
 		rendered = nil,
 		capturingAction = nil,
@@ -219,6 +221,26 @@ describe("ControlCustomizationUI", function()
 		parts.screen.OnResetRequested:Fire()
 
 		expect(parts.profile:GetScheme("Keyboard")).toBe(KeyboardSchemes.Standard)
+	end)
+
+	it("removes a binding from the device in use when asked", function()
+		local _, parts = makeMenu()
+		parts.playerInput.OnMenuPressed:Fire()
+
+		parts.screen.OnUnbindRequested:Fire(InputAction.Jump, Enum.KeyCode.Space)
+
+		expect(parts.profile:GetScheme("Keyboard")[InputAction.Jump][Enum.KeyCode.Space]).toBeUndefined()
+	end)
+
+	it("closes and gives gameplay input back when exit is pressed", function()
+		local menu, parts = makeMenu()
+		parts.playerInput.OnMenuPressed:Fire()
+
+		parts.screen.OnExitRequested:Fire()
+
+		expect(menu:IsOpen()).toBe(false)
+		expect(parts.view.isVisible).toBe(false)
+		expect(countCalls(parts.playerInput, "ResumeGameplayInput")).toBe(1)
 	end)
 
 	it("hides the bindings screen and refuses rebinds on a touch device", function()

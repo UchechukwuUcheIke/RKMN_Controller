@@ -3,8 +3,9 @@ local Panel = {}
 Panel.__index = Panel
 
 local UITheme = require(script.Parent.UITheme)
+local PanelTone = require(script.Parent.PanelTone)
 
-export type PanelTone = "Window" | "Row" | "RowHighlighted"
+type PanelTone = PanelTone.PanelTone
 
 export type PanelProps = {
     Name: string?,
@@ -23,15 +24,21 @@ type PanelData = {
 export type Panel = typeof(setmetatable({} :: PanelData, Panel))
 
 local TONE_COLORS: {[PanelTone]: Color3} = {
-    Window = UITheme.Colors.Window,
-    Row = UITheme.Colors.Row,
-    RowHighlighted = UITheme.Colors.RowHighlighted,
+    [PanelTone.Window] = UITheme.Colors.Window,
+    [PanelTone.Row] = UITheme.Colors.Row,
+    [PanelTone.RowHighlighted] = UITheme.Colors.RowHighlighted,
+    [PanelTone.AppBar] = UITheme.Colors.AppBar,
+    [PanelTone.Item] = UITheme.Colors.Item,
+    [PanelTone.ImageBox] = UITheme.Colors.ImageBox,
 }
 
 local CORNER_RADII: {[PanelTone]: UDim} = {
-    Window = UITheme.WindowCornerRadius,
-    Row = UITheme.RowCornerRadius,
-    RowHighlighted = UITheme.RowCornerRadius,
+    [PanelTone.Window] = UITheme.WindowCornerRadius,
+    [PanelTone.Row] = UITheme.RowCornerRadius,
+    [PanelTone.RowHighlighted] = UITheme.RowCornerRadius,
+    [PanelTone.AppBar] = UITheme.RowCornerRadius,
+    [PanelTone.Item] = UITheme.ItemCornerRadius,
+    [PanelTone.ImageBox] = UITheme.ImageBoxCornerRadius,
 }
 
 local function createFrame(props: PanelProps, tone: PanelTone): Frame
@@ -54,7 +61,7 @@ local function addRoundedCorners(parent: GuiObject, tone: PanelTone): ()
 end
 
 function Panel.new(props: PanelProps): Panel
-    local tone = props.Tone or "Window"
+    local tone = props.Tone or PanelTone.Window
     local frame = createFrame(props, tone)
     addRoundedCorners(frame, tone)
 

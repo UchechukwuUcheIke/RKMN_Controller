@@ -111,14 +111,14 @@ local function makeTouchGamepad(deviceDetector: DeviceDetector, playerInput: Pla
     return TouchGamepadPresenter.new(deviceDetector, playerInput, gamepadUI, positioner, TouchGamepadLayoutRegistry.Standard)
 end
 
+-- The player's controls outlive any one character, so the profile is created once rather than per Setup.
+local controlProfile = ControlProfile.new(KeyboardSchemes.Standard, GamepadSchemes.Standard)
+
 local function makeControlCustomization(screenGui: ScreenGui, deviceDetector: DeviceDetector, playerInput: PlayerInputFacade): ControlCustomizationUI
     local bindingCapture = BindingCapture.new(UserInputService)
     local view = ControlCustomizationView.new(screenGui)
     return ControlCustomizationUI.new(deviceDetector, controlProfile, playerInput, bindingCapture, view, task.defer)
 end
-
--- The player's controls outlive any one character, so the profile is created once rather than per Setup.
-local controlProfile = ControlProfile.new(KeyboardSchemes.Standard, GamepadSchemes.Standard)
 
 -- Setup runs per character, so the previous character's device tracking and touch controls are torn down first.
 -- The touch controls must go before their PlayerInputFacade does.

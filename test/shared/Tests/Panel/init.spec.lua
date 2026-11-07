@@ -7,6 +7,7 @@ local it = JestGlobals.it
 local expect = JestGlobals.expect
 
 local Panel = require(ReplicatedStorage.ControlCustomization.UIComponents.Panel)
+local PanelTone = require(ReplicatedStorage.ControlCustomization.UIComponents.PanelTone)
 local UITheme = require(ReplicatedStorage.ControlCustomization.UIComponents.UITheme)
 
 describe("Panel", function()
@@ -25,17 +26,17 @@ describe("Panel", function()
 	end)
 
 	it("rounds its corners by tone", function()
-		local windowCorner = Panel.new({ Tone = "Window" }):GetGuiObject():FindFirstChildOfClass("UICorner")
-		local rowCorner = Panel.new({ Tone = "Row" }):GetGuiObject():FindFirstChildOfClass("UICorner")
+		local windowCorner = Panel.new({ Tone = PanelTone.Window }):GetGuiObject():FindFirstChildOfClass("UICorner")
+		local rowCorner = Panel.new({ Tone = PanelTone.Row }):GetGuiObject():FindFirstChildOfClass("UICorner")
 
 		expect(windowCorner.CornerRadius).toEqual(UITheme.WindowCornerRadius)
 		expect(rowCorner.CornerRadius).toEqual(UITheme.RowCornerRadius)
 	end)
 
 	it("changes color when its tone changes", function()
-		local panel = Panel.new({ Tone = "Row" })
+		local panel = Panel.new({ Tone = PanelTone.Row })
 
-		panel:SetTone("RowHighlighted")
+		panel:SetTone(PanelTone.RowHighlighted)
 
 		expect(panel:GetGuiObject().BackgroundColor3).toEqual(UITheme.Colors.RowHighlighted)
 	end)

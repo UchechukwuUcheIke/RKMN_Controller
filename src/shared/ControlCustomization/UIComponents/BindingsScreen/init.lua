@@ -9,7 +9,8 @@ local InputAction = require(PlayerInputFolder.InputAction)
 local InputDevice = require(PlayerInputFolder.InputDevice)
 local InputSchemeTypes = require(PlayerInputFolder.InputScheme)
 local BindingRow = require(script.Parent.BindingRow)
-local UIComponents = script.Parent.UIComponents
+local UIComponents = script.Parent
+local AppBar = require(UIComponents.AppBar)
 local Button = require(UIComponents.Button)
 local Label = require(UIComponents.Label)
 
@@ -17,21 +18,27 @@ type Signal = typeof(Signal)
 type ActionID = InputAction.ActionID
 type InputDevice = InputDevice.InputDevice
 type InputScheme = InputSchemeTypes.InputScheme
+type InputBinding = InputSchemeTypes.InputBinding
 type BindingRow = BindingRow.BindingRow
+type AppBar = AppBar.AppBar
 type Button = Button.Button
 type Label = Label.Label
 type LabelProps = Label.LabelProps
+type AppBarProps = AppBar.AppBarProps
 type ButtonProps = Button.ButtonProps
 type BindingRowProps = BindingRow.BindingRowProps
 
 type BindingsScreenData = {
     _root: Frame,
-    _titleLabel: Label,
+    _appBar: AppBar,
     _promptLabel: Label,
     _resetButton: Button,
+    _exitButton: Button,
     _rows: {[ActionID]: BindingRow},
     OnRebindRequested: Signal,
-    OnResetRequested: Signal
+    OnUnbindRequested: Signal,
+    OnResetRequested: Signal,
+    OnExitRequested: Signal
 }
 
 export type BindingsScreen = typeof(setmetatable({} :: BindingsScreenData, BindingsScreen))
@@ -47,9 +54,8 @@ local ROW_ORDER: {ActionID} = {
     InputAction.Menu,
 }
 
-local TITLE_ORDER = 0
+local APP_BAR_ORDER = 0
 local PROMPT_ORDER = 100
-local RESET_ORDER = 101
 local ROW_SPACING = 6
 
 local function createRoot(parent: Instance): Frame
@@ -67,12 +73,12 @@ local function createRoot(parent: Instance): Frame
     return root
 end
 
-local function createTitleLabel(): Label
-    local labelProps: LabelProps = {
-        Name = "Title",
-        LayoutOrder = TITLE_ORDER,
+local function createAppBar(): AppBar
+    local appBarProps: AppBarProps = {
+        Name = "AppBar",
+        LayoutOrder = APP_BAR_ORDER,
     }
-    return Label.new(labelProps)
+    return AppBar.new(appBarProps)
 end
 
 local function createPromptLabel(): Label
@@ -88,8 +94,16 @@ local function createResetButton(): Button
     local buttonProps: ButtonProps = {
         Name = "Reset",
         Text = "Reset to defaults",
-        Size = UDim2.fromOffset(160, 40),
-        LayoutOrder = RESET_ORDER,
+        Size = UDim2.fromOffset(160, 32),
+    }
+    return Button.new(buttonProps)
+end
+
+local function createExitButton(): Button
+    local buttonProps: ButtonProps = {
+        Name = "Exit",
+        Text = "Exit",
+        Size = UDim2.fromOffset(80, 32),
     }
     return Button.new(buttonProps)
 end
@@ -99,21 +113,26 @@ function BindingsScreen.new(parent: Instance): BindingsScreen
 
     self._root = createRoot(parent)
     self._rows = {}
-    self._titleLabel = createTitleLabel()
+    self._appBar = createAppBar()
     self._promptLabel = createPromptLabel()
     self._resetButton = createResetButton()
+    self._exitButton = createExitButton()
     self.OnRebindRequested = Signal.new()
+    self.OnUnbindRequested = Signal.new()
     self.OnResetRequested = Signal.new()
+    self.OnExitRequested = Signal.new()
 
     self:_buildRows()
-    self:_parentLabelsAndResetButton()
+    self:_parentAppBarAndPrompt()
+    self:_addButtonsToAppBar()
     self:_forwardResetPresses()
+    self:_forwardExitPresses()
 
     return self :: BindingsScreen
 end
 
 function BindingsScreen.Render(self: BindingsScreen, device: InputDevice, scheme: InputScheme): ()
-    self._titleLabel:SetText(device .. " controls")
+    self._appBar:SetTitle(device .. " controls")
 
     for _, actionName in ipairs(ROW_ORDER) do
         self._rows[actionName]:SetBindings(scheme[actionName])
@@ -150,19 +169,32 @@ function BindingsScreen._buildRows(self: BindingsScreen): ()
         row.RebindRequested:Connect(function(requestedAction: ActionID)
             self.OnRebindRequested:Fire(requestedAction)
         end)
+        row.BindingDeleteRequested:Connect(function(requestedAction: ActionID, binding: InputBinding)
+            self.OnUnbindRequested:Fire(requestedAction, binding)
+        end)
         self._rows[actionName] = row
     end
 end
 
-function BindingsScreen._parentLabelsAndResetButton(self: BindingsScreen): ()
-    self._titleLabel:GetGuiObject().Parent = self._root
+function BindingsScreen._parentAppBarAndPrompt(self: BindingsScreen): ()
+    self._appBar:GetGuiObject().Parent = self._root
     self._promptLabel:GetGuiObject().Parent = self._root
-    self._resetButton:GetGuiObject().Parent = self._root
+end
+
+function BindingsScreen._addButtonsToAppBar(self: BindingsScreen): ()
+    self._appBar:AddAction(self._resetButton:GetGuiObject())
+    self._appBar:AddAction(self._exitButton:GetGuiObject())
 end
 
 function BindingsScreen._forwardResetPresses(self: BindingsScreen): ()
     self._resetButton.Activated:Connect(function()
         self.OnResetRequested:Fire()
+    end)
+end
+
+function BindingsScreen._forwardExitPresses(self: BindingsScreen): ()
+    self._exitButton.Activated:Connect(function()
+        self.OnExitRequested:Fire()
     end)
 end
 
@@ -175,11 +207,14 @@ end
 
 function BindingsScreen.Destroy(self: BindingsScreen): ()
     self:_destroyRows()
+    self._exitButton:Destroy()
     self._resetButton:Destroy()
     self._promptLabel:Destroy()
-    self._titleLabel:Destroy()
+    self._appBar:Destroy()
     self.OnRebindRequested:DisconnectAll()
+    self.OnUnbindRequested:DisconnectAll()
     self.OnResetRequested:DisconnectAll()
+    self.OnExitRequested:DisconnectAll()
     self._root:Destroy()
 
     setmetatable(self :: any, nil)

@@ -11,7 +11,7 @@ local DeviceDetector = require(PlayerInputFolder.DeviceDetector)
 local PlayerInputFacade = require(PlayerInputFolder.PlayerInputFacade)
 local BindingCapture = require(PlayerInputFolder.BindingCapture)
 local ControlCustomizationView = require(script.Parent.ControlCustomizationView)
-local BindingsScreen = require(script.Parent.BindingsScreen)
+local BindingsScreen = require(script.Parent.UIComponents.BindingsScreen)
 
 type ActionID = InputAction.ActionID
 type InputDevice = InputDevice.InputDevice
@@ -87,6 +87,12 @@ function ControlCustomizationUI.Enable(self: ControlCustomizationUI): ()
     end))
     table.insert(self._connections, self._bindingsScreen.OnRebindRequested:Connect(function(actionName: ActionID)
         self:_beginRebind(actionName)
+    end))
+    table.insert(self._connections, self._bindingsScreen.OnUnbindRequested:Connect(function(actionName: ActionID, binding: InputBinding)
+        self:_unbind(actionName, binding)
+    end))
+    table.insert(self._connections, self._bindingsScreen.OnExitRequested:Connect(function()
+        self:Close()
     end))
     table.insert(self._connections, self._bindingsScreen.OnResetRequested:Connect(function()
         self:_resetCurrentDevice()
@@ -167,7 +173,6 @@ function ControlCustomizationUI._beginRebind(self: ControlCustomizationUI, actio
         return
     end
 
-    -- The menu key is a bindable key like any other, so it must not close the menu while the player is choosing one.
     self._playerInput:DisableMenuKey()
     self._bindingCapture:Begin(device, function(binding: InputBinding?)
         self:_finishRebind(device, actionName, binding)
@@ -190,6 +195,13 @@ function ControlCustomizationUI._enableMenuKeyNextFrame(self: ControlCustomizati
             self._playerInput:EnableMenuKey()
         end
     end)
+end
+
+function ControlCustomizationUI._unbind(self: ControlCustomizationUI, actionName: ActionID, binding: InputBinding): ()
+    local device = self._deviceDetector:GetCurrentDevice()
+    if device ~= InputDevice.Touch then
+        self._controlProfile:UnbindKey(device, actionName, binding)
+    end
 end
 
 function ControlCustomizationUI._resetCurrentDevice(self: ControlCustomizationUI): ()

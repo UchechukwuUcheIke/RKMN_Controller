@@ -7,6 +7,7 @@ local it = JestGlobals.it
 local expect = JestGlobals.expect
 
 local Label = require(ReplicatedStorage.ControlCustomization.UIComponents.Label)
+local LabelStyle = require(ReplicatedStorage.ControlCustomization.UIComponents.LabelStyle)
 local UITheme = require(ReplicatedStorage.ControlCustomization.UIComponents.UITheme)
 
 describe("Label", function()
@@ -21,7 +22,7 @@ describe("Label", function()
 	end)
 
 	it("uses the theme's title font, size and color for the Title style", function()
-		local textLabel = Label.new({ Style = "Title" }):GetGuiObject()
+		local textLabel = Label.new({ Style = LabelStyle.Title }):GetGuiObject()
 
 		expect(textLabel.Font).toBe(UITheme.Fonts.Title)
 		expect(textLabel.TextSize).toBe(UITheme.TextSizes.Title)

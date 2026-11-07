@@ -5,6 +5,9 @@ local UITheme = {
         Window = Color3.fromRGB(28, 28, 34),
         Row = Color3.fromRGB(45, 45, 52),
         RowHighlighted = Color3.fromRGB(90, 75, 30),
+        AppBar = Color3.fromRGB(36, 36, 44),
+        Item = Color3.fromRGB(66, 66, 78),
+        ImageBox = Color3.fromRGB(38, 38, 46),
 
         ButtonNormal = Color3.fromRGB(45, 45, 55),
         ButtonHovered = Color3.fromRGB(62, 62, 76),
@@ -32,6 +35,8 @@ local UITheme = {
     ButtonCornerRadius = UDim.new(0, 8),
     RowCornerRadius = UDim.new(0, 8),
     WindowCornerRadius = UDim.new(0, 12),
+    ItemCornerRadius = UDim.new(0, 8),
+    ImageBoxCornerRadius = UDim.new(0, 6),
 
     ButtonBorderThickness = 1,
     FocusRingThickness = 2,

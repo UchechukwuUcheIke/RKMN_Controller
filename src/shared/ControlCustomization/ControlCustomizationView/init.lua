@@ -2,10 +2,12 @@
 local ControlCustomizationView = {}
 ControlCustomizationView.__index = ControlCustomizationView
 
-local BindingsScreen = require(script.Parent.BindingsScreen)
 local UIComponents = script.Parent.UIComponents
+local BindingsScreen = require(UIComponents.BindingsScreen)
 local Label = require(UIComponents.Label)
 local Panel = require(UIComponents.Panel)
+local PanelTone = require(UIComponents.PanelTone)
+local LabelStyle = require(UIComponents.LabelStyle)
 
 type BindingsScreen = BindingsScreen.BindingsScreen
 type Label = Label.Label
@@ -25,7 +27,7 @@ local PANEL_PADDING = 16
 
 local function createPanel(): Panel
     local panelProps: Panel.PanelProps = {
-        Tone = "Window",
+        Tone = PanelTone.Window,
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
         Size = UDim2.fromOffset(520, 420),
@@ -38,7 +40,7 @@ local function createTitleLabel(): Label
     local labelProps: Label.LabelProps = {
         Name = "Title",
         Text = "Controls",
-        Style = "Title",
+        Style = LabelStyle.Title,
         Size = UDim2.new(1, 0, 0, TITLE_HEIGHT),
         Alignment = Enum.TextXAlignment.Center,
     }
