@@ -51,7 +51,7 @@ describe("BindingRow", function()
 		})
 
 		expect(itemNames(row)).toEqual({ "Space", "W" })
-		expect(row:GetGuiObject().Bindings:FindFirstChild("Unbound")).toBeUndefined()
+		expect(row:GetGuiObject().Bindings:FindFirstChild("Unbound")).toBeNil()
 	end)
 
 	it("orders items by name", function()

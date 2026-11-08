@@ -32,4 +32,42 @@ describe("ButtonTransformRules", function()
 
 		expect(ButtonTransformRules.GetEffectiveSize(transform)).toEqual(UDim2.new(1, 200, 0.5, 80))
 	end)
+
+	describe("ClampPosition", function()
+		local viewport = Vector2.new(1024, 512)
+		local size = Vector2.new(128, 64)
+		local centered = Vector2.new(0.5, 0.5)
+
+		it("leaves a position that is fully on screen alone", function()
+			local result = ButtonTransformRules.ClampPosition(Vector2.new(0.4, 0.6), size, centered, viewport)
+
+			expect(result).toEqual(Vector2.new(0.4, 0.6))
+		end)
+
+		it("keeps a centered control's edges on screen", function()
+			local result = ButtonTransformRules.ClampPosition(Vector2.new(-1, 2), size, centered, viewport)
+
+			expect(result).toEqual(Vector2.new(0.0625, 0.9375))
+		end)
+
+		it("accounts for the anchor point", function()
+			local topLeftAnchor = Vector2.new(0, 0)
+			local result = ButtonTransformRules.ClampPosition(Vector2.new(2, 2), size, topLeftAnchor, viewport)
+
+			expect(result).toEqual(Vector2.new(0.875, 0.875))
+		end)
+
+		it("centers a control that is bigger than the viewport", function()
+			local huge = Vector2.new(2048, 64)
+			local result = ButtonTransformRules.ClampPosition(Vector2.new(0.1, 0.5), huge, centered, viewport)
+
+			expect(result.X).toBe(0.5)
+		end)
+
+		it("returns the position unchanged when the viewport has no size", function()
+			local result = ButtonTransformRules.ClampPosition(Vector2.new(3, 3), size, centered, Vector2.new())
+
+			expect(result).toEqual(Vector2.new(3, 3))
+		end)
+	end)
 end)

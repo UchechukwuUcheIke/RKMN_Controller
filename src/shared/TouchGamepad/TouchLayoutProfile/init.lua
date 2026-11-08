@@ -18,22 +18,6 @@ type TouchLayoutProfileData = {
 
 export type TouchLayoutProfile = typeof(setmetatable({} :: TouchLayoutProfileData, TouchLayoutProfile))
 
-local function copyLayout(layout: TouchGamepadLayout): TouchGamepadLayout
-    local copy: TouchGamepadLayout = {}
-
-    for controlID, transform in pairs(layout) do
-        copy[controlID] = table.freeze({
-            Position = transform.Position,
-            BaseSize = transform.BaseSize,
-            AnchorPoint = transform.AnchorPoint,
-            Scale = transform.Scale,
-            Transparency = transform.Transparency
-        })
-    end
-
-    return table.freeze(copy)
-end
-
 function TouchLayoutProfile.new(defaultLayout: TouchGamepadLayout): TouchLayoutProfile
     local self = setmetatable({}, TouchLayoutProfile)
 
@@ -49,13 +33,13 @@ function TouchLayoutProfile.GetLayout(self: TouchLayoutProfile): TouchGamepadLay
 end
 
 function TouchLayoutProfile.SetLayout(self: TouchLayoutProfile, layout: TouchGamepadLayout): ()
-    for controlID in pairs(self._defaultLayout) do
-        if not layout[controlID] then
+    for _, controlID in ipairs(self._defaultLayout:GetControlIDs()) do
+        if not layout:HasControl(controlID) then
             error(`Layout has no transform for {controlID}`)
         end
     end
 
-    self._customLayout = copyLayout(layout)
+    self._customLayout = layout
 
     self.LayoutChanged:Fire()
 end

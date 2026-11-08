@@ -7,17 +7,21 @@ local it = JestGlobals.it
 local expect = JestGlobals.expect
 
 local TouchLayoutProfile = require(ReplicatedStorage.TouchGamepad.TouchLayoutProfile)
+local ButtonTransform = require(ReplicatedStorage.TouchGamepad.ButtonTransform)
+local TouchLayout = require(ReplicatedStorage.TouchGamepad.TouchLayout)
 
 local function makeTransform(x)
-	return {
+	return ButtonTransform.new({
 		Position = UDim2.fromOffset(x, 0),
 		BaseSize = UDim2.fromOffset(80, 80),
 		AnchorPoint = Vector2.new(0.5, 0.5),
-	}
+		Scale = 1,
+		Transparency = 0.5,
+	})
 end
 
 local function makeLayout(x)
-	return { Left = makeTransform(x), Jump = makeTransform(x) }
+	return TouchLayout.new({ Left = makeTransform(x), Jump = makeTransform(x) })
 end
 
 describe("TouchLayoutProfile", function()
@@ -34,30 +38,27 @@ describe("TouchLayoutProfile", function()
 
 		profile:SetLayout(makeLayout(50))
 
-		expect(profile:GetLayout().Left.Position).toEqual(UDim2.fromOffset(50, 0))
-		expect(defaultLayout.Left.Position).toEqual(UDim2.fromOffset(10, 0))
+		expect(profile:GetLayout():GetTransform("Left").Position).toEqual(UDim2.fromOffset(50, 0))
+		expect(defaultLayout:GetTransform("Left").Position).toEqual(UDim2.fromOffset(10, 0))
 	end)
 
-	it("keeps its own frozen copy of a set layout", function()
+	it("keeps the layout it is given, which can no longer change", function()
 		local profile = TouchLayoutProfile.new(makeLayout(10))
 		local layout = makeLayout(50)
 
 		profile:SetLayout(layout)
-		layout.Left.Position = UDim2.fromOffset(999, 0)
 
-		expect(profile:GetLayout()).never.toBe(layout)
-		expect(profile:GetLayout().Left.Position).toEqual(UDim2.fromOffset(50, 0))
-		expect(table.isfrozen(profile:GetLayout())).toBe(true)
-		expect(table.isfrozen(profile:GetLayout().Left)).toBe(true)
+		expect(profile:GetLayout()).toBe(layout)
+		expect(table.isfrozen(layout)).toBe(true)
 	end)
 
 	it("refuses a layout missing an action", function()
 		local profile = TouchLayoutProfile.new(makeLayout(10))
 
 		expect(function()
-			profile:SetLayout({ Left = makeTransform(50) })
+			profile:SetLayout(TouchLayout.new({ Left = makeTransform(50) }))
 		end).toThrow()
-		expect(profile:GetLayout().Jump.Position).toEqual(UDim2.fromOffset(10, 0))
+		expect(profile:GetLayout():GetTransform("Jump").Position).toEqual(UDim2.fromOffset(10, 0))
 	end)
 
 	it("fires LayoutChanged when the layout is set", function()

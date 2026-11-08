@@ -229,7 +229,7 @@ describe("ControlCustomizationUI", function()
 
 		parts.screen.OnUnbindRequested:Fire(InputAction.Jump, Enum.KeyCode.Space)
 
-		expect(parts.profile:GetScheme("Keyboard")[InputAction.Jump][Enum.KeyCode.Space]).toBeUndefined()
+		expect(parts.profile:GetScheme("Keyboard")[InputAction.Jump][Enum.KeyCode.Space]).toBeNil()
 	end)
 
 	it("closes and gives gameplay input back when exit is pressed", function()

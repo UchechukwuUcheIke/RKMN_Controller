@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local InputAction = require(ReplicatedStorage.PlayerInput.InputAction)
 local TouchGamepadLayoutRegistry = require(script.Parent.Parent.TouchGamepadLayoutRegistry)
 local ButtonTransformRules = require(script.Parent.Parent.ButtonTransformRules)
+local ButtonTransformModule = require(script.Parent.Parent.ButtonTransform)
 local ActionButtonModule = require(script.Parent.ActionButton)
 
 type ActionButton = ActionButtonModule.ActionButton
@@ -23,13 +24,13 @@ local ARROW_WIDTH_SCALE = 0.45
 
 local function makeArrowTransform(isLeft: boolean, transparency: number): ButtonTransform
     local edge = if isLeft then 0 else 1
-    return {
+    return ButtonTransformModule.new({
         Position = UDim2.fromScale(edge, 0.5),
         BaseSize = UDim2.fromScale(ARROW_WIDTH_SCALE, 1),
         AnchorPoint = Vector2.new(edge, 0.5),
         Scale = 1,
         Transparency = transparency
-    }
+    })
 end
 
 function DPad.new(parent: Instance?): DPad

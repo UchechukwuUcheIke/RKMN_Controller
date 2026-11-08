@@ -8,6 +8,7 @@ local TouchGamepadUI = require(script.Parent.UserInterface.TouchGamepadUI)
 type ControlID = TouchGamepadLayoutRegistry.ControlID
 type PositionableControl = TouchGamepadUI.PositionableControl
 type TouchGamepadLayout = TouchGamepadLayoutRegistry.TouchGamepadLayout
+type ButtonTransform = TouchGamepadLayoutRegistry.ButtonTransform
 
 type MobileButtonPositionerData = {
     _controls: {[ControlID]: PositionableControl}
@@ -27,13 +28,13 @@ end
 
 function MobileButtonPositioner.ApplyLayout(self: MobileButtonPositioner, layout: TouchGamepadLayout): ()
     for controlID in pairs(self._controls) do
-        if not layout[controlID] then
+        if not layout:HasControl(controlID) then
             error(`Layout has no transform for {controlID}`)
         end
     end
 
     for controlID, control in pairs(self._controls) do
-        control:SetTransform(layout[controlID])
+        control:SetTransform(layout:GetTransform(controlID) :: ButtonTransform)
     end
 end
 
