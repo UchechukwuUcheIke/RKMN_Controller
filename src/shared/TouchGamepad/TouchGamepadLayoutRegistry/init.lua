@@ -19,35 +19,35 @@ TouchGamepadLayoutRegistry.DPad = "DPad" :: ControlID
 
 TouchGamepadLayoutRegistry.Standard = TouchLayout.new({
     [TouchGamepadLayoutRegistry.DPad] = ButtonTransform.new({
-        Position = UDim2.new(0, 145, 1, -90),
+        Position = UDim2.fromScale(0.18, 0.78),
         BaseSize = UDim2.new(0, 190, 0, 80),
         AnchorPoint = CENTERED,
         Scale = DEFAULT_SCALE,
         Transparency = DEFAULT_TRANSPARENCY
     }),
     [InputAction.Jump] = ButtonTransform.new({
-        Position = UDim2.new(1, -120, 1, -120),
+        Position = UDim2.fromScale(0.85, 0.7),
         BaseSize = UDim2.new(0, 80, 0, 80),
         AnchorPoint = CENTERED,
         Scale = DEFAULT_SCALE,
         Transparency = DEFAULT_TRANSPARENCY
     }),
     [InputAction.Dash] = ButtonTransform.new({
-        Position = UDim2.new(1, -220, 1, -90),
+        Position = UDim2.fromScale(0.72, 0.78),
         BaseSize = UDim2.new(0, 70, 0, 70),
         AnchorPoint = CENTERED,
         Scale = DEFAULT_SCALE,
         Transparency = DEFAULT_TRANSPARENCY
     }),
     [InputAction.Shoot] = ButtonTransform.new({
-        Position = UDim2.new(1, -210, 1, -190),
+        Position = UDim2.fromScale(0.74, 0.52),
         BaseSize = UDim2.new(0, 70, 0, 70),
         AnchorPoint = CENTERED,
         Scale = DEFAULT_SCALE,
         Transparency = DEFAULT_TRANSPARENCY
     }),
     [InputAction.Menu] = ButtonTransform.new({
-        Position = UDim2.new(1, -50, 0, 50),
+        Position = UDim2.fromScale(0.94, 0.12),
         BaseSize = UDim2.new(0, 70, 0, 40),
         AnchorPoint = CENTERED,
         Scale = DEFAULT_SCALE,

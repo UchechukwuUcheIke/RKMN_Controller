@@ -46,7 +46,7 @@ describe("TouchLayoutEditSession", function()
 			local startingLayout = makeLayout()
 			local session = TouchLayoutEditSession.new(startingLayout)
 
-			session:SetPosition("Jump", UDim2.fromScale(0.7, 0.2))
+			session:SetControlPosition("Jump", UDim2.fromScale(0.7, 0.2))
 
 			expect(positionOf(session, "Jump")).toEqual(UDim2.fromScale(0.7, 0.2))
 			expect(positionOf(session, "DPad")).toEqual(UDim2.fromScale(0.1, 0.5))
@@ -57,8 +57,8 @@ describe("TouchLayoutEditSession", function()
 		it("clamps scale and transparency through the rules", function()
 			local session = makeSession()
 
-			session:SetScale("Jump", 10)
-			session:SetTransparency("Jump", 5)
+			session:SetControlScale("Jump", 10)
+			session:SetControlTransparency("Jump", 5)
 
 			expect(session:GetLayout():GetTransform("Jump").Scale).toBe(1.5)
 			expect(session:GetLayout():GetTransform("Jump").Transparency).toBe(0.8)
@@ -71,7 +71,7 @@ describe("TouchLayoutEditSession", function()
 				fireCount += 1
 			end)
 
-			session:SetScale("Jump", 1)
+			session:SetControlScale("Jump", 1)
 
 			expect(fireCount).toBe(0)
 			expect(session:CanUndo()).toBe(false)
@@ -81,7 +81,7 @@ describe("TouchLayoutEditSession", function()
 			local session = makeSession()
 
 			expect(function()
-				session:SetScale("Fly", 1)
+				session:SetControlScale("Fly", 1)
 			end).toThrow()
 		end)
 
@@ -92,7 +92,7 @@ describe("TouchLayoutEditSession", function()
 				fireCount += 1
 			end)
 
-			session:SetScale("Jump", 1.2)
+			session:SetControlScale("Jump", 1.2)
 
 			expect(fireCount).toBe(1)
 		end)
@@ -130,8 +130,8 @@ describe("TouchLayoutEditSession", function()
 	describe("undo and redo", function()
 		it("undoes and redoes one edit at a time", function()
 			local session = makeSession()
-			session:SetScale("Jump", 1.2)
-			session:SetScale("Jump", 1.4)
+			session:SetControlScale("Jump", 1.2)
+			session:SetControlScale("Jump", 1.4)
 
 			session:Undo()
 			expect(session:GetLayout():GetTransform("Jump").Scale).toBe(1.2)
@@ -148,10 +148,10 @@ describe("TouchLayoutEditSession", function()
 
 		it("drops the redo steps when a new edit is made", function()
 			local session = makeSession()
-			session:SetScale("Jump", 1.2)
+			session:SetControlScale("Jump", 1.2)
 			session:Undo()
 
-			session:SetScale("Jump", 1.4)
+			session:SetControlScale("Jump", 1.4)
 
 			expect(session:CanRedo()).toBe(false)
 		end)
@@ -167,7 +167,7 @@ describe("TouchLayoutEditSession", function()
 
 		it("is clean again once undone back to the starting layout", function()
 			local session = makeSession()
-			session:SetScale("Jump", 1.2)
+			session:SetControlScale("Jump", 1.2)
 
 			session:Undo()
 
@@ -176,7 +176,7 @@ describe("TouchLayoutEditSession", function()
 
 		it("announces undo and redo", function()
 			local session = makeSession()
-			session:SetScale("Jump", 1.2)
+			session:SetControlScale("Jump", 1.2)
 			local fireCount = 0
 			session.Changed:Connect(function()
 				fireCount += 1
@@ -194,9 +194,9 @@ describe("TouchLayoutEditSession", function()
 			local session = makeSession()
 
 			session:BeginGesture()
-			session:SetPosition("Jump", UDim2.fromScale(0.8, 0.5))
-			session:SetPosition("Jump", UDim2.fromScale(0.7, 0.5))
-			session:SetPosition("Jump", UDim2.fromScale(0.6, 0.5))
+			session:SetControlPosition("Jump", UDim2.fromScale(0.8, 0.5))
+			session:SetControlPosition("Jump", UDim2.fromScale(0.7, 0.5))
+			session:SetControlPosition("Jump", UDim2.fromScale(0.6, 0.5))
 			session:EndGesture()
 
 			expect(positionOf(session, "Jump")).toEqual(UDim2.fromScale(0.6, 0.5))
@@ -210,7 +210,7 @@ describe("TouchLayoutEditSession", function()
 			local session = makeSession()
 
 			session:BeginGesture()
-			session:SetPosition("Jump", UDim2.fromScale(0.8, 0.5))
+			session:SetControlPosition("Jump", UDim2.fromScale(0.8, 0.5))
 
 			expect(positionOf(session, "Jump")).toEqual(UDim2.fromScale(0.8, 0.5))
 			expect(session:IsDirty()).toBe(true)
@@ -220,8 +220,8 @@ describe("TouchLayoutEditSession", function()
 			local session = makeSession()
 
 			session:BeginGesture()
-			session:SetScale("Jump", 1.2)
-			session:SetScale("Jump", 1)
+			session:SetControlScale("Jump", 1.2)
+			session:SetControlScale("Jump", 1)
 			session:EndGesture()
 
 			expect(session:CanUndo()).toBe(false)
@@ -229,7 +229,7 @@ describe("TouchLayoutEditSession", function()
 
 		it("holds off undo and redo until the gesture ends", function()
 			local session = makeSession()
-			session:SetScale("Jump", 1.2)
+			session:SetControlScale("Jump", 1.2)
 
 			session:BeginGesture()
 
@@ -259,7 +259,7 @@ describe("TouchLayoutEditSession", function()
 	describe("saving and discarding", function()
 		it("becomes clean once marked saved, and keeps its history", function()
 			local session = makeSession()
-			session:SetScale("Jump", 1.2)
+			session:SetControlScale("Jump", 1.2)
 
 			session:MarkSaved()
 
@@ -269,7 +269,7 @@ describe("TouchLayoutEditSession", function()
 
 		it("is dirty again when undone past the saved layout", function()
 			local session = makeSession()
-			session:SetScale("Jump", 1.2)
+			session:SetControlScale("Jump", 1.2)
 			session:MarkSaved()
 
 			session:Undo()
@@ -279,10 +279,10 @@ describe("TouchLayoutEditSession", function()
 
 		it("discards edits back to the last saved layout in one undoable step", function()
 			local session = makeSession()
-			session:SetScale("Jump", 1.2)
+			session:SetControlScale("Jump", 1.2)
 			session:MarkSaved()
-			session:SetScale("Jump", 1.4)
-			session:SetPosition("DPad", UDim2.fromScale(0.3, 0.5))
+			session:SetControlScale("Jump", 1.4)
+			session:SetControlPosition("DPad", UDim2.fromScale(0.3, 0.5))
 
 			session:DiscardChanges()
 
