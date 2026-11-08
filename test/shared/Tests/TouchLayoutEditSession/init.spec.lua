@@ -256,6 +256,86 @@ describe("TouchLayoutEditSession", function()
 		end)
 	end)
 
+	describe("replacing the layout", function()
+		local function makeOtherLayout()
+			return TouchLayout.new({ DPad = makeTransform(0.4), Jump = makeTransform(0.6) })
+		end
+
+		it("swaps the whole draft for the other layout", function()
+			local session = makeSession()
+			local other = makeOtherLayout()
+
+			session:ReplaceLayout(other)
+
+			expect(session:GetLayout()).toBe(other)
+			expect(session:IsDirty()).toBe(true)
+		end)
+
+		it("is one step that undo and redo both reverse", function()
+			local session = makeSession()
+			session:SetControlScale("Jump", 1.2)
+			local other = makeOtherLayout()
+
+			session:ReplaceLayout(other)
+			session:Undo()
+			expect(session:GetLayout():GetTransform("Jump").Scale).toBe(1.2)
+
+			session:Redo()
+			expect(session:GetLayout()).toBe(other)
+		end)
+
+		it("keeps the selection", function()
+			local session = makeSession()
+			session:SelectControl("Jump")
+
+			session:ReplaceLayout(makeOtherLayout())
+
+			expect(session:GetSelectedControl()).toBe("Jump")
+		end)
+
+		it("announces the change", function()
+			local session = makeSession()
+			local fireCount = 0
+			session.Changed:Connect(function()
+				fireCount += 1
+			end)
+
+			session:ReplaceLayout(makeOtherLayout())
+
+			expect(fireCount).toBe(1)
+		end)
+
+		it("does nothing for a layout equal to the current one", function()
+			local session = makeSession()
+
+			session:ReplaceLayout(makeLayout())
+
+			expect(session:CanUndo()).toBe(false)
+			expect(session:IsDirty()).toBe(false)
+		end)
+
+		it("refuses a layout that places different controls", function()
+			local session = makeSession()
+
+			expect(function()
+				session:ReplaceLayout(TouchLayout.new({ DPad = makeTransform(0.4) }))
+			end).toThrow()
+			expect(function()
+				session:ReplaceLayout(TouchLayout.new({ DPad = makeTransform(0.4), Jump = makeTransform(0.6), Dash = makeTransform(0.5) }))
+			end).toThrow()
+		end)
+
+		it("is ignored while a gesture is in progress", function()
+			local session = makeSession()
+			session:BeginGesture()
+
+			session:ReplaceLayout(makeOtherLayout())
+
+			expect(session:IsDirty()).toBe(false)
+			session:EndGesture()
+		end)
+	end)
+
 	describe("saving and discarding", function()
 		it("becomes clean once marked saved, and keeps its history", function()
 			local session = makeSession()

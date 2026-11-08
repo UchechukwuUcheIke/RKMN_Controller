@@ -33,6 +33,7 @@ local TouchGamepadPresenter = require(TouchGamepadFolder.TouchGamepadPresenter)
 local TouchGamepadUI = require(TouchGamepadFolder.UserInterface.TouchGamepadUI)
 local MobileButtonPositioner = require(TouchGamepadFolder.MobileButtonPositioner)
 local TouchGamepadLayoutRegistry = require(TouchGamepadFolder.TouchGamepadLayoutRegistry)
+local TouchLayoutPresets = require(TouchGamepadFolder.TouchLayoutPresets)
 local TouchLayoutProfile = require(TouchGamepadFolder.TouchLayoutProfile)
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
 local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
@@ -47,6 +48,7 @@ type DeviceDetector = DeviceDetector.DeviceDetector
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type TouchGamepadPresenter = TouchGamepadPresenter.TouchGamepadPresenter
 type ControlCustomizationUI = ControlCustomizationUI.ControlCustomizationUI
+type ControlID = TouchGamepadLayoutRegistry.ControlID
 type TouchLayoutEditor = TouchLayoutEditor.TouchLayoutEditor
 type TouchLayoutCanvas = TouchLayoutCanvas.TouchLayoutCanvas
 type TouchLayoutScreen = TouchLayoutScreen.TouchLayoutScreen
@@ -132,6 +134,17 @@ local function makeControlCustomization(screenGui: ScreenGui, deviceDetector: De
     return ControlCustomizationUI.new(deviceDetector, controlProfile, playerInput, bindingCapture, view, task.defer)
 end
 
+-- The player cannot move these in the touch editor, and a preset leaves them where they are.
+local FIXED_TOUCH_CONTROLS: {ControlID} = { InputAction.Menu }
+
+local function makePresetOptions(): {{Id: string, Name: string}}
+    local options = {}
+    for _, preset in ipairs(TouchLayoutPresets.All) do
+        table.insert(options, { Id = preset.Id, Name = preset.Name })
+    end
+    return options
+end
+
 -- Everything the editor needs that is not the editor itself, kept together so the lot can be torn down as one.
 type TouchLayoutEditing = {
     Editor: TouchLayoutEditor,
@@ -152,9 +165,9 @@ local function makeTouchLayoutEditing(deviceDetector: DeviceDetector, playerInpu
         GetViewportSize = function()
             return gamepadUI:GetViewportSize()
         end,
-        FixedControls = { InputAction.Menu },
+        FixedControls = FIXED_TOUCH_CONTROLS,
     })
-    local screen = TouchLayoutScreen.new(playerGui, canvas)
+    local screen = TouchLayoutScreen.new(playerGui, canvas, makePresetOptions())
     local editor = TouchLayoutEditor.new({
         DeviceDetector = deviceDetector,
         LayoutProfile = touchLayoutProfile,
@@ -162,6 +175,8 @@ local function makeTouchLayoutEditing(deviceDetector: DeviceDetector, playerInpu
         TouchGamepad = touchGamepad,
         Canvas = canvas,
         Screen = screen,
+        Presets = TouchLayoutPresets.All,
+        FixedControls = FIXED_TOUCH_CONTROLS,
     })
 
     return { Editor = editor, Screen = screen, Canvas = canvas, Positioner = positioner, GamepadUI = gamepadUI }

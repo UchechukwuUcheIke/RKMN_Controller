@@ -142,6 +142,22 @@ function TouchLayoutEditSession.DiscardChanges(self: TouchLayoutEditSession): ()
     self.Changed:Fire()
 end
 
+-- Swaps the whole draft for another layout of the same controls, as one step that Undo can reverse.
+function TouchLayoutEditSession.ReplaceLayout(self: TouchLayoutEditSession, layout: TouchGamepadLayout): ()
+    local placesSameControls = layout:HasAllControlsOf(self._draftLayout) and self._draftLayout:HasAllControlsOf(layout)
+    if not placesSameControls then
+        error("The replacement layout places different controls")
+    end
+
+    if self._draftLayout:Equals(layout) or self:_isGestureInProgress() then
+        return
+    end
+
+    self:_recordUndoStep(self._draftLayout)
+    self._draftLayout = layout
+    self.Changed:Fire()
+end
+
 function TouchLayoutEditSession.MarkSaved(self: TouchLayoutEditSession): ()
     self._savedLayout = self._draftLayout
     self.Changed:Fire()

@@ -26,7 +26,8 @@ local function makeScreen()
 		end,
 		FixedControls = { "Menu" },
 	})
-	local screen = TouchLayoutScreen.new(parent, canvas)
+	local presetOptions = { { Id = "Standard", Name = "Standard" }, { Id = "Compact", Name = "Compact" } }
+	local screen = TouchLayoutScreen.new(parent, canvas, presetOptions)
 	return screen, { parent = parent, canvas = canvas, gamepadUI = gamepadUI }
 end
 
@@ -123,17 +124,15 @@ describe("TouchLayoutScreen", function()
 		local undos = count(screen.UndoRequested)
 		local redos = count(screen.RedoRequested)
 		local discards = count(screen.DiscardRequested)
-		local presets = count(screen.PresetsRequested)
 		local saves = count(screen.SaveRequested)
 
 		screen._exitButton:_handleActivated()
 		screen._undoButton:_handleActivated()
 		screen._redoButton:_handleActivated()
 		screen._discardButton:_handleActivated()
-		screen._presetsButton:_handleActivated()
 		screen._saveButton:_handleActivated()
 
-		expect({ exits(), undos(), redos(), discards(), presets(), saves() }).toEqual({ 1, 1, 1, 1, 1, 1 })
+		expect({ exits(), undos(), redos(), discards(), saves() }).toEqual({ 1, 1, 1, 1, 1 })
 	end)
 
 	it("does not announce a press on a button that is switched off", function()
@@ -176,6 +175,56 @@ describe("TouchLayoutScreen", function()
 		screen._unsavedPrompt._buttons[2]:_handleActivated()
 
 		expect(choices).toEqual({ UnsavedChangesChoice.Discard })
+	end)
+
+	it("opens the preset picker when Presets is pressed", function()
+		local screen, parts = makeScreen()
+		local picker = parts.parent.TouchLayoutChrome.PresetPicker
+		expect(picker.Visible).toBe(false)
+
+		screen._presetsButton:_handleActivated()
+
+		expect(picker.Visible).toBe(true)
+	end)
+
+	it("closes the picker and announces the preset that was chosen", function()
+		local screen, parts = makeScreen()
+		local chosen = {}
+		screen.PresetChosen:Connect(function(presetID)
+			table.insert(chosen, presetID)
+		end)
+		screen._presetsButton:_handleActivated()
+
+		screen._presetPicker._optionButtons[2]:_handleActivated()
+
+		expect(chosen).toEqual({ "Compact" })
+		expect(parts.parent.TouchLayoutChrome.PresetPicker.Visible).toBe(false)
+	end)
+
+	it("closes the picker without choosing anything when it is cancelled", function()
+		local screen, parts = makeScreen()
+		local chosen = 0
+		screen.PresetChosen:Connect(function()
+			chosen += 1
+		end)
+		screen._presetsButton:_handleActivated()
+
+		screen._presetPicker._cancelButton:_handleActivated()
+
+		expect(chosen).toBe(0)
+		expect(parts.parent.TouchLayoutChrome.PresetPicker.Visible).toBe(false)
+	end)
+
+	it("puts away the picker and the unsaved-changes prompt when the screen is hidden", function()
+		local screen, parts = makeScreen()
+		screen:SetVisible(true)
+		screen._presetsButton:_handleActivated()
+		screen:ShowUnsavedChangesPrompt()
+
+		screen:SetVisible(false)
+
+		expect(parts.parent.TouchLayoutChrome.PresetPicker.Visible).toBe(false)
+		expect(parts.parent.TouchLayoutChrome.UnsavedChangesPrompt.Visible).toBe(false)
 	end)
 
 	it("passes the adjustment panel's events on", function()

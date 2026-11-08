@@ -15,13 +15,22 @@ local UnsavedChangesChoice = require(ReplicatedStorage.ControlCustomization.UICo
 local STANDARD = TouchGamepadLayoutRegistry.Standard
 local MOVED = UDim2.fromScale(0.4, 0.4)
 
+-- Moves Jump and Menu, so a test can see Jump follow the preset while the fixed Menu stays put.
+local function makePreset()
+	local jump = STANDARD:GetTransform("Jump")
+	local menu = STANDARD:GetTransform("Menu")
+	local layout = STANDARD:CopyWithTransform("Jump", jump:CopyWithChanges({ Position = MOVED }))
+	layout = layout:CopyWithTransform("Menu", menu:CopyWithChanges({ Position = UDim2.fromScale(0.1, 0.1) }))
+	return { Id = "Test", Name = "Test", Layout = layout }
+end
+
 local function makeFakeScreen()
 	local screen = {
 		ExitRequested = Signal.new(),
 		UndoRequested = Signal.new(),
 		RedoRequested = Signal.new(),
 		DiscardRequested = Signal.new(),
-		PresetsRequested = Signal.new(),
+		PresetChosen = Signal.new(),
 		SaveRequested = Signal.new(),
 		BackgroundPressed = Signal.new(),
 		UnsavedChoiceMade = Signal.new(),
@@ -107,6 +116,8 @@ local function makeEditor(startingDevice)
 		TouchGamepad = parts.touchGamepad,
 		Canvas = parts.canvas,
 		Screen = parts.screen,
+		Presets = { makePreset() },
+		FixedControls = { "Menu" },
 	})
 	editor:Enable()
 	return editor, parts
@@ -322,6 +333,50 @@ describe("TouchLayoutEditor", function()
 
 			expect(jump(parts).Position).toEqual(STANDARD:GetTransform("Jump").Position)
 			expect(parts.screen.editState.IsDirty).toBe(false)
+		end)
+	end)
+
+	describe("presets", function()
+		it("applies a chosen preset to the draft", function()
+			local _, parts = makeOpenEditor()
+
+			parts.screen.PresetChosen:Fire("Test")
+
+			expect(jump(parts).Position).toEqual(MOVED)
+			expect(parts.screen.editState.IsDirty).toBe(true)
+		end)
+
+		it("leaves a control the player cannot move where it was", function()
+			local _, parts = makeOpenEditor()
+
+			parts.screen.PresetChosen:Fire("Test")
+
+			expect(parts.screen.layout:GetTransform("Menu")).toBe(STANDARD:GetTransform("Menu"))
+		end)
+
+		it("is one undo step", function()
+			local _, parts = makeOpenEditor()
+			parts.screen.PresetChosen:Fire("Test")
+
+			parts.screen.UndoRequested:Fire()
+
+			expect(jump(parts).Position).toEqual(STANDARD:GetTransform("Jump").Position)
+		end)
+
+		it("ignores a preset it does not know", function()
+			local _, parts = makeOpenEditor()
+
+			parts.screen.PresetChosen:Fire("Nope")
+
+			expect(parts.screen.editState.IsDirty).toBe(false)
+		end)
+
+		it("does not touch the saved layout until Save", function()
+			local _, parts = makeOpenEditor()
+
+			parts.screen.PresetChosen:Fire("Test")
+
+			expect(parts.profile:GetLayout()).toBe(STANDARD)
 		end)
 	end)
 

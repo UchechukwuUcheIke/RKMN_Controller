@@ -10,6 +10,7 @@ local AppBar = require(UIComponents.AppBar)
 local Button = require(UIComponents.Button)
 local ConfirmDialog = require(UIComponents.ConfirmDialog)
 local ControlAdjustmentPanel = require(UIComponents.ControlAdjustmentPanel)
+local PresetPicker = require(UIComponents.PresetPicker)
 local TouchLayoutCanvas = require(UIComponents.TouchLayoutCanvas)
 local UITheme = require(UIComponents.UITheme)
 local UnsavedChangesChoice = require(UIComponents.UnsavedChangesChoice)
@@ -22,6 +23,8 @@ type AppBar = AppBar.AppBar
 type Button = Button.Button
 type ConfirmDialog = ConfirmDialog.ConfirmDialog
 type ControlAdjustmentPanel = ControlAdjustmentPanel.ControlAdjustmentPanel
+type PresetPicker = PresetPicker.PresetPicker
+type PresetOption = PresetPicker.PresetOption
 type TouchLayoutCanvas = TouchLayoutCanvas.TouchLayoutCanvas
 
 export type EditState = {
@@ -38,6 +41,7 @@ type TouchLayoutScreenData = {
     _appBar: AppBar,
     _adjustmentPanel: ControlAdjustmentPanel,
     _unsavedPrompt: ConfirmDialog,
+    _presetPicker: PresetPicker,
     _exitButton: Button,
     _undoButton: Button,
     _redoButton: Button,
@@ -48,7 +52,7 @@ type TouchLayoutScreenData = {
     UndoRequested: Signal,
     RedoRequested: Signal,
     DiscardRequested: Signal,
-    PresetsRequested: Signal,
+    PresetChosen: Signal,
     SaveRequested: Signal,
     BackgroundPressed: Signal,
     UnsavedChoiceMade: Signal,
@@ -129,13 +133,22 @@ local function createUnsavedPrompt(): ConfirmDialog
     return ConfirmDialog.new(dialogProps)
 end
 
+local function createPresetPicker(presetOptions: {PresetOption}): PresetPicker
+    local pickerProps: PresetPicker.PresetPickerProps = {
+        Name = "PresetPicker",
+        Title = "Presets",
+        Options = presetOptions,
+    }
+    return PresetPicker.new(pickerProps)
+end
+
 local function forward(source: Signal, target: Signal): ()
     source:Connect(function(...)
         target:Fire(...)
     end)
 end
 
-function TouchLayoutScreen.new(parent: Instance, canvas: TouchLayoutCanvas): TouchLayoutScreen
+function TouchLayoutScreen.new(parent: Instance, canvas: TouchLayoutCanvas, presetOptions: {PresetOption}): TouchLayoutScreen
     local self = setmetatable({}, TouchLayoutScreen)
 
     self._backdropGui = createLayer(parent, "TouchLayoutBackdrop", BACKDROP_DISPLAY_ORDER)
@@ -145,6 +158,7 @@ function TouchLayoutScreen.new(parent: Instance, canvas: TouchLayoutCanvas): Tou
     self._appBar = createAppBar()
     self._adjustmentPanel = createAdjustmentPanel()
     self._unsavedPrompt = createUnsavedPrompt()
+    self._presetPicker = createPresetPicker(presetOptions)
     self._exitButton = createToolbarButton("Exit", "Exit", 60)
     self._undoButton = createToolbarButton("Undo", "Undo", 60)
     self._redoButton = createToolbarButton("Redo", "Redo", 60)
@@ -155,7 +169,7 @@ function TouchLayoutScreen.new(parent: Instance, canvas: TouchLayoutCanvas): Tou
     self.UndoRequested = Signal.new()
     self.RedoRequested = Signal.new()
     self.DiscardRequested = Signal.new()
-    self.PresetsRequested = Signal.new()
+    self.PresetChosen = Signal.new()
     self.SaveRequested = Signal.new()
     self.BackgroundPressed = Signal.new()
     self.UnsavedChoiceMade = Signal.new()
@@ -206,6 +220,11 @@ end
 function TouchLayoutScreen.SetVisible(self: TouchLayoutScreen, isVisible: boolean): ()
     self._backdropGui.Enabled = isVisible
     self._chromeGui.Enabled = isVisible
+
+    if not isVisible then
+        self._presetPicker:Hide()
+        self._unsavedPrompt:Hide()
+    end
     self._canvas:SetVisible(isVisible)
 end
 
@@ -227,6 +246,7 @@ function TouchLayoutScreen._assembleChrome(self: TouchLayoutScreen): ()
 
     self._appBar:GetGuiObject().Parent = self._chromeGui
     self._adjustmentPanel:GetGuiObject().Parent = self._chromeGui
+    self._presetPicker:GetGuiObject().Parent = self._chromeGui
     self._unsavedPrompt:GetGuiObject().Parent = self._chromeGui
 end
 
@@ -235,9 +255,18 @@ function TouchLayoutScreen._forwardEvents(self: TouchLayoutScreen): ()
     forward(self._undoButton.Activated, self.UndoRequested)
     forward(self._redoButton.Activated, self.RedoRequested)
     forward(self._discardButton.Activated, self.DiscardRequested)
-    forward(self._presetsButton.Activated, self.PresetsRequested)
     forward(self._saveButton.Activated, self.SaveRequested)
     forward(self._unsavedPrompt.ChoiceMade, self.UnsavedChoiceMade)
+
+    self._presetsButton.Activated:Connect(function()
+        self._presetPicker:Show()
+    end)
+    self._presetPicker.PresetChosen:Connect(function(presetID: string)
+        self:_handlePresetChosen(presetID)
+    end)
+    self._presetPicker.Cancelled:Connect(function()
+        self._presetPicker:Hide()
+    end)
     forward(self._adjustmentPanel.ScaleChanged, self.ScaleChanged)
     forward(self._adjustmentPanel.TransparencyChanged, self.TransparencyChanged)
     forward(self._adjustmentPanel.AdjustmentStarted, self.AdjustmentStarted)
@@ -246,6 +275,11 @@ function TouchLayoutScreen._forwardEvents(self: TouchLayoutScreen): ()
     self._backdropButton.Activated:Connect(function()
         self:_handleBackdropActivated()
     end)
+end
+
+function TouchLayoutScreen._handlePresetChosen(self: TouchLayoutScreen, presetID: string): ()
+    self._presetPicker:Hide()
+    self.PresetChosen:Fire(presetID)
 end
 
 function TouchLayoutScreen._handleBackdropActivated(self: TouchLayoutScreen): ()
@@ -266,7 +300,7 @@ function TouchLayoutScreen._disconnectSignals(self: TouchLayoutScreen): ()
     self.UndoRequested:DisconnectAll()
     self.RedoRequested:DisconnectAll()
     self.DiscardRequested:DisconnectAll()
-    self.PresetsRequested:DisconnectAll()
+    self.PresetChosen:DisconnectAll()
     self.SaveRequested:DisconnectAll()
     self.BackgroundPressed:DisconnectAll()
     self.UnsavedChoiceMade:DisconnectAll()
@@ -279,6 +313,7 @@ end
 -- The canvas was handed in, so whoever made it destroys it.
 function TouchLayoutScreen.Destroy(self: TouchLayoutScreen): ()
     self:_disconnectSignals()
+    self._presetPicker:Destroy()
     self._unsavedPrompt:Destroy()
     self._adjustmentPanel:Destroy()
     self:_destroyButtons()

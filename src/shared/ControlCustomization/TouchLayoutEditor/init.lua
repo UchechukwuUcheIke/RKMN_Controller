@@ -10,6 +10,7 @@ local PlayerInputFacade = require(PlayerInputFolder.PlayerInputFacade)
 local TouchGamepadFolder = ReplicatedStorage.TouchGamepad
 local TouchGamepadLayoutRegistry = require(TouchGamepadFolder.TouchGamepadLayoutRegistry)
 local TouchGamepadPresenter = require(TouchGamepadFolder.TouchGamepadPresenter)
+local TouchLayoutPresets = require(TouchGamepadFolder.TouchLayoutPresets)
 local TouchLayoutProfile = require(TouchGamepadFolder.TouchLayoutProfile)
 local TouchLayoutEditSession = require(script.Parent.TouchLayoutEditSession)
 local UIComponents = script.Parent.UIComponents
@@ -22,6 +23,8 @@ type DeviceDetector = DeviceDetector.DeviceDetector
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type ControlID = TouchGamepadLayoutRegistry.ControlID
 type TouchGamepadPresenter = TouchGamepadPresenter.TouchGamepadPresenter
+type LayoutPreset = TouchLayoutPresets.LayoutPreset
+type TouchGamepadLayout = TouchGamepadLayoutRegistry.TouchGamepadLayout
 type TouchLayoutProfile = TouchLayoutProfile.TouchLayoutProfile
 type TouchLayoutEditSession = TouchLayoutEditSession.TouchLayoutEditSession
 type TouchLayoutCanvas = TouchLayoutCanvas.TouchLayoutCanvas
@@ -38,7 +41,9 @@ export type TouchLayoutEditorDependencies = {
     PlayerInput: PlayerInputFacade,
     TouchGamepad: TouchGamepadPresenter,
     Canvas: TouchLayoutCanvas,
-    Screen: TouchLayoutScreen
+    Screen: TouchLayoutScreen,
+    Presets: {LayoutPreset},
+    FixedControls: {ControlID}
 }
 
 type TouchLayoutEditorData = {
@@ -48,6 +53,8 @@ type TouchLayoutEditorData = {
     _touchGamepad: TouchGamepadPresenter,
     _canvas: TouchLayoutCanvas,
     _screen: TouchLayoutScreen,
+    _presets: {LayoutPreset},
+    _fixedControls: {ControlID},
 
     _session: TouchLayoutEditSession?,
     _sessionConnection: Connection?,
@@ -66,6 +73,8 @@ function TouchLayoutEditor.new(dependencies: TouchLayoutEditorDependencies): Tou
     self._touchGamepad = dependencies.TouchGamepad
     self._canvas = dependencies.Canvas
     self._screen = dependencies.Screen
+    self._presets = dependencies.Presets
+    self._fixedControls = dependencies.FixedControls
 
     self._session = nil
     self._sessionConnection = nil
@@ -190,6 +199,9 @@ function TouchLayoutEditor._subscribeToScreen(self: TouchLayoutEditor): ()
     table.insert(self._connections, screen.ExitRequested:Connect(function()
         self:_handleExitRequested()
     end))
+    table.insert(self._connections, screen.PresetChosen:Connect(function(presetID: string)
+        self:_handlePresetChosen(presetID)
+    end))
     table.insert(self._connections, screen.UnsavedChoiceMade:Connect(function(choice: UnsavedChangesChoice)
         self:_handleUnsavedChoice(choice)
     end))
@@ -279,6 +291,37 @@ function TouchLayoutEditor._handleExitRequested(self: TouchLayoutEditor): ()
     else
         self:Close()
     end
+end
+
+-- A preset places every control, but the controls the player cannot move stay where they are.
+function TouchLayoutEditor._handlePresetChosen(self: TouchLayoutEditor, presetID: string): ()
+    local session = self._session
+    local preset = self:_findPreset(presetID)
+    if not session or not preset then
+        return
+    end
+
+    session:ReplaceLayout(self:_keepFixedControls(preset.Layout, session:GetLayout()))
+end
+
+function TouchLayoutEditor._findPreset(self: TouchLayoutEditor, presetID: string): LayoutPreset?
+    for _, preset in ipairs(self._presets) do
+        if preset.Id == presetID then
+            return preset
+        end
+    end
+    return nil
+end
+
+function TouchLayoutEditor._keepFixedControls(self: TouchLayoutEditor, presetLayout: TouchGamepadLayout, currentLayout: TouchGamepadLayout): TouchGamepadLayout
+    local layout = presetLayout
+    for _, controlID in ipairs(self._fixedControls) do
+        local current = currentLayout:GetTransform(controlID)
+        if current and layout:HasControl(controlID) then
+            layout = layout:CopyWithTransform(controlID, current)
+        end
+    end
+    return layout
 end
 
 function TouchLayoutEditor._handleUnsavedChoice(self: TouchLayoutEditor, choice: UnsavedChangesChoice): ()
