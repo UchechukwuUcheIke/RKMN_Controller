@@ -11,14 +11,14 @@ local DeviceDetector = require(PlayerInputFolder.DeviceDetector)
 local PlayerInputFacade = require(PlayerInputFolder.PlayerInputFacade)
 local TouchGamepadUI = require(script.Parent.UserInterface.TouchGamepadUI)
 local MobileButtonPositioner = require(script.Parent.MobileButtonPositioner)
-local TouchGamepadLayoutRegistry = require(script.Parent.TouchGamepadLayoutRegistry)
+local TouchLayoutProfile = require(script.Parent.TouchLayoutProfile)
 
 type InputDevice = InputDevice.InputDevice
 type DeviceDetector = DeviceDetector.DeviceDetector
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type TouchGamepadUI = TouchGamepadUI.TouchGamepadUI
 type MobileButtonPositioner = MobileButtonPositioner.MobileButtonPositioner
-type TouchGamepadLayout = TouchGamepadLayoutRegistry.TouchGamepadLayout
+type TouchLayoutProfile = TouchLayoutProfile.TouchLayoutProfile
 type Connection = { Disconnect: (self: any) -> () }
 
 type TouchGamepadPresenterData = {
@@ -26,10 +26,11 @@ type TouchGamepadPresenterData = {
     _playerInput: PlayerInputFacade,
     _gamepadUI: TouchGamepadUI,
     _positioner: MobileButtonPositioner,
-    _layout: TouchGamepadLayout,
+    _layoutProfile: TouchLayoutProfile,
 
     _hasBoundButtons: boolean,
-    _contextConnection: Connection?
+    _contextConnection: Connection?,
+    _layoutConnection: Connection?
 }
 
 export type TouchGamepadPresenter = typeof(setmetatable({} :: TouchGamepadPresenterData, TouchGamepadPresenter))
@@ -39,7 +40,7 @@ function TouchGamepadPresenter.new(
     playerInput: PlayerInputFacade,
     gamepadUI: TouchGamepadUI,
     positioner: MobileButtonPositioner,
-    layout: TouchGamepadLayout
+    layoutProfile: TouchLayoutProfile
 ): TouchGamepadPresenter
     local self = setmetatable({}, TouchGamepadPresenter)
 
@@ -47,10 +48,11 @@ function TouchGamepadPresenter.new(
     self._playerInput = playerInput
     self._gamepadUI = gamepadUI
     self._positioner = positioner
-    self._layout = layout
+    self._layoutProfile = layoutProfile
 
     self._hasBoundButtons = false
     self._contextConnection = nil
+    self._layoutConnection = nil
 
     return self :: TouchGamepadPresenter
 end
@@ -64,6 +66,10 @@ function TouchGamepadPresenter.Enable(self: TouchGamepadPresenter): ()
 
     self._contextConnection = self._deviceDetector.OnContextChanged:Connect(function(newDevice: InputDevice)
         self:_handleContextChange(newDevice)
+    end)
+
+    self._layoutConnection = self._layoutProfile.LayoutChanged:Connect(function()
+        self:_handleLayoutChange()
     end)
 
     self:_handleContextChange(self._deviceDetector:GetCurrentDevice())
@@ -82,6 +88,13 @@ function TouchGamepadPresenter._handleContextChange(self: TouchGamepadPresenter,
         self._gamepadUI:SetVisible(true)
     else
         self:_hide()
+    end
+end
+
+function TouchGamepadPresenter._handleLayoutChange(self: TouchGamepadPresenter): ()
+    if self._hasBoundButtons then
+        local layout = self._layoutProfile:GetLayout()
+        self._positioner:ApplyLayout(layout)
     end
 end
 
@@ -106,13 +119,17 @@ function TouchGamepadPresenter._initializeButtons(self: TouchGamepadPresenter): 
         self._positioner:RegisterControl(controlID, control)
     end
 
-    self._positioner:ApplyLayout(self._layout)
+    self._positioner:ApplyLayout(self._layoutProfile:GetLayout())
 end
 
 function TouchGamepadPresenter._unbindConnection(self: TouchGamepadPresenter): ()
     if self._contextConnection then
         self._contextConnection:Disconnect()
         self._contextConnection = nil
+    end
+    if self._layoutConnection then
+        self._layoutConnection:Disconnect()
+        self._layoutConnection = nil
     end
 end
 

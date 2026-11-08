@@ -29,6 +29,7 @@ local TouchGamepadPresenter = require(TouchGamepadFolder.TouchGamepadPresenter)
 local TouchGamepadUI = require(TouchGamepadFolder.UserInterface.TouchGamepadUI)
 local MobileButtonPositioner = require(TouchGamepadFolder.MobileButtonPositioner)
 local TouchGamepadLayoutRegistry = require(TouchGamepadFolder.TouchGamepadLayoutRegistry)
+local TouchLayoutProfile = require(TouchGamepadFolder.TouchLayoutProfile)
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
 local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
 local StateMachineContext = require(RKMNControllerFolder.FSMContext)
@@ -105,10 +106,12 @@ local function _makeProdDependencies(character: Model, inputMapper: InputMapper)
     return makeDependencies(character, constants, collisionQuery, inputMapper)
 end
 
+local touchLayoutProfile = TouchLayoutProfile.new(TouchGamepadLayoutRegistry.Standard)
+
 local function makeTouchGamepad(deviceDetector: DeviceDetector, playerInput: PlayerInputFacade): TouchGamepadPresenter
     local gamepadUI = TouchGamepadUI.new(LocalPlayer:WaitForChild("PlayerGui"))
     local positioner = MobileButtonPositioner.new()
-    return TouchGamepadPresenter.new(deviceDetector, playerInput, gamepadUI, positioner, TouchGamepadLayoutRegistry.Standard)
+    return TouchGamepadPresenter.new(deviceDetector, playerInput, gamepadUI, positioner, touchLayoutProfile)
 end
 
 -- The player's controls outlive any one character, so the profile is created once rather than per Setup.
