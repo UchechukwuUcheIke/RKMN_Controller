@@ -26,6 +26,13 @@ describe("DPad", function()
 		expect(dPad:GetRightButton():GetInstance().Name).toBe("Right")
 	end)
 
+	it("hands out its frame as the instance a layout places", function()
+		local dPad = DPad.new()
+
+		expect(dPad:GetInstance().Name).toBe("DPad")
+		expect(dPad:GetLeftButton():GetInstance().Parent).toBe(dPad:GetInstance())
+	end)
+
 	it("moves and scales as one unit, with the arrows parented inside it", function()
 		local dPad = DPad.new()
 

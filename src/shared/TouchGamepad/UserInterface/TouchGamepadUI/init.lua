@@ -17,7 +17,8 @@ type DPad = DPadModule.DPad
 
 -- Anything the layout can place: a lone button, or the pad holding Left and Right.
 export type PositionableControl = {
-    SetTransform: (self: any, transform: ButtonTransform) -> ()
+    SetTransform: (self: any, transform: ButtonTransform) -> (),
+    GetInstance: (self: any) -> GuiObject
 }
 
 type TouchGamepadUIData = {
@@ -81,6 +82,10 @@ function TouchGamepadUI.GetPositionableControls(self: TouchGamepadUI): {[Control
     end
 
     return controls
+end
+
+function TouchGamepadUI.SetDisplayOrder(self: TouchGamepadUI, displayOrder: number): ()
+    self._screenGui.DisplayOrder = displayOrder
 end
 
 function TouchGamepadUI.SetVisible(self: TouchGamepadUI, isVisible: boolean): ()

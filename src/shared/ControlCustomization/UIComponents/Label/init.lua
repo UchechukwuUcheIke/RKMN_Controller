@@ -15,7 +15,8 @@ export type LabelProps = {
     Position: UDim2?,
     AnchorPoint: Vector2?,
     LayoutOrder: number?,
-    Alignment: Enum.TextXAlignment?
+    Alignment: Enum.TextXAlignment?,
+    Wrapped: boolean?
 }
 
 type LabelData = {
@@ -48,6 +49,7 @@ local function applyStylingFromProperties(textLabel: TextLabel, props: LabelProp
     textLabel.LayoutOrder = props.LayoutOrder or 0
     textLabel.Text = props.Text or ""
     textLabel.TextXAlignment = props.Alignment or Enum.TextXAlignment.Left
+    textLabel.TextWrapped = props.Wrapped == true
 end
 
 local function createTextLabel(props: LabelProps): TextLabel

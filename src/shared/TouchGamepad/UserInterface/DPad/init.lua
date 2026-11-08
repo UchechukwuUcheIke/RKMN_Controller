@@ -56,6 +56,10 @@ function DPad.GetRightButton(self: DPad): ActionButton
     return self._rightButton
 end
 
+function DPad.GetInstance(self: DPad): GuiObject
+    return self._frame
+end
+
 function DPad.SetTransform(self: DPad, transform: ButtonTransform): ()
     self._frame.Position = transform.Position
     self._frame.Size = ButtonTransformRules.GetEffectiveSize(transform)

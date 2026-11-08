@@ -16,6 +16,13 @@ local UITheme = {
         ButtonBorder = Color3.fromRGB(80, 80, 95),
         FocusRing = Color3.fromRGB(90, 160, 255),
 
+        SliderTrack = Color3.fromRGB(60, 60, 72),
+        SliderFill = Color3.fromRGB(90, 160, 255),
+        SliderKnob = Color3.fromRGB(235, 235, 240),
+        SliderDisabled = Color3.fromRGB(85, 85, 97),
+
+        Backdrop = Color3.fromRGB(0, 0, 0),
+
         Text = Color3.fromRGB(235, 235, 240),
         DisabledText = Color3.fromRGB(115, 115, 125),
         TitleText = Color3.fromRGB(245, 245, 245),
@@ -40,6 +47,10 @@ local UITheme = {
 
     ButtonBorderThickness = 1,
     FocusRingThickness = 2,
+
+    SliderTrackHeight = 6,
+    SliderKnobSize = 20,
+    BackdropTransparency = 0.5,
 }
 
 return table.freeze(UITheme)

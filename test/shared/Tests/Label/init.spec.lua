@@ -11,6 +11,11 @@ local LabelStyle = require(ReplicatedStorage.ControlCustomization.UIComponents.L
 local UITheme = require(ReplicatedStorage.ControlCustomization.UIComponents.UITheme)
 
 describe("Label", function()
+	it("wraps its text only when asked to", function()
+		expect(Label.new({}):GetGuiObject().TextWrapped).toBe(false)
+		expect(Label.new({ Wrapped = true }):GetGuiObject().TextWrapped).toBe(true)
+	end)
+
 	it("defaults to a transparent, left-aligned body label", function()
 		local textLabel = Label.new({ Text = "Jump" }):GetGuiObject()
 
