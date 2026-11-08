@@ -3,6 +3,7 @@ local TouchGamepadPresenter = {}
 TouchGamepadPresenter.__index = TouchGamepadPresenter
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local GuiService = game:GetService("GuiService")
 local PlayerInputFolder = ReplicatedStorage.PlayerInput
 local InputAction = require(PlayerInputFolder.InputAction)
 local InputDevice = require(PlayerInputFolder.InputDevice)
@@ -59,6 +60,8 @@ function TouchGamepadPresenter.Enable(self: TouchGamepadPresenter): ()
         return
     end
 
+    GuiService.TouchControlsEnabled = false
+
     self._contextConnection = self._deviceDetector.OnContextChanged:Connect(function(newDevice: InputDevice)
         self:_handleContextChange(newDevice)
     end)
@@ -67,6 +70,8 @@ function TouchGamepadPresenter.Enable(self: TouchGamepadPresenter): ()
 end
 
 function TouchGamepadPresenter.Disable(self: TouchGamepadPresenter): ()
+    GuiService.TouchControlsEnabled = true
+
     self:_unbindConnection()
     self:_hide()
 end
