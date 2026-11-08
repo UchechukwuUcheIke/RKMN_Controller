@@ -21,6 +21,13 @@ describe("ButtonTransformRules", function()
 		expect(ButtonTransformRules.ClampTransparency(1)).toBe(0.8)
 	end)
 
+	it("turns transparency into the opacity the player sees and back", function()
+		expect(ButtonTransformRules.TransparencyToOpacity(0.25)).toBe(0.75)
+		expect(ButtonTransformRules.OpacityToTransparency(0.75)).toBe(0.25)
+		expect(ButtonTransformRules.MAX_OPACITY).toBe(1)
+		expect(ButtonTransformRules.MIN_OPACITY).toBeCloseTo(0.2)
+	end)
+
 	it("scales both the scale and offset parts of the size", function()
 		local transform = {
 			Position = UDim2.new(),

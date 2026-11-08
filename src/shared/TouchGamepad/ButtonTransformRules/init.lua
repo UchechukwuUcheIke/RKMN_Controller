@@ -9,6 +9,17 @@ ButtonTransformRules.MIN_SCALE = 0.5
 ButtonTransformRules.MAX_SCALE = 1.5
 ButtonTransformRules.MIN_TRANSPARENCY = 0
 ButtonTransformRules.MAX_TRANSPARENCY = 0.8
+-- The player sees opacity, the reverse of Roblox's transparency.
+ButtonTransformRules.MIN_OPACITY = 1 - ButtonTransformRules.MAX_TRANSPARENCY
+ButtonTransformRules.MAX_OPACITY = 1 - ButtonTransformRules.MIN_TRANSPARENCY
+
+function ButtonTransformRules.TransparencyToOpacity(transparency: number): number
+    return 1 - transparency
+end
+
+function ButtonTransformRules.OpacityToTransparency(opacity: number): number
+    return 1 - opacity
+end
 
 function ButtonTransformRules.ClampScale(scale: number): number
     return math.clamp(scale, ButtonTransformRules.MIN_SCALE, ButtonTransformRules.MAX_SCALE)
