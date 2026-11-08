@@ -88,6 +88,10 @@ function TouchGamepadUI.SetDisplayOrder(self: TouchGamepadUI, displayOrder: numb
     self._screenGui.DisplayOrder = displayOrder
 end
 
+function TouchGamepadUI.GetViewportSize(self: TouchGamepadUI): Vector2
+    return self._screenGui.AbsoluteSize
+end
+
 function TouchGamepadUI.SetVisible(self: TouchGamepadUI, isVisible: boolean): ()
     self._screenGui.Enabled = isVisible
 

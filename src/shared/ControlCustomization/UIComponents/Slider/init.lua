@@ -3,11 +3,12 @@ local Slider = {}
 Slider.__index = Slider
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
 local Signal = require(ReplicatedStorage.DevPackages.goodsignal)
 local UITheme = require(script.Parent.UITheme)
+local DragTracker = require(script.Parent.DragTracker)
 
 type Signal = typeof(Signal)
+type DragTracker = DragTracker.DragTracker
 
 export type SliderProps = {
     Name: string?,
@@ -32,9 +33,7 @@ type SliderData = {
     _step: number?,
     _value: number,
     _isEnabled: boolean,
-    _dragInput: InputObject?,
-    _dragConnections: {RBXScriptConnection},
-    _rootConnection: RBXScriptConnection,
+    _dragTracker: DragTracker,
     ValueChanged: Signal,
     DragStarted: Signal,
     DragEnded: Signal
@@ -43,10 +42,6 @@ type SliderData = {
 export type Slider = typeof(setmetatable({} :: SliderData, Slider))
 
 local DEFAULT_SIZE = UDim2.new(1, 0, 0, 28)
-
-local function isPointerPress(input: InputObject): boolean
-    return input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch
-end
 
 local function addRoundedCorners(parent: GuiObject): ()
     local corner = Instance.new("UICorner")
@@ -116,8 +111,7 @@ function Slider.new(props: SliderProps): Slider
     self._step = props.Step
     self._value = math.clamp(props.Value or props.Min, props.Min, props.Max)
     self._isEnabled = props.Enabled ~= false
-    self._dragInput = nil
-    self._dragConnections = {}
+    self._dragTracker = DragTracker.new(self._root)
     self.ValueChanged = Signal.new()
     self.DragStarted = Signal.new()
     self.DragEnded = Signal.new()
@@ -126,9 +120,8 @@ function Slider.new(props: SliderProps): Slider
     self._knob.Parent = self._track
     self._track.Parent = self._root
 
-    self._rootConnection = self._root.InputBegan:Connect(function(input: InputObject)
-        self:_handleInputBegan(input)
-    end)
+    self:_subscribeToDrag()
+    self:_syncDragTrackerToEnabled()
     self:_renderCurrentState()
 
     return self :: Slider
@@ -149,12 +142,13 @@ end
 
 function Slider.Enable(self: Slider): ()
     self._isEnabled = true
+    self:_syncDragTrackerToEnabled()
     self:_renderCurrentState()
 end
 
 function Slider.Disable(self: Slider): ()
     self._isEnabled = false
-    self:_endDrag()
+    self:_syncDragTrackerToEnabled()
     self:_renderCurrentState()
 end
 
@@ -163,66 +157,28 @@ function Slider.IsEnabled(self: Slider): boolean
 end
 
 function Slider.IsDragging(self: Slider): boolean
-    return self._dragInput ~= nil
+    return self._dragTracker:IsDragging()
 end
 
-function Slider._handleInputBegan(self: Slider, input: InputObject): ()
-    if not self._isEnabled or self:IsDragging() or not isPointerPress(input) then
-        return
-    end
-
-    self:_beginDrag(input)
-    self:_setValueFromPointerX(input.Position.X)
+function Slider._subscribeToDrag(self: Slider): ()
+    self._dragTracker.Began:Connect(function(pointerPosition: Vector2)
+        self.DragStarted:Fire()
+        self:_setValueFromPointerX(pointerPosition.X)
+    end)
+    self._dragTracker.Moved:Connect(function(pointerPosition: Vector2)
+        self:_setValueFromPointerX(pointerPosition.X)
+    end)
+    self._dragTracker.Ended:Connect(function()
+        self.DragEnded:Fire()
+    end)
 end
 
-function Slider._beginDrag(self: Slider, input: InputObject): ()
-    self._dragInput = input
-
-    table.insert(self._dragConnections, UserInputService.InputChanged:Connect(function(changedInput: InputObject)
-        self:_handleInputChanged(changedInput)
-    end))
-    table.insert(self._dragConnections, UserInputService.InputEnded:Connect(function(endedInput: InputObject)
-        self:_handleInputEnded(endedInput)
-    end))
-
-    self.DragStarted:Fire()
-end
-
-function Slider._handleInputChanged(self: Slider, input: InputObject): ()
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input == self._dragInput then
-        self:_setValueFromPointerX(input.Position.X)
+function Slider._syncDragTrackerToEnabled(self: Slider): ()
+    if self._isEnabled then
+        self._dragTracker:Enable()
+    else
+        self._dragTracker:Disable()
     end
-end
-
-function Slider._handleInputEnded(self: Slider, input: InputObject): ()
-    local dragInput = self._dragInput
-    if not dragInput or input.UserInputType ~= dragInput.UserInputType then
-        return
-    end
-
-    local isTouch = input.UserInputType == Enum.UserInputType.Touch
-    if isTouch and input ~= dragInput then
-        return
-    end
-
-    self:_endDrag()
-end
-
-function Slider._endDrag(self: Slider): ()
-    if not self:IsDragging() then
-        return
-    end
-
-    self:_disconnectDrag()
-    self.DragEnded:Fire()
-end
-
-function Slider._disconnectDrag(self: Slider): ()
-    for _, connection in ipairs(self._dragConnections) do
-        connection:Disconnect()
-    end
-    table.clear(self._dragConnections)
-    self._dragInput = nil
 end
 
 function Slider._setValueFromPointerX(self: Slider, pointerX: number): ()
@@ -270,8 +226,7 @@ function Slider._renderCurrentState(self: Slider): ()
 end
 
 function Slider.Destroy(self: Slider): ()
-    self:_disconnectDrag()
-    self._rootConnection:Disconnect()
+    self._dragTracker:Destroy()
     self.ValueChanged:DisconnectAll()
     self.DragStarted:DisconnectAll()
     self.DragEnded:DisconnectAll()

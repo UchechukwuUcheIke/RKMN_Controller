@@ -24,6 +24,14 @@ function ButtonTransformRules.GetEffectiveSize(transform: ButtonTransform): UDim
     return UDim2.new(size.X.Scale * scale, size.X.Offset * scale, size.Y.Scale * scale, size.Y.Offset * scale)
 end
 
+function ButtonTransformRules.GetEffectivePixelSize(transform: ButtonTransform, viewportSize: Vector2): Vector2
+    local size = ButtonTransformRules.GetEffectiveSize(transform)
+    return Vector2.new(
+        size.X.Scale * viewportSize.X + size.X.Offset,
+        size.Y.Scale * viewportSize.Y + size.Y.Offset
+    )
+end
+
 local function clampAxis(position: number, size: number, anchor: number, viewport: number): number
     local lowest = anchor * size / viewport
     local highest = 1 - (1 - anchor) * size / viewport

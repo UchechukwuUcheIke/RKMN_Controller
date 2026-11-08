@@ -9,6 +9,10 @@ local expect = JestGlobals.expect
 local Slider = require(ReplicatedStorage.ControlCustomization.UIComponents.Slider)
 local UITheme = require(ReplicatedStorage.ControlCustomization.UIComponents.UITheme)
 
+local function makeInput(inputType)
+	return { UserInputType = inputType, Position = Vector3.new() }
+end
+
 local function recordValues(slider)
 	local values = {}
 	slider.ValueChanged:Connect(function(value)
@@ -104,51 +108,33 @@ describe("Slider", function()
 		slider.DragEnded:Connect(function()
 			table.insert(events, "ended")
 		end)
-		local mouseDown = { UserInputType = Enum.UserInputType.MouseButton1, Position = Vector3.new() }
 
-		slider:_handleInputBegan(mouseDown)
+		slider._dragTracker:_handleInputBegan(makeInput(Enum.UserInputType.MouseButton1))
 		expect(slider:IsDragging()).toBe(true)
 
-		slider:_handleInputEnded({ UserInputType = Enum.UserInputType.MouseButton1, Position = Vector3.new() })
+		slider._dragTracker:_handleInputEnded(makeInput(Enum.UserInputType.MouseButton1))
 
 		expect(slider:IsDragging()).toBe(false)
 		expect(events).toEqual({ "started", "ended" })
 	end)
 
-	it("ignores presses that are not a click or a touch", function()
-		local slider = Slider.new({ Min = 0, Max = 10 })
-
-		slider:_handleInputBegan({ UserInputType = Enum.UserInputType.MouseButton2, Position = Vector3.new() })
-
-		expect(slider:IsDragging()).toBe(false)
-	end)
-
-	it("keeps following the touch that started the drag and ignores another finger lifting", function()
-		local slider = Slider.new({ Min = 0, Max = 10 })
-		local firstFinger = { UserInputType = Enum.UserInputType.Touch, Position = Vector3.new() }
-		local secondFinger = { UserInputType = Enum.UserInputType.Touch, Position = Vector3.new() }
-		slider:_handleInputBegan(firstFinger)
-
-		slider:_handleInputEnded(secondFinger)
-		expect(slider:IsDragging()).toBe(true)
-
-		slider:_handleInputEnded(firstFinger)
-		expect(slider:IsDragging()).toBe(false)
-	end)
-
 	it("cannot be dragged while disabled, and a drag in progress ends when it is disabled", function()
 		local slider = Slider.new({ Min = 0, Max = 10, Enabled = false })
-		local mouseDown = { UserInputType = Enum.UserInputType.MouseButton1, Position = Vector3.new() }
+		local ended = 0
+		slider.DragEnded:Connect(function()
+			ended += 1
+		end)
 
-		slider:_handleInputBegan(mouseDown)
+		slider._dragTracker:_handleInputBegan(makeInput(Enum.UserInputType.MouseButton1))
 		expect(slider:IsDragging()).toBe(false)
 
 		slider:Enable()
-		slider:_handleInputBegan(mouseDown)
+		slider._dragTracker:_handleInputBegan(makeInput(Enum.UserInputType.MouseButton1))
 		expect(slider:IsDragging()).toBe(true)
 
 		slider:Disable()
 		expect(slider:IsDragging()).toBe(false)
+		expect(ended).toBe(1)
 	end)
 
 	it("greys its fill and knob while disabled", function()

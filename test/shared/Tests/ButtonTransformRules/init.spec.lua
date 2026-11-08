@@ -33,6 +33,20 @@ describe("ButtonTransformRules", function()
 		expect(ButtonTransformRules.GetEffectiveSize(transform)).toEqual(UDim2.new(1, 200, 0.5, 80))
 	end)
 
+	it("works out a control's size in pixels from the viewport, scale and offset together", function()
+		local transform = {
+			Position = UDim2.new(),
+			BaseSize = UDim2.new(0.5, 100, 0.25, 40),
+			AnchorPoint = Vector2.new(),
+			Scale = 2,
+			Transparency = 0,
+		}
+
+		local result = ButtonTransformRules.GetEffectivePixelSize(transform, Vector2.new(1000, 400))
+
+		expect(result).toEqual(Vector2.new(1200, 280))
+	end)
+
 	describe("ClampPosition", function()
 		local viewport = Vector2.new(1024, 512)
 		local size = Vector2.new(128, 64)
