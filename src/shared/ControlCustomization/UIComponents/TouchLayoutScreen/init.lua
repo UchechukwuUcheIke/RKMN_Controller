@@ -8,9 +8,11 @@ local TouchGamepadLayoutRegistry = require(ReplicatedStorage.TouchGamepad.TouchG
 local UIComponents = script.Parent
 local AppBar = require(UIComponents.AppBar)
 local Button = require(UIComponents.Button)
+local ConfirmDialog = require(UIComponents.ConfirmDialog)
 local ControlAdjustmentPanel = require(UIComponents.ControlAdjustmentPanel)
 local TouchLayoutCanvas = require(UIComponents.TouchLayoutCanvas)
 local UITheme = require(UIComponents.UITheme)
+local UnsavedChangesChoice = require(UIComponents.UnsavedChangesChoice)
 
 type Signal = typeof(Signal)
 type ControlID = TouchGamepadLayoutRegistry.ControlID
@@ -18,6 +20,7 @@ type ButtonTransform = TouchGamepadLayoutRegistry.ButtonTransform
 type TouchGamepadLayout = TouchGamepadLayoutRegistry.TouchGamepadLayout
 type AppBar = AppBar.AppBar
 type Button = Button.Button
+type ConfirmDialog = ConfirmDialog.ConfirmDialog
 type ControlAdjustmentPanel = ControlAdjustmentPanel.ControlAdjustmentPanel
 type TouchLayoutCanvas = TouchLayoutCanvas.TouchLayoutCanvas
 
@@ -34,6 +37,7 @@ type TouchLayoutScreenData = {
     _canvas: TouchLayoutCanvas,
     _appBar: AppBar,
     _adjustmentPanel: ControlAdjustmentPanel,
+    _unsavedPrompt: ConfirmDialog,
     _exitButton: Button,
     _undoButton: Button,
     _redoButton: Button,
@@ -47,6 +51,7 @@ type TouchLayoutScreenData = {
     PresetsRequested: Signal,
     SaveRequested: Signal,
     BackgroundPressed: Signal,
+    UnsavedChoiceMade: Signal,
     ScaleChanged: Signal,
     TransparencyChanged: Signal,
     AdjustmentStarted: Signal,
@@ -110,6 +115,20 @@ local function createAdjustmentPanel(): ControlAdjustmentPanel
     return ControlAdjustmentPanel.new(panelProps)
 end
 
+local function createUnsavedPrompt(): ConfirmDialog
+    local dialogProps: ConfirmDialog.ConfirmDialogProps = {
+        Name = "UnsavedChangesPrompt",
+        Title = "Unsaved changes",
+        Message = "Save your layout before leaving?",
+        Choices = {
+            { Id = UnsavedChangesChoice.Save, Text = "Save" },
+            { Id = UnsavedChangesChoice.Discard, Text = "Discard" },
+            { Id = UnsavedChangesChoice.Cancel, Text = "Cancel" },
+        },
+    }
+    return ConfirmDialog.new(dialogProps)
+end
+
 local function forward(source: Signal, target: Signal): ()
     source:Connect(function(...)
         target:Fire(...)
@@ -125,6 +144,7 @@ function TouchLayoutScreen.new(parent: Instance, canvas: TouchLayoutCanvas): Tou
     self._canvas = canvas
     self._appBar = createAppBar()
     self._adjustmentPanel = createAdjustmentPanel()
+    self._unsavedPrompt = createUnsavedPrompt()
     self._exitButton = createToolbarButton("Exit", "Exit", 60)
     self._undoButton = createToolbarButton("Undo", "Undo", 60)
     self._redoButton = createToolbarButton("Redo", "Redo", 60)
@@ -138,6 +158,7 @@ function TouchLayoutScreen.new(parent: Instance, canvas: TouchLayoutCanvas): Tou
     self.PresetsRequested = Signal.new()
     self.SaveRequested = Signal.new()
     self.BackgroundPressed = Signal.new()
+    self.UnsavedChoiceMade = Signal.new()
     self.ScaleChanged = Signal.new()
     self.TransparencyChanged = Signal.new()
     self.AdjustmentStarted = Signal.new()
@@ -174,6 +195,14 @@ function TouchLayoutScreen.SetEditState(self: TouchLayoutScreen, editState: Edit
     TouchLayoutScreen._setEnabled(self._saveButton, editState.IsDirty)
 end
 
+function TouchLayoutScreen.ShowUnsavedChangesPrompt(self: TouchLayoutScreen): ()
+    self._unsavedPrompt:Show()
+end
+
+function TouchLayoutScreen.HideUnsavedChangesPrompt(self: TouchLayoutScreen): ()
+    self._unsavedPrompt:Hide()
+end
+
 function TouchLayoutScreen.SetVisible(self: TouchLayoutScreen, isVisible: boolean): ()
     self._backdropGui.Enabled = isVisible
     self._chromeGui.Enabled = isVisible
@@ -198,6 +227,7 @@ function TouchLayoutScreen._assembleChrome(self: TouchLayoutScreen): ()
 
     self._appBar:GetGuiObject().Parent = self._chromeGui
     self._adjustmentPanel:GetGuiObject().Parent = self._chromeGui
+    self._unsavedPrompt:GetGuiObject().Parent = self._chromeGui
 end
 
 function TouchLayoutScreen._forwardEvents(self: TouchLayoutScreen): ()
@@ -207,6 +237,7 @@ function TouchLayoutScreen._forwardEvents(self: TouchLayoutScreen): ()
     forward(self._discardButton.Activated, self.DiscardRequested)
     forward(self._presetsButton.Activated, self.PresetsRequested)
     forward(self._saveButton.Activated, self.SaveRequested)
+    forward(self._unsavedPrompt.ChoiceMade, self.UnsavedChoiceMade)
     forward(self._adjustmentPanel.ScaleChanged, self.ScaleChanged)
     forward(self._adjustmentPanel.TransparencyChanged, self.TransparencyChanged)
     forward(self._adjustmentPanel.AdjustmentStarted, self.AdjustmentStarted)
@@ -238,6 +269,7 @@ function TouchLayoutScreen._disconnectSignals(self: TouchLayoutScreen): ()
     self.PresetsRequested:DisconnectAll()
     self.SaveRequested:DisconnectAll()
     self.BackgroundPressed:DisconnectAll()
+    self.UnsavedChoiceMade:DisconnectAll()
     self.ScaleChanged:DisconnectAll()
     self.TransparencyChanged:DisconnectAll()
     self.AdjustmentStarted:DisconnectAll()
@@ -247,6 +279,7 @@ end
 -- The canvas was handed in, so whoever made it destroys it.
 function TouchLayoutScreen.Destroy(self: TouchLayoutScreen): ()
     self:_disconnectSignals()
+    self._unsavedPrompt:Destroy()
     self._adjustmentPanel:Destroy()
     self:_destroyButtons()
     self._appBar:Destroy()

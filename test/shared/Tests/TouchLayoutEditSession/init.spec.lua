@@ -102,25 +102,25 @@ describe("TouchLayoutEditSession", function()
 		it("selects a control and clears the selection", function()
 			local session = makeSession()
 
-			session:Select("Jump")
-			expect(session:GetSelected()).toBe("Jump")
+			session:SelectControl("Jump")
+			expect(session:GetSelectedControl()).toBe("Jump")
 
-			session:Select(nil)
-			expect(session:GetSelected()).toBeNil()
+			session:SelectControl(nil)
+			expect(session:GetSelectedControl()).toBeNil()
 		end)
 
 		it("refuses to select a control the layout does not have", function()
 			local session = makeSession()
 
 			expect(function()
-				session:Select("Fly")
+				session:SelectControl("Fly")
 			end).toThrow()
 		end)
 
 		it("does not count selecting as an edit", function()
 			local session = makeSession()
 
-			session:Select("Jump")
+			session:SelectControl("Jump")
 
 			expect(session:IsDirty()).toBe(false)
 			expect(session:CanUndo()).toBe(false)

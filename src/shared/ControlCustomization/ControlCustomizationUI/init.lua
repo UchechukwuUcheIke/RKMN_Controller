@@ -134,10 +134,11 @@ function ControlCustomizationUI.Close(self: ControlCustomizationUI): ()
     self._playerInput:ResumeGameplayInput()
 end
 
+-- A touch device edits its layout in the touch editor, so this panel does not open for it.
 function ControlCustomizationUI._toggle(self: ControlCustomizationUI): ()
     if self._isOpen then
         self:Close()
-    else
+    elseif self._deviceDetector:GetCurrentDevice() ~= InputDevice.Touch then
         self:Open()
     end
 end

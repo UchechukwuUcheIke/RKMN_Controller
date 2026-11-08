@@ -11,6 +11,7 @@ local TouchLayoutCanvas = require(ReplicatedStorage.ControlCustomization.UICompo
 local TouchGamepadUI = require(ReplicatedStorage.TouchGamepad.UserInterface.TouchGamepadUI)
 local MobileButtonPositioner = require(ReplicatedStorage.TouchGamepad.MobileButtonPositioner)
 local TouchGamepadLayoutRegistry = require(ReplicatedStorage.TouchGamepad.TouchGamepadLayoutRegistry)
+local UnsavedChangesChoice = require(ReplicatedStorage.ControlCustomization.UIComponents.UnsavedChangesChoice)
 
 local STANDARD = TouchGamepadLayoutRegistry.Standard
 
@@ -151,6 +152,30 @@ describe("TouchLayoutScreen", function()
 		screen:_handleBackdropActivated()
 
 		expect(presses()).toBe(1)
+	end)
+
+	it("keeps the unsaved-changes prompt hidden until asked", function()
+		local screen, parts = makeScreen()
+		local prompt = parts.parent.TouchLayoutChrome.UnsavedChangesPrompt
+		expect(prompt.Visible).toBe(false)
+
+		screen:ShowUnsavedChangesPrompt()
+		expect(prompt.Visible).toBe(true)
+
+		screen:HideUnsavedChangesPrompt()
+		expect(prompt.Visible).toBe(false)
+	end)
+
+	it("passes the prompt's choice on", function()
+		local screen = makeScreen()
+		local choices = {}
+		screen.UnsavedChoiceMade:Connect(function(choice)
+			table.insert(choices, choice)
+		end)
+
+		screen._unsavedPrompt._buttons[2]:_handleActivated()
+
+		expect(choices).toEqual({ UnsavedChangesChoice.Discard })
 	end)
 
 	it("passes the adjustment panel's events on", function()

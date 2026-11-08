@@ -14,6 +14,7 @@ local MovementStats = require(RKMNControllerFolder.MovementStats)
 local TimerUtility = require(RKMNControllerFolder.TimerUtility)
 local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
 local PlayerInputFolder = ReplicatedStorage.PlayerInput
+local InputAction = require(PlayerInputFolder.InputAction)
 local InputMapper = require(PlayerInputFolder.InputMapper)
 local ControlProfile = require(PlayerInputFolder.ControlProfile)
 local KeyboardSchemes = require(PlayerInputFolder.KeyboardSchemes)
@@ -24,6 +25,9 @@ local BindingCapture = require(PlayerInputFolder.BindingCapture)
 local ControlCustomizationFolder = ReplicatedStorage.ControlCustomization
 local ControlCustomizationUI = require(ControlCustomizationFolder.ControlCustomizationUI)
 local ControlCustomizationView = require(ControlCustomizationFolder.ControlCustomizationView)
+local TouchLayoutEditor = require(ControlCustomizationFolder.TouchLayoutEditor)
+local TouchLayoutCanvas = require(ControlCustomizationFolder.UIComponents.TouchLayoutCanvas)
+local TouchLayoutScreen = require(ControlCustomizationFolder.UIComponents.TouchLayoutScreen)
 local TouchGamepadFolder = ReplicatedStorage.TouchGamepad
 local TouchGamepadPresenter = require(TouchGamepadFolder.TouchGamepadPresenter)
 local TouchGamepadUI = require(TouchGamepadFolder.UserInterface.TouchGamepadUI)
@@ -43,6 +47,11 @@ type DeviceDetector = DeviceDetector.DeviceDetector
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type TouchGamepadPresenter = TouchGamepadPresenter.TouchGamepadPresenter
 type ControlCustomizationUI = ControlCustomizationUI.ControlCustomizationUI
+type TouchLayoutEditor = TouchLayoutEditor.TouchLayoutEditor
+type TouchLayoutCanvas = TouchLayoutCanvas.TouchLayoutCanvas
+type TouchLayoutScreen = TouchLayoutScreen.TouchLayoutScreen
+type TouchGamepadUI = TouchGamepadUI.TouchGamepadUI
+type MobileButtonPositioner = MobileButtonPositioner.MobileButtonPositioner
 type MovementStateMachine = MovementStateMachine.MovementStateMachine
 type PhysicsResolver = PhysicsResolver.PhysicsResolver
 type RKMNController = RKMNController.RKMNController
@@ -123,17 +132,68 @@ local function makeControlCustomization(screenGui: ScreenGui, deviceDetector: De
     return ControlCustomizationUI.new(deviceDetector, controlProfile, playerInput, bindingCapture, view, task.defer)
 end
 
+-- Everything the editor needs that is not the editor itself, kept together so the lot can be torn down as one.
+type TouchLayoutEditing = {
+    Editor: TouchLayoutEditor,
+    Screen: TouchLayoutScreen,
+    Canvas: TouchLayoutCanvas,
+    Positioner: MobileButtonPositioner,
+    GamepadUI: TouchGamepadUI
+}
+
+-- The editor's ghost controls are a second TouchGamepadUI that is never given to the player's input.
+local function makeTouchLayoutEditing(deviceDetector: DeviceDetector, playerInput: PlayerInputFacade, touchGamepad: TouchGamepadPresenter): TouchLayoutEditing
+    local playerGui = LocalPlayer:WaitForChild("PlayerGui")
+    local gamepadUI = TouchGamepadUI.new(playerGui)
+    local positioner = MobileButtonPositioner.new()
+    local canvas = TouchLayoutCanvas.new({
+        GamepadUI = gamepadUI,
+        Positioner = positioner,
+        GetViewportSize = function()
+            return gamepadUI:GetViewportSize()
+        end,
+        FixedControls = { InputAction.Menu },
+    })
+    local screen = TouchLayoutScreen.new(playerGui, canvas)
+    local editor = TouchLayoutEditor.new({
+        DeviceDetector = deviceDetector,
+        LayoutProfile = touchLayoutProfile,
+        PlayerInput = playerInput,
+        TouchGamepad = touchGamepad,
+        Canvas = canvas,
+        Screen = screen,
+    })
+
+    return { Editor = editor, Screen = screen, Canvas = canvas, Positioner = positioner, GamepadUI = gamepadUI }
+end
+
 -- Setup runs per character, so the previous character's device tracking and touch controls are torn down first.
 -- The touch controls must go before their PlayerInputFacade does.
 local activeDeviceDetector: DeviceDetector? = nil
 local activeTouchGamepad: TouchGamepadPresenter? = nil
 local activeControlCustomization: ControlCustomizationUI? = nil
+local activeTouchLayoutEditing: TouchLayoutEditing? = nil
 
 local function replaceControlCustomization(controlCustomization: ControlCustomizationUI): ()
     if activeControlCustomization then
         activeControlCustomization:Destroy()
     end
     activeControlCustomization = controlCustomization
+end
+
+-- The editor hands the previous character's touch controls and input back when it closes, so it goes before them.
+local function destroyTouchLayoutEditing(): ()
+    local editing = activeTouchLayoutEditing
+    if not editing then
+        return
+    end
+
+    editing.Editor:Destroy()
+    editing.Screen:Destroy()
+    editing.Canvas:Destroy()
+    editing.Positioner:Destroy()
+    editing.GamepadUI:Destroy()
+    activeTouchLayoutEditing = nil
 end
 
 local function replaceTouchControls(deviceDetector: DeviceDetector, touchGamepad: TouchGamepadPresenter): ()
@@ -148,6 +208,8 @@ local function replaceTouchControls(deviceDetector: DeviceDetector, touchGamepad
 end
 
 function RKMNControllerSetup.Setup(character: Model): RKMNController
+    destroyTouchLayoutEditing()
+
     local screenGui = mountScreenGui()
     local world = game.Workspace
 
@@ -162,6 +224,10 @@ function RKMNControllerSetup.Setup(character: Model): RKMNController
     local touchGamepad = makeTouchGamepad(deviceDetector, dependencies.PlayerInput)
     replaceTouchControls(deviceDetector, touchGamepad)
     touchGamepad:Enable()
+
+    local touchLayoutEditing = makeTouchLayoutEditing(deviceDetector, dependencies.PlayerInput, touchGamepad)
+    activeTouchLayoutEditing = touchLayoutEditing
+    touchLayoutEditing.Editor:Enable()
 
     local controlCustomization = makeControlCustomization(screenGui, deviceDetector, dependencies.PlayerInput)
     replaceControlCustomization(controlCustomization)

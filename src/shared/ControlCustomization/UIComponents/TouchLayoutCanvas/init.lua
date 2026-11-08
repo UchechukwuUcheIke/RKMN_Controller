@@ -46,6 +46,7 @@ type TouchLayoutCanvasData = {
     _fixedControls: {[ControlID]: boolean},
     _handles: {[ControlID]: ControlHandle},
     _layout: TouchGamepadLayout?,
+    _pressedControl: ControlID?,
     _activeDrag: ActiveDrag?,
     ControlPressed: Signal,
     ControlDragged: Signal,
@@ -124,6 +125,7 @@ function TouchLayoutCanvas.new(props: TouchLayoutCanvasProps): TouchLayoutCanvas
     self._fixedControls = toSet(props.FixedControls)
     self._handles = {}
     self._layout = nil
+    self._pressedControl = nil
     self._activeDrag = nil
     self.ControlPressed = Signal.new()
     self.ControlDragged = Signal.new()
@@ -165,16 +167,22 @@ function TouchLayoutCanvas._createHandle(self: TouchLayoutCanvas, controlID: Con
         self:_handlePointerBegan(controlID, pointerPosition)
     end)
     tracker.Moved:Connect(function(pointerPosition: Vector2)
-        self:_handlePointerMoved(pointerPosition)
+        self:_handlePointerMoved(controlID, pointerPosition)
     end)
     tracker.Ended:Connect(function()
-        self:_handlePointerEnded()
+        self:_handlePointerEnded(controlID)
     end)
 
     return { Button = button, Outline = createOutline(button), Tracker = tracker }
 end
 
+-- One control at a time: a second finger landing on another control is ignored until the first lets go.
 function TouchLayoutCanvas._handlePointerBegan(self: TouchLayoutCanvas, controlID: ControlID, pointerPosition: Vector2): ()
+    if self._pressedControl then
+        return
+    end
+
+    self._pressedControl = controlID
     self._activeDrag = self:_startDragIfMovable(controlID, pointerPosition)
     self.ControlPressed:Fire(controlID)
 end
@@ -193,11 +201,11 @@ function TouchLayoutCanvas._startDragIfMovable(self: TouchLayoutCanvas, controlI
     }
 end
 
-function TouchLayoutCanvas._handlePointerMoved(self: TouchLayoutCanvas, pointerPosition: Vector2): ()
+function TouchLayoutCanvas._handlePointerMoved(self: TouchLayoutCanvas, controlID: ControlID, pointerPosition: Vector2): ()
     local drag = self._activeDrag
     local layout = self._layout
     local viewportSize = self._getViewportSize()
-    if not drag or not layout or not hasArea(viewportSize) then
+    if controlID ~= self._pressedControl or not drag or not layout or not hasArea(viewportSize) then
         return
     end
 
@@ -214,7 +222,12 @@ function TouchLayoutCanvas._handlePointerMoved(self: TouchLayoutCanvas, pointerP
     self.ControlDragged:Fire(drag.ControlID, UDim2.fromScale(keptOnScreen.X, keptOnScreen.Y))
 end
 
-function TouchLayoutCanvas._handlePointerEnded(self: TouchLayoutCanvas): ()
+function TouchLayoutCanvas._handlePointerEnded(self: TouchLayoutCanvas, controlID: ControlID): ()
+    if controlID ~= self._pressedControl then
+        return
+    end
+
+    self._pressedControl = nil
     self._activeDrag = nil
     self.PointerReleased:Fire()
 end

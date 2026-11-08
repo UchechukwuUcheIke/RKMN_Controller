@@ -243,10 +243,22 @@ describe("ControlCustomizationUI", function()
 		expect(countCalls(parts.playerInput, "ResumeGameplayInput")).toBe(1)
 	end)
 
-	it("hides the bindings screen and refuses rebinds on a touch device", function()
-		local _, parts = makeMenu()
+	it("does not open on a touch device, which has its own editor", function()
+		local menu, parts = makeMenu()
 		parts.detector.device = "Touch"
+
 		parts.playerInput.OnMenuPressed:Fire()
+
+		expect(menu:IsOpen()).toBe(false)
+		expect(parts.view.isVisible).toBe(false)
+		expect(countCalls(parts.playerInput, "SuspendGameplayInput")).toBe(0)
+	end)
+
+	it("refuses rebinds when the device turns to touch while open", function()
+		local _, parts = makeMenu()
+		parts.playerInput.OnMenuPressed:Fire()
+		parts.detector.device = "Touch"
+		parts.detector.OnContextChanged:Fire("Touch")
 
 		parts.screen.OnRebindRequested:Fire(InputAction.Jump)
 

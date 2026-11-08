@@ -29,6 +29,7 @@ type TouchGamepadPresenterData = {
     _layoutProfile: TouchLayoutProfile,
 
     _hasBoundButtons: boolean,
+    _isSuspended: boolean,
     _contextConnection: Connection?,
     _layoutConnection: Connection?
 }
@@ -51,6 +52,7 @@ function TouchGamepadPresenter.new(
     self._layoutProfile = layoutProfile
 
     self._hasBoundButtons = false
+    self._isSuspended = false
     self._contextConnection = nil
     self._layoutConnection = nil
 
@@ -82,8 +84,22 @@ function TouchGamepadPresenter.Disable(self: TouchGamepadPresenter): ()
     self:_hide()
 end
 
+-- Hides the controls without handing Roblox's own touch controls back, for while something else is using the screen.
+function TouchGamepadPresenter.Suspend(self: TouchGamepadPresenter): ()
+    self._isSuspended = true
+    self:_hide()
+end
+
+function TouchGamepadPresenter.Resume(self: TouchGamepadPresenter): ()
+    self._isSuspended = false
+
+    if self._contextConnection then
+        self:_handleContextChange(self._deviceDetector:GetCurrentDevice())
+    end
+end
+
 function TouchGamepadPresenter._handleContextChange(self: TouchGamepadPresenter, newDevice: InputDevice): ()
-    if newDevice == InputDevice.Touch then
+    if newDevice == InputDevice.Touch and not self._isSuspended then
         self:_initializeButtons()
         self._gamepadUI:SetVisible(true)
     else

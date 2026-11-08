@@ -146,6 +146,28 @@ describe("TouchLayoutCanvas", function()
 		expect(#dragged).toBe(0)
 	end)
 
+	it("ignores a second finger on another control until the first lets go", function()
+		local canvas = makeCanvas()
+		local pressed = record(canvas.ControlPressed)
+		local dragged = record(canvas.ControlDragged)
+		local released = record(canvas.PointerReleased)
+		press(canvas, "Jump", 100, 100)
+
+		press(canvas, "Dash", 300, 300)
+		move(canvas, "Dash", 400, 400)
+		release(canvas, "Dash")
+
+		expect(pressed).toEqual({ { "Jump" } })
+		expect(#dragged).toBe(0)
+		expect(#released).toBe(0)
+
+		release(canvas, "Jump")
+		expect(#released).toBe(1)
+
+		press(canvas, "Dash", 300, 300)
+		expect(#pressed).toBe(2)
+	end)
+
 	it("lets a fixed control be pressed but never dragged", function()
 		local canvas = makeCanvas()
 		local pressed = record(canvas.ControlPressed)

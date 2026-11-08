@@ -106,6 +106,53 @@ describe("TouchGamepadPresenter", function()
 		presenter:Destroy()
 	end)
 
+	it("hides the controls while suspended, without bringing Roblox's controls back", function()
+		local presenter, parts = makePresenter("Touch")
+		presenter:Enable()
+
+		presenter:Suspend()
+
+		expect(parts.gamepadUI._screenGui.Enabled).toBe(false)
+		expect(GuiService.TouchControlsEnabled).toBe(false)
+		presenter:Destroy()
+	end)
+
+	it("stays hidden while suspended even when the device becomes touch", function()
+		local presenter, parts = makePresenter("Keyboard")
+		presenter:Enable()
+		presenter:Suspend()
+
+		parts.detector:Switch("Touch")
+
+		expect(parts.gamepadUI._screenGui.Enabled).toBe(false)
+		presenter:Destroy()
+	end)
+
+	it("shows the controls again, in the profile's current layout, when resumed on a touch device", function()
+		local presenter, parts = makePresenter("Touch")
+		presenter:Enable()
+		presenter:Suspend()
+		parts.profile:SetLayout(movedJumpLayout())
+
+		presenter:Resume()
+
+		expect(parts.gamepadUI._screenGui.Enabled).toBe(true)
+		expect(jumpPosition(parts)).toEqual(UDim2.fromScale(0.5, 0.5))
+		presenter:Destroy()
+	end)
+
+	it("does not show the controls on resume when the presenter is disabled", function()
+		local presenter, parts = makePresenter("Touch")
+		presenter:Enable()
+		presenter:Suspend()
+		presenter:Disable()
+
+		presenter:Resume()
+
+		expect(parts.gamepadUI._screenGui.Enabled).toBe(false)
+		presenter:Destroy()
+	end)
+
 	it("turns Roblox's built-in touch controls off while enabled and back on when disabled", function()
 		local presenter = makePresenter("Touch")
 
