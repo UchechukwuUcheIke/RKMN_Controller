@@ -1,7 +1,7 @@
 --!strict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packet = require(ReplicatedStorage.Packet)
-local BugReportSubmitStatus = require(ReplicatedStorage.BugReportSubmitStatus)
+local BugReportSubmitStatus = require(ReplicatedStorage.BugReport.BugReportSubmitStatus)
 
 local BugReportPacket = Packet("SubmitBugReport", {
     Description = Packet.StringLong,

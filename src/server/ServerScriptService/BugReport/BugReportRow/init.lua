@@ -2,7 +2,7 @@
 local BugReportRow = {}
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local BugReportDraft = require(ReplicatedStorage.BugReportDraft)
+local BugReportDraft = require(ReplicatedStorage.BugReport.BugReportDraft)
 
 type Platform = BugReportDraft.Platform
 type InputDevice = BugReportDraft.InputDevice

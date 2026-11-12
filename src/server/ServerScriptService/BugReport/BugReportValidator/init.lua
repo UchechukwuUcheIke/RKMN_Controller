@@ -2,9 +2,9 @@
 local BugReportValidator = {}
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local BugReportDraft = require(ReplicatedStorage.BugReportDraft)
-local Platform = require(ReplicatedStorage.BugReportDraft.Platform)
-local InputDevice = require(ReplicatedStorage.BugReportDraft.InputDevice)
+local BugReportDraft = require(ReplicatedStorage.BugReport.BugReportDraft)
+local Platform = require(ReplicatedStorage.BugReport.BugReportDraft.Platform)
+local InputDevice = require(ReplicatedStorage.BugReport.BugReportDraft.InputDevice)
 local BugReportRow = require(script.Parent.BugReportRow)
 
 type BugReportRow = BugReportRow.BugReportRow

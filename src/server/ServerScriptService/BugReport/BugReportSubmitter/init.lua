@@ -3,12 +3,12 @@ local BugReportSubmitter = {}
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local BugReportSubmitStatus = require(ReplicatedStorage.BugReportSubmitStatus)
+local BugReportSubmitStatus = require(ReplicatedStorage.BugReport.BugReportSubmitStatus)
 local BugReportValidator = require(script.Parent.BugReportValidator)
 local BugReportRow = require(script.Parent.BugReportRow)
-local PlayerSessionIDRegistry = require(script.Parent.PlayerSessionIDRegistry)
-local SupabaseClient = require(script.Parent.SupabaseClient)
-local SupabaseConfig = require(script.Parent.SupabaseConfig)
+local PlayerSessionIDRegistry = require(script.Parent.Parent.PlayerSessionIDRegistry)
+local SupabaseClient = require(script.Parent.Parent.SupabaseClient)
+local SupabaseConfig = require(script.Parent.Parent.SupabaseConfig)
 
 type ReportContext = BugReportRow.ReportContext
 type BugReportSubmitStatus = BugReportSubmitStatus.BugReportSubmitStatus
