@@ -11,7 +11,6 @@ local Timers = require(ReplicatedStorage.RKMNController.TimerIDRegistry)
 local TimerUtility = require(ReplicatedStorage.RKMNController.TimerUtility)
 local InputAction = require(PlayerInputFolder.InputAction)
 
-local InputMapper = require(PlayerInputFolder.InputMapper)
 local RawInputObserver = require(PlayerInputFolder.RawInputObserver)
 local InputBuffer = require(PlayerInputFolder.InputBuffer)
 local DirectionResolver = require(PlayerInputFolder.DirectionResolver)
@@ -20,7 +19,6 @@ type Signal = typeof(Signal)
 type Direction = Direction.Direction
 type TimerUtility = TimerUtility.TimerUtility
 type ActionID = InputAction.ActionID
-type InputMapper = InputMapper.InputMapper
 type InputBuffer = InputBuffer.InputBuffer
 type DirectionResolver = DirectionResolver.DirectionResolver
 type RawInputObserver = RawInputObserver.RawInputObserver
@@ -51,7 +49,7 @@ export type PlayerInputFacade = typeof(setmetatable({} :: PlayerInputFacadeData,
 
 local BUFFER_DURATION = 0.1
 
-function PlayerInputFacade.new(timerUtility: TimerUtility, inputMapper: InputMapper): PlayerInputFacade
+function PlayerInputFacade.new(timerUtility: TimerUtility, rawInputObserver: RawInputObserver): PlayerInputFacade
     local self = setmetatable({}, PlayerInputFacade)
 
     self._isEnabled = false
@@ -59,7 +57,7 @@ function PlayerInputFacade.new(timerUtility: TimerUtility, inputMapper: InputMap
     self._isMenuKeyDisabled = false
     self._isTriggerHeld = false
 
-    self._rawInputObserver = RawInputObserver.new(inputMapper)
+    self._rawInputObserver = rawInputObserver
     self._jumpBuffer = InputBuffer.new(timerUtility, Timers.JumpBuffer, BUFFER_DURATION)
     self._dashBuffer = InputBuffer.new(timerUtility, Timers.DashBuffer, BUFFER_DURATION)
     self._directionResolver = DirectionResolver.new()
@@ -233,7 +231,6 @@ function PlayerInputFacade.ConsumeDashBuffer(self: PlayerInputFacade): ()
 end
 
 function PlayerInputFacade._destroySubcomponents(self: PlayerInputFacade): ()
-    self._rawInputObserver:Destroy()
     self._jumpBuffer:Destroy()
     self._dashBuffer:Destroy()
     self._directionResolver:Destroy()

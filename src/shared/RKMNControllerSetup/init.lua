@@ -16,6 +16,7 @@ local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
 local PlayerInputFolder = ReplicatedStorage.PlayerInput
 local InputAction = require(PlayerInputFolder.InputAction)
 local InputMapper = require(PlayerInputFolder.InputMapper)
+local RawInputObserver = require(PlayerInputFolder.RawInputObserver)
 local ControlProfile = require(PlayerInputFolder.ControlProfile)
 local KeyboardSchemes = require(PlayerInputFolder.KeyboardSchemes)
 local GamepadSchemes = require(PlayerInputFolder.GamepadSchemes)
@@ -43,7 +44,7 @@ local DiagnosticControllerQuery = require(DebugModuleFolder.DiagnosticCollisionQ
 type CollisionConstants = CollisionConstants.CollisionConstants
 type TimerUtility = TimerUtility.TimerUtility
 type CollisionQuery = CollisionQuery.CollisionQuery
-type InputMapper = InputMapper.InputMapper
+type RawInputObserver = RawInputObserver.RawInputObserver
 type DeviceDetector = DeviceDetector.DeviceDetector
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type TouchGamepadPresenter = TouchGamepadPresenter.TouchGamepadPresenter
@@ -76,10 +77,10 @@ local function mountScreenGui(): ScreenGui
     return screenGui
 end
 
-local function makeDependencies(character: Model, constants: CollisionConstants, collisionQuery: CollisionQuery, inputMapper: InputMapper): RKMNControllerDependencies
+local function makeDependencies(character: Model, constants: CollisionConstants, collisionQuery: CollisionQuery, rawInputObserver: RawInputObserver): RKMNControllerDependencies
     local movementStats = MovementStats.new()
     local timerUtility = TimerUtility.new()
-    local playerInput = PlayerInputFacade.new(timerUtility, inputMapper)
+    local playerInput = PlayerInputFacade.new(timerUtility, rawInputObserver)
     local physicsResolver = PhysicsResolver.new(character, movementStats, collisionQuery)
 
     local FSMContextDependencies: StateMachineContextDependencies = {
@@ -103,18 +104,18 @@ local function makeDependencies(character: Model, constants: CollisionConstants,
     return dependencies
 end
 
-local function makeDebugDependencies(character: Model, inputMapper: InputMapper): RKMNControllerDependencies
+local function makeDebugDependencies(character: Model, rawInputObserver: RawInputObserver): RKMNControllerDependencies
     local world = game.Workspace
     local constants = CollisionConstants.new(character)
     local collisionQuery = DiagnosticControllerQuery.new(world, character, constants)
-    return makeDependencies(character, constants, collisionQuery, inputMapper)
+    return makeDependencies(character, constants, collisionQuery, rawInputObserver)
 end
 
-local function _makeProdDependencies(character: Model, inputMapper: InputMapper): RKMNControllerDependencies
+local function _makeProdDependencies(character: Model, rawInputObserver: RawInputObserver): RKMNControllerDependencies
     local world = game.Workspace
     local constants = CollisionConstants.new(character)
     local collisionQuery = CollisionQuery.new(world, character, constants)
-    return makeDependencies(character, constants, collisionQuery, inputMapper)
+    return makeDependencies(character, constants, collisionQuery, rawInputObserver)
 end
 
 local touchLayoutProfile = TouchLayoutProfile.new(TouchGamepadLayoutRegistry.Standard)
@@ -127,6 +128,11 @@ end
 
 -- The player's controls outlive any one character, so the profile is created once rather than per Setup.
 local controlProfile = ControlProfile.new(KeyboardSchemes.Standard, GamepadSchemes.Standard)
+
+-- Created once for the same reason, so a log attached to the observer survives respawns. Each character's
+-- DeviceDetector loads the player's scheme into this mapper.
+local inputMapper = InputMapper.new()
+local rawInputObserver = RawInputObserver.new(inputMapper)
 
 local function makeControlCustomization(screenGui: ScreenGui, deviceDetector: DeviceDetector, playerInput: PlayerInputFacade): ControlCustomizationUI
     local bindingCapture = BindingCapture.new(UserInputService)
@@ -229,10 +235,9 @@ function RKMNControllerSetup.Setup(character: Model): RKMNController
     local world = game.Workspace
 
     -- The detector loads the profile's scheme for the device in use into the mapper.
-    local inputMapper = InputMapper.new()
     local deviceDetector = DeviceDetector.new(UserInputService, inputMapper, controlProfile)
 
-    local dependencies: RKMNControllerDependencies = makeDebugDependencies(character, inputMapper)
+    local dependencies: RKMNControllerDependencies = makeDebugDependencies(character, rawInputObserver)
     local kinematicController = RKMNController.new(dependencies)
     kinematicController:SetInputEnabled(true)
 

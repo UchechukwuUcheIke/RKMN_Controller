@@ -9,6 +9,7 @@ local expect = JestGlobals.expect
 local Direction = require(ReplicatedStorage.Data.Direction)
 local TimerUtility = require(ReplicatedStorage.RKMNController.TimerUtility)
 local InputMapper = require(ReplicatedStorage.PlayerInput.InputMapper)
+local RawInputObserver = require(ReplicatedStorage.PlayerInput.RawInputObserver)
 local KeyboardSchemes = require(ReplicatedStorage.PlayerInput.KeyboardSchemes)
 local PlayerInputFacade = require(ReplicatedStorage.PlayerInput.PlayerInputFacade)
 
@@ -17,7 +18,7 @@ local function makeFacade()
 	local timer = TimerUtility.new()
 	local mapper = InputMapper.new()
 	mapper:LoadControlScheme(KeyboardSchemes.Standard)
-	local facade = PlayerInputFacade.new(timer, mapper)
+	local facade = PlayerInputFacade.new(timer, RawInputObserver.new(mapper))
 
 	local events = { jump = 0, dash = 0, pressed = 0, released = 0 }
 	facade.OnJumpPressed:Connect(function() events.jump += 1 end)
