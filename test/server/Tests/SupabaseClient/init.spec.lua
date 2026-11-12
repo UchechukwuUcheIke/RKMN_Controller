@@ -1,12 +1,13 @@
 --!nonstrict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 local JestGlobals = require(ReplicatedStorage.DevPackages.JestGlobals)
 
 local describe = JestGlobals.describe
 local it = JestGlobals.it
 local expect = JestGlobals.expect
 
-local SupabaseClient = require(ReplicatedStorage.SupabaseClient)
+local SupabaseClient = require(ServerScriptService.Server.SupabaseClient)
 
 local CONFIG = { Url = "https://abc.supabase.co", AnonKey = "anon-key" }
 

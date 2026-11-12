@@ -17,7 +17,8 @@ runButton.Click:Connect(function()
     -- Adjust these paths based on your project's structure (e.g., ReplicatedStorage.Packages.Jest)
     local Jest = require(ReplicatedStorage.DevPackages.Jest)
     local testRoots = { 
-        ReplicatedStorage.Tests
+        ReplicatedStorage.Tests,
+        game:GetService("ServerScriptService").ServerTests.Tests
     }
 
     -- 3. Execute the CLI

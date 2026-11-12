@@ -1,12 +1,13 @@
 --!nonstrict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 local JestGlobals = require(ReplicatedStorage.DevPackages.JestGlobals)
 
 local describe = JestGlobals.describe
 local it = JestGlobals.it
 local expect = JestGlobals.expect
 
-local HttpTransport = require(ReplicatedStorage.HttpTransport)
+local HttpTransport = require(ServerScriptService.Server.HttpTransport)
 
 describe("HttpTransport.ToResult", function()
 	it("treats a 2xx response as ok and keeps its body", function()

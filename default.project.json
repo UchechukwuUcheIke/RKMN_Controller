@@ -16,6 +16,9 @@
     "ServerScriptService": {
       "Server": {
         "$path": "src/server/ServerScriptService"
+      },
+      "ServerTests": {
+        "$path": "test/server"
       }
     },
 
