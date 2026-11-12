@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
 local LocalPlayer = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RKMNControllerFolder = ReplicatedStorage.RKMNController
@@ -36,6 +37,15 @@ local MobileButtonPositioner = require(TouchGamepadFolder.MobileButtonPositioner
 local TouchGamepadLayoutRegistry = require(TouchGamepadFolder.TouchGamepadLayoutRegistry)
 local TouchLayoutPresets = require(TouchGamepadFolder.TouchLayoutPresets)
 local TouchLayoutProfile = require(TouchGamepadFolder.TouchLayoutProfile)
+local TelemetryFolder = ReplicatedStorage.Telemetry
+local BugReportFolder = TelemetryFolder.BugReport
+local InputActionLog = require(TelemetryFolder.InputActionLog)
+local BugReportDraft = require(BugReportFolder.BugReportDraft)
+local BugReportPacket = require(BugReportFolder.BugReportPacket)
+local BugReportButton = require(BugReportFolder.UserInterface.BugReportButton)
+local BugReportScreen = require(BugReportFolder.UserInterface.BugReportScreen)
+local BugReportPresenter = require(BugReportFolder.BugReportPresenter)
+local PlatformDetector = require(BugReportFolder.PlatformDetector)
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
 local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
 local StateMachineContext = require(RKMNControllerFolder.FSMContext)
@@ -46,6 +56,7 @@ type TimerUtility = TimerUtility.TimerUtility
 type CollisionQuery = CollisionQuery.CollisionQuery
 type RawInputObserver = RawInputObserver.RawInputObserver
 type DeviceDetector = DeviceDetector.DeviceDetector
+type BugReportPresenter = BugReportPresenter.BugReportPresenter
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type TouchGamepadPresenter = TouchGamepadPresenter.TouchGamepadPresenter
 type ControlCustomizationUI = ControlCustomizationUI.ControlCustomizationUI
@@ -134,6 +145,31 @@ local controlProfile = ControlProfile.new(KeyboardSchemes.Standard, GamepadSchem
 local inputMapper = InputMapper.new()
 local rawInputObserver = RawInputObserver.new(inputMapper)
 
+-- Also once, so a report filed right after a death still has the inputs that led to it.
+local bugReportInputLog = InputActionLog.new(
+    rawInputObserver,
+    BugReportDraft.MAX_INPUT_LOG_ENTRIES,
+    BugReportDraft.MAX_INPUT_LOG_AGE_SECONDS
+)
+
+local function makeBugReport(deviceDetector: DeviceDetector, playerInput: PlayerInputFacade): BugReportPresenter
+    local playerGui = LocalPlayer:WaitForChild("PlayerGui")
+    return BugReportPresenter.new({
+        Button = BugReportButton.new(playerGui),
+        Screen = BugReportScreen.new(playerGui),
+        InputLog = bugReportInputLog,
+        DeviceDetector = deviceDetector,
+        PlayerInput = playerInput,
+        GetPlatform = function()
+            return PlatformDetector.GetPlatform(UserInputService, GuiService)
+        end,
+        Submit = function(draft)
+            return BugReportPacket:Fire(draft)
+        end,
+        Delay = task.delay,
+    })
+end
+
 local function makeControlCustomization(screenGui: ScreenGui, deviceDetector: DeviceDetector, playerInput: PlayerInputFacade): ControlCustomizationUI
     local bindingCapture = BindingCapture.new(UserInputService)
     local view = ControlCustomizationView.new(screenGui)
@@ -194,6 +230,14 @@ local activeDeviceDetector: DeviceDetector? = nil
 local activeTouchGamepad: TouchGamepadPresenter? = nil
 local activeControlCustomization: ControlCustomizationUI? = nil
 local activeTouchLayoutEditing: TouchLayoutEditing? = nil
+local activeBugReport: BugReportPresenter? = nil
+
+local function replaceBugReport(bugReport: BugReportPresenter): ()
+    if activeBugReport then
+        activeBugReport:Destroy()
+    end
+    activeBugReport = bugReport
+end
 
 local function replaceControlCustomization(controlCustomization: ControlCustomizationUI): ()
     if activeControlCustomization then
@@ -252,6 +296,11 @@ function RKMNControllerSetup.Setup(character: Model): RKMNController
     local controlCustomization = makeControlCustomization(screenGui, deviceDetector, dependencies.PlayerInput)
     replaceControlCustomization(controlCustomization)
     controlCustomization:Enable()
+
+    local bugReport = makeBugReport(deviceDetector, dependencies.PlayerInput)
+    replaceBugReport(bugReport)
+    bugReport:Enable()
+
     local debugTool = DebugFacade.new(world, screenGui, kinematicWorld, kinematicController, runServiceAdapter)
     kinematicWorld:RegisterPlayer(kinematicController)
     runServiceAdapter:Start()
