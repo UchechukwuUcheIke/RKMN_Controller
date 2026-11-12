@@ -1,6 +1,6 @@
 --!strict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local BugReportPacket = require(ReplicatedStorage.BugReport.BugReportPacket)
+local BugReportPacket = require(ReplicatedStorage.Telemetry.BugReport.BugReportPacket)
 local BugReportSubmitter = require(script.Parent.BugReportSubmitter)
 
 BugReportPacket.OnServerInvoke = function(player: Player, draft)

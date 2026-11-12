@@ -1,4 +1,7 @@
 --!strict
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StringEnum = require(ReplicatedStorage.Utility.StringEnum)
+
 export type Platform = "mobile" | "pc" | "console" | "unknown"
 
 local Platform = {
@@ -8,14 +11,8 @@ local Platform = {
     Unknown = "unknown" :: Platform,
 }
 
-local VALID_VALUES: {[string]: boolean} = {}
-for _, value in Platform do
-    VALID_VALUES[value] = true
-end
-table.freeze(VALID_VALUES)
-
 function Platform.IsValid(value: any): boolean
-    return typeof(value) == "string" and VALID_VALUES[value] == true
+    return StringEnum.Contains(Platform, value)
 end
 
 table.freeze(Platform)

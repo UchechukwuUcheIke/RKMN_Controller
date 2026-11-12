@@ -2,13 +2,14 @@
 local BugReportRow = {}
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local BugReportDraft = require(ReplicatedStorage.BugReport.BugReportDraft)
+local BugReportDraft = require(ReplicatedStorage.Telemetry.BugReport.BugReportDraft)
 
 type Platform = BugReportDraft.Platform
 type InputDevice = BugReportDraft.InputDevice
 
 -- What the server knows about the reporting player; none of it comes from the client.
 export type ReportContext = {
+    ReportId: string,
     UserId: number,
     Username: string,
     PlaceVersion: number,
@@ -16,7 +17,15 @@ export type ReportContext = {
     Position: Vector3?
 }
 
+-- The parts of a draft that the validator has checked and cleaned.
+export type CheckedDraft = {
+    Description: string,
+    Platform: Platform,
+    InputDevice: InputDevice
+}
+
 export type BugReportRow = {
+    id: string,
     user_id: number,
     username: string,
     description: string,
@@ -31,10 +40,11 @@ export type BugReportRow = {
 
 -- Builds a row from a draft that has already been checked; the draft's types are trusted here.
 -- The field names match the table's columns, so the column mapping lives only in this function.
-function BugReportRow.new(draft: BugReportDraft.BugReportDraft, context: ReportContext): BugReportRow
+function BugReportRow.new(draft: CheckedDraft, context: ReportContext): BugReportRow
     local position = context.Position
 
     return table.freeze({
+        id = context.ReportId,
         user_id = context.UserId,
         username = context.Username,
         description = draft.Description,

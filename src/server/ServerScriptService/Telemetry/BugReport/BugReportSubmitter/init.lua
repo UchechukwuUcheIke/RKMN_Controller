@@ -1,19 +1,21 @@
 --!strict
 local BugReportSubmitter = {}
 
+local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local BugReportSubmitStatus = require(ReplicatedStorage.BugReport.BugReportSubmitStatus)
+local BugReportSubmitStatus = require(ReplicatedStorage.Telemetry.BugReport.BugReportSubmitStatus)
 local BugReportValidator = require(script.Parent.BugReportValidator)
 local BugReportRow = require(script.Parent.BugReportRow)
-local PlayerSessionIDRegistry = require(script.Parent.Parent.PlayerSessionIDRegistry)
-local SupabaseClient = require(script.Parent.Parent.SupabaseClient)
-local SupabaseConfig = require(script.Parent.Parent.SupabaseConfig)
+local PlayerSessionIDRegistry = require(script.Parent.Parent.Parent.PlayerSessionIDRegistry)
+local SupabaseClient = require(script.Parent.Parent.Parent.SupabaseClient)
+local SupabaseConfig = require(script.Parent.Parent.Parent.SupabaseConfig)
 
 type ReportContext = BugReportRow.ReportContext
 type BugReportSubmitStatus = BugReportSubmitStatus.BugReportSubmitStatus
 
 local TABLE_NAME = "bug_reports"
+local INPUT_LOG_TABLE_NAME = "input_log_entries"
 local COOLDOWN_SECONDS = 30
 
 local lastSubmitClockByPlayer: {[Player]: number} = {}
@@ -29,6 +31,7 @@ end
 
 local function buildContext(player: Player): ReportContext
     return {
+        ReportId = HttpService:GenerateGUID(false),
         UserId = player.UserId,
         Username = player.Name,
         PlaceVersion = game.PlaceVersion,
@@ -64,6 +67,16 @@ local function attemptSubmit(player: Player, draft: any): BugReportSubmitStatus
     if not insertResult.Ok then
         warn(`Bug report from {player.Name} not sent: {insertResult.Error} {insertResult.Body or ""}`)
         return BugReportSubmitStatus.Failed
+    end
+
+    -- The report is saved first, so a log can only ever attach to a report that exists. If the log
+    -- fails, the report still counts as sent: it is worth more than the log.
+    local inputLogRows = validation.InputLogRows
+    if inputLogRows and #inputLogRows > 0 then
+        local logResult = SupabaseClient.Insert(configResult.Config, INPUT_LOG_TABLE_NAME, inputLogRows :: any)
+        if not logResult.Ok then
+            warn(`Input log for bug report {validation.Row.id} not saved: {logResult.Error} {logResult.Body or ""}`)
+        end
     end
 
     return BugReportSubmitStatus.Sent
