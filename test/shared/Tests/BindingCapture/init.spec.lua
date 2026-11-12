@@ -32,7 +32,7 @@ end
 describe("BindingCapture", function()
 	it("reports the next keyboard key pressed", function()
 		local capture, service, results, record = makeCapture()
-		capture:Begin("Keyboard", record)
+		capture:Begin("keyboard", record)
 
 		service:Press(Enum.UserInputType.Keyboard, Enum.KeyCode.J)
 
@@ -41,7 +41,7 @@ describe("BindingCapture", function()
 
 	it("reports a key even when Roblox's GUI already handled it", function()
 		local capture, service, results, record = makeCapture()
-		capture:Begin("Keyboard", record)
+		capture:Begin("keyboard", record)
 
 		service:Press(Enum.UserInputType.Keyboard, Enum.KeyCode.J, true)
 
@@ -50,7 +50,7 @@ describe("BindingCapture", function()
 
 	it("stops listening after the first capture", function()
 		local capture, service, results, record = makeCapture()
-		capture:Begin("Keyboard", record)
+		capture:Begin("keyboard", record)
 
 		service:Press(Enum.UserInputType.Keyboard, Enum.KeyCode.J)
 		service:Press(Enum.UserInputType.Keyboard, Enum.KeyCode.K)
@@ -61,7 +61,7 @@ describe("BindingCapture", function()
 
 	it("cancels on Escape without reporting a binding", function()
 		local capture, service, results, record = makeCapture()
-		capture:Begin("Keyboard", record)
+		capture:Begin("keyboard", record)
 
 		service:Press(Enum.UserInputType.Keyboard, Enum.KeyCode.Escape, true)
 
@@ -70,7 +70,7 @@ describe("BindingCapture", function()
 
 	it("cancels on Escape while capturing a gamepad button", function()
 		local capture, service, results, record = makeCapture()
-		capture:Begin("Gamepad", record)
+		capture:Begin("gamepad", record)
 
 		service:Press(Enum.UserInputType.Keyboard, Enum.KeyCode.Escape)
 
@@ -79,7 +79,7 @@ describe("BindingCapture", function()
 
 	it("cancels on Select while capturing a gamepad button", function()
 		local capture, service, results, record = makeCapture()
-		capture:Begin("Gamepad", record)
+		capture:Begin("gamepad", record)
 
 		service:Press(Enum.UserInputType.Gamepad1, Enum.KeyCode.ButtonSelect)
 
@@ -88,7 +88,7 @@ describe("BindingCapture", function()
 
 	it("reports other gamepad buttons while capturing a gamepad button", function()
 		local capture, service, results, record = makeCapture()
-		capture:Begin("Gamepad", record)
+		capture:Begin("gamepad", record)
 
 		service:Press(Enum.UserInputType.Gamepad1, Enum.KeyCode.ButtonA)
 
@@ -97,7 +97,7 @@ describe("BindingCapture", function()
 
 	it("reports a mouse button only when the GUI did not handle the click", function()
 		local capture, service, results, record = makeCapture()
-		capture:Begin("Keyboard", record)
+		capture:Begin("keyboard", record)
 
 		service:Press(Enum.UserInputType.MouseButton1, nil, true)
 		expect(results).toEqual({})
@@ -108,7 +108,7 @@ describe("BindingCapture", function()
 
 	it("ignores gamepad buttons while capturing a keyboard binding", function()
 		local capture, service, results, record = makeCapture()
-		capture:Begin("Keyboard", record)
+		capture:Begin("keyboard", record)
 
 		service:Press(Enum.UserInputType.Gamepad1, Enum.KeyCode.ButtonA)
 
@@ -118,7 +118,7 @@ describe("BindingCapture", function()
 
 	it("reports a gamepad button and ignores keyboard keys", function()
 		local capture, service, results, record = makeCapture()
-		capture:Begin("Gamepad", record)
+		capture:Begin("gamepad", record)
 
 		service:Press(Enum.UserInputType.Keyboard, Enum.KeyCode.J)
 		expect(results).toEqual({})
@@ -129,7 +129,7 @@ describe("BindingCapture", function()
 
 	it("ignores thumbsticks", function()
 		local capture, service, results, record = makeCapture()
-		capture:Begin("Gamepad", record)
+		capture:Begin("gamepad", record)
 
 		service:Press(Enum.UserInputType.Gamepad1, Enum.KeyCode.Thumbstick1)
 		service:Press(Enum.UserInputType.Gamepad1, Enum.KeyCode.Thumbstick2)
@@ -139,7 +139,7 @@ describe("BindingCapture", function()
 
 	it("ignores touch and mouse movement", function()
 		local capture, service, results, record = makeCapture()
-		capture:Begin("Keyboard", record)
+		capture:Begin("keyboard", record)
 
 		service:Press(Enum.UserInputType.Touch)
 		service:Press(Enum.UserInputType.MouseMovement)
@@ -149,9 +149,9 @@ describe("BindingCapture", function()
 
 	it("cancels a capture already in progress when a new one begins", function()
 		local capture, service, results, record = makeCapture()
-		capture:Begin("Keyboard", record)
+		capture:Begin("keyboard", record)
 
-		capture:Begin("Gamepad", record)
+		capture:Begin("gamepad", record)
 		service:Press(Enum.UserInputType.Gamepad1, Enum.KeyCode.ButtonB)
 
 		expect(results).toEqual({ "cancelled", Enum.KeyCode.ButtonB })
@@ -160,8 +160,8 @@ describe("BindingCapture", function()
 	it("lets the callback start the next capture", function()
 		local capture, service = makeCapture()
 		local second = {}
-		capture:Begin("Keyboard", function()
-			capture:Begin("Keyboard", function(binding)
+		capture:Begin("keyboard", function()
+			capture:Begin("keyboard", function(binding)
 				table.insert(second, binding)
 			end)
 		end)
@@ -174,7 +174,7 @@ describe("BindingCapture", function()
 
 	it("reports a cancel through the callback", function()
 		local capture, _, results, record = makeCapture()
-		capture:Begin("Keyboard", record)
+		capture:Begin("keyboard", record)
 
 		capture:Cancel()
 
@@ -194,13 +194,13 @@ describe("BindingCapture", function()
 		local capture = makeCapture()
 
 		expect(function()
-			capture:Begin("Touch", function() end)
+			capture:Begin("touch", function() end)
 		end).toThrow()
 	end)
 
 	it("stops reacting once destroyed", function()
 		local capture, service, results, record = makeCapture()
-		capture:Begin("Keyboard", record)
+		capture:Begin("keyboard", record)
 
 		capture:Destroy()
 		service:Press(Enum.UserInputType.Keyboard, Enum.KeyCode.J)

@@ -24,35 +24,35 @@ describe("ControlProfile", function()
 	it("starts as the live defaults", function()
 		local profile, keyboardDefault, gamepadDefault = makeProfile()
 
-		expect(profile:GetScheme("Keyboard")).toBe(keyboardDefault)
-		expect(profile:GetScheme("Gamepad")).toBe(gamepadDefault)
+		expect(profile:GetScheme("keyboard")).toBe(keyboardDefault)
+		expect(profile:GetScheme("gamepad")).toBe(gamepadDefault)
 	end)
 
 	it("has an empty scheme for touch", function()
 		local profile = makeProfile()
 
-		expect(next(profile:GetScheme("Touch"))).toBeNil()
+		expect(next(profile:GetScheme("touch"))).toBeNil()
 	end)
 
 	it("adds a binding without changing the defaults", function()
 		local profile, keyboardDefault = makeProfile()
 
-		profile:BindKey("Keyboard", "Jump", Enum.KeyCode.J)
+		profile:BindKey("keyboard", "Jump", Enum.KeyCode.J)
 
-		expect(profile:GetScheme("Keyboard").Jump[Enum.KeyCode.J]).toBe(true)
-		expect(profile:GetScheme("Keyboard").Jump[Enum.KeyCode.Space]).toBe(true)
+		expect(profile:GetScheme("keyboard").Jump[Enum.KeyCode.J]).toBe(true)
+		expect(profile:GetScheme("keyboard").Jump[Enum.KeyCode.Space]).toBe(true)
 		expect(keyboardDefault.Jump[Enum.KeyCode.J]).toBeNil()
 	end)
 
 	it("allows any number of bindings on one action", function()
 		local profile = makeProfile()
 
-		profile:BindKey("Keyboard", "Jump", Enum.KeyCode.J)
-		profile:BindKey("Keyboard", "Jump", Enum.KeyCode.K)
-		profile:BindKey("Keyboard", "Jump", Enum.KeyCode.L)
+		profile:BindKey("keyboard", "Jump", Enum.KeyCode.J)
+		profile:BindKey("keyboard", "Jump", Enum.KeyCode.K)
+		profile:BindKey("keyboard", "Jump", Enum.KeyCode.L)
 
 		local count = 0
-		for _ in pairs(profile:GetScheme("Keyboard").Jump) do
+		for _ in pairs(profile:GetScheme("keyboard").Jump) do
 			count += 1
 		end
 		expect(count).toBe(4)
@@ -61,36 +61,36 @@ describe("ControlProfile", function()
 	it("takes a binding from the action that had it", function()
 		local profile = makeProfile()
 
-		profile:BindKey("Keyboard", "Jump", Enum.KeyCode.C)
+		profile:BindKey("keyboard", "Jump", Enum.KeyCode.C)
 
-		expect(profile:GetScheme("Keyboard").Jump[Enum.KeyCode.C]).toBe(true)
-		expect(profile:GetScheme("Keyboard").Shoot).toBeNil()
+		expect(profile:GetScheme("keyboard").Jump[Enum.KeyCode.C]).toBe(true)
+		expect(profile:GetScheme("keyboard").Shoot).toBeNil()
 	end)
 
 	it("keeps an action's other bindings when one is taken", function()
 		local profile = makeProfile()
-		profile:BindKey("Keyboard", "Shoot", Enum.KeyCode.X)
+		profile:BindKey("keyboard", "Shoot", Enum.KeyCode.X)
 
-		profile:BindKey("Keyboard", "Jump", Enum.KeyCode.C)
+		profile:BindKey("keyboard", "Jump", Enum.KeyCode.C)
 
-		expect(profile:GetScheme("Keyboard").Shoot[Enum.KeyCode.X]).toBe(true)
-		expect(profile:GetScheme("Keyboard").Shoot[Enum.KeyCode.C]).toBeNil()
+		expect(profile:GetScheme("keyboard").Shoot[Enum.KeyCode.X]).toBe(true)
+		expect(profile:GetScheme("keyboard").Shoot[Enum.KeyCode.C]).toBeNil()
 	end)
 
 	it("removes a binding and leaves an emptied action unbound", function()
 		local profile = makeProfile()
 
-		profile:UnbindKey("Keyboard", "Jump", Enum.KeyCode.Space)
+		profile:UnbindKey("keyboard", "Jump", Enum.KeyCode.Space)
 
-		expect(profile:GetScheme("Keyboard").Jump).toBeNil()
+		expect(profile:GetScheme("keyboard").Jump).toBeNil()
 	end)
 
 	it("keeps each device's edits separate", function()
 		local profile = makeProfile()
 
-		profile:BindKey("Keyboard", "Jump", Enum.KeyCode.J)
+		profile:BindKey("keyboard", "Jump", Enum.KeyCode.J)
 
-		expect(profile:GetScheme("Gamepad").Jump[Enum.KeyCode.J]).toBeNil()
+		expect(profile:GetScheme("gamepad").Jump[Enum.KeyCode.J]).toBeNil()
 	end)
 
 	it("announces the edited device", function()
@@ -100,10 +100,10 @@ describe("ControlProfile", function()
 			table.insert(announced, device)
 		end)
 
-		profile:BindKey("Gamepad", "Jump", Enum.KeyCode.ButtonY)
-		profile:UnbindKey("Gamepad", "Jump", Enum.KeyCode.ButtonY)
+		profile:BindKey("gamepad", "Jump", Enum.KeyCode.ButtonY)
+		profile:UnbindKey("gamepad", "Jump", Enum.KeyCode.ButtonY)
 
-		expect(announced).toEqual({ "Gamepad", "Gamepad" })
+		expect(announced).toEqual({ "gamepad", "gamepad" })
 	end)
 
 	it("ignores edits that change nothing", function()
@@ -113,20 +113,20 @@ describe("ControlProfile", function()
 			announced += 1
 		end)
 
-		profile:BindKey("Keyboard", "Jump", Enum.KeyCode.Space)
-		profile:UnbindKey("Keyboard", "Jump", Enum.KeyCode.J)
+		profile:BindKey("keyboard", "Jump", Enum.KeyCode.Space)
+		profile:UnbindKey("keyboard", "Jump", Enum.KeyCode.J)
 
 		expect(announced).toBe(0)
-		expect(profile:GetScheme("Keyboard")).toBe(keyboardDefault)
+		expect(profile:GetScheme("keyboard")).toBe(keyboardDefault)
 	end)
 
 	it("returns a device to the live defaults on reset", function()
 		local profile, keyboardDefault = makeProfile()
-		profile:BindKey("Keyboard", "Jump", Enum.KeyCode.J)
+		profile:BindKey("keyboard", "Jump", Enum.KeyCode.J)
 
-		profile:ResetDevice("Keyboard")
+		profile:ResetDevice("keyboard")
 
-		expect(profile:GetScheme("Keyboard")).toBe(keyboardDefault)
+		expect(profile:GetScheme("keyboard")).toBe(keyboardDefault)
 	end)
 
 	it("announces a reset only when there was something to reset", function()
@@ -136,9 +136,9 @@ describe("ControlProfile", function()
 			announced += 1
 		end)
 
-		profile:ResetDevice("Keyboard")
-		profile:BindKey("Keyboard", "Jump", Enum.KeyCode.J)
-		profile:ResetDevice("Keyboard")
+		profile:ResetDevice("keyboard")
+		profile:BindKey("keyboard", "Jump", Enum.KeyCode.J)
+		profile:ResetDevice("keyboard")
 
 		expect(announced).toBe(2)
 	end)
@@ -147,7 +147,7 @@ describe("ControlProfile", function()
 		local profile = makeProfile()
 
 		expect(function()
-			profile:BindKey("Touch", "Jump", Enum.KeyCode.J)
+			profile:BindKey("touch", "Jump", Enum.KeyCode.J)
 		end).toThrow()
 	end)
 end)

@@ -57,7 +57,7 @@ end
 
 describe("TouchGamepadPresenter", function()
 	it("places the controls from the profile's layout once on a touch device", function()
-		local presenter, parts = makePresenter("Touch")
+		local presenter, parts = makePresenter("touch")
 
 		presenter:Enable()
 
@@ -66,7 +66,7 @@ describe("TouchGamepadPresenter", function()
 	end)
 
 	it("leaves the controls unbound until the device is touch", function()
-		local presenter, parts = makePresenter("Keyboard")
+		local presenter, parts = makePresenter("keyboard")
 
 		presenter:Enable()
 
@@ -75,7 +75,7 @@ describe("TouchGamepadPresenter", function()
 	end)
 
 	it("moves the controls when the profile's layout changes", function()
-		local presenter, parts = makePresenter("Touch")
+		local presenter, parts = makePresenter("touch")
 		presenter:Enable()
 
 		parts.profile:SetLayout(movedJumpLayout())
@@ -85,18 +85,18 @@ describe("TouchGamepadPresenter", function()
 	end)
 
 	it("uses the layout current at the time the device first becomes touch", function()
-		local presenter, parts = makePresenter("Keyboard")
+		local presenter, parts = makePresenter("keyboard")
 		presenter:Enable()
 		parts.profile:SetLayout(movedJumpLayout())
 
-		parts.detector:Switch("Touch")
+		parts.detector:Switch("touch")
 
 		expect(jumpPosition(parts)).toEqual(UDim2.fromScale(0.5, 0.5))
 		presenter:Destroy()
 	end)
 
 	it("stops following the profile once disabled", function()
-		local presenter, parts = makePresenter("Touch")
+		local presenter, parts = makePresenter("touch")
 		presenter:Enable()
 		presenter:Disable()
 
@@ -107,7 +107,7 @@ describe("TouchGamepadPresenter", function()
 	end)
 
 	it("hides the controls while suspended, without bringing Roblox's controls back", function()
-		local presenter, parts = makePresenter("Touch")
+		local presenter, parts = makePresenter("touch")
 		presenter:Enable()
 
 		presenter:Suspend()
@@ -118,18 +118,18 @@ describe("TouchGamepadPresenter", function()
 	end)
 
 	it("stays hidden while suspended even when the device becomes touch", function()
-		local presenter, parts = makePresenter("Keyboard")
+		local presenter, parts = makePresenter("keyboard")
 		presenter:Enable()
 		presenter:Suspend()
 
-		parts.detector:Switch("Touch")
+		parts.detector:Switch("touch")
 
 		expect(parts.gamepadUI._screenGui.Enabled).toBe(false)
 		presenter:Destroy()
 	end)
 
 	it("shows the controls again, in the profile's current layout, when resumed on a touch device", function()
-		local presenter, parts = makePresenter("Touch")
+		local presenter, parts = makePresenter("touch")
 		presenter:Enable()
 		presenter:Suspend()
 		parts.profile:SetLayout(movedJumpLayout())
@@ -142,7 +142,7 @@ describe("TouchGamepadPresenter", function()
 	end)
 
 	it("does not show the controls on resume when the presenter is disabled", function()
-		local presenter, parts = makePresenter("Touch")
+		local presenter, parts = makePresenter("touch")
 		presenter:Enable()
 		presenter:Suspend()
 		presenter:Disable()
@@ -154,7 +154,7 @@ describe("TouchGamepadPresenter", function()
 	end)
 
 	it("turns Roblox's built-in touch controls off while enabled and back on when disabled", function()
-		local presenter = makePresenter("Touch")
+		local presenter = makePresenter("touch")
 
 		presenter:Enable()
 		expect(GuiService.TouchControlsEnabled).toBe(false)

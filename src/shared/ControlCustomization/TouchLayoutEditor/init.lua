@@ -4,7 +4,7 @@ TouchLayoutEditor.__index = TouchLayoutEditor
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PlayerInputFolder = ReplicatedStorage.PlayerInput
-local InputDevice = require(PlayerInputFolder.InputDevice)
+local InputDevice = require(ReplicatedStorage.Data.InputDevice)
 local DeviceDetector = require(PlayerInputFolder.DeviceDetector)
 local PlayerInputFacade = require(PlayerInputFolder.PlayerInputFacade)
 local TouchGamepadFolder = ReplicatedStorage.TouchGamepad

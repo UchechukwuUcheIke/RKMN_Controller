@@ -2,9 +2,10 @@
 local ControlCustomizationUI = {}
 ControlCustomizationUI.__index = ControlCustomizationUI
 
-local PlayerInputFolder = game:GetService("ReplicatedStorage").PlayerInput
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local PlayerInputFolder = ReplicatedStorage.PlayerInput
 local InputAction = require(PlayerInputFolder.InputAction)
-local InputDevice = require(PlayerInputFolder.InputDevice)
+local InputDevice = require(ReplicatedStorage.Data.InputDevice)
 local InputSchemeTypes = require(PlayerInputFolder.InputScheme)
 local ControlProfile = require(PlayerInputFolder.ControlProfile)
 local DeviceDetector = require(PlayerInputFolder.DeviceDetector)

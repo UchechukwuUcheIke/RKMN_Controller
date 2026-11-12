@@ -8,7 +8,7 @@ local Signal = require(DevPackages.goodsignal)
 
 local ControlProfile = require(script.Parent.ControlProfile)
 local InputMapper = require(script.Parent.InputMapper)
-local InputDevice = require(script.Parent.InputDevice)
+local InputDevice = require(ReplicatedStorage.Data.InputDevice)
 
 type Signal = typeof(Signal)
 type ControlProfile = ControlProfile.ControlProfile

@@ -7,7 +7,7 @@ local Signal = require(ReplicatedStorage.DevPackages.goodsignal)
 
 local PlayerInputFolder = script.Parent
 local InputAction = require(PlayerInputFolder.InputAction)
-local InputDevice = require(PlayerInputFolder.InputDevice)
+local InputDevice = require(ReplicatedStorage.Data.InputDevice)
 local InputSchemeTypes = require(PlayerInputFolder.InputScheme)
 
 type Signal = typeof(Signal)

@@ -1,8 +1,9 @@
 --!strict
 local BugReportDraft = {}
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Platform = require(script.Platform)
-local InputDevice = require(script.InputDevice)
+local InputDevice = require(ReplicatedStorage.Data.InputDevice)
 
 export type Platform = Platform.Platform
 export type InputDevice = InputDevice.InputDevice

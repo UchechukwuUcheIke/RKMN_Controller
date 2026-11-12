@@ -70,7 +70,7 @@ local function makeMenu()
 	end
 	function view:Destroy() end
 
-	local detector = { device = "Keyboard", OnContextChanged = Signal.new() }
+	local detector = { device = "keyboard", OnContextChanged = Signal.new() }
 	function detector:GetCurrentDevice()
 		return self.device
 	end
@@ -122,7 +122,7 @@ describe("ControlCustomizationUI", function()
 		expect(menu:IsOpen()).toBe(true)
 		expect(parts.view.isVisible).toBe(true)
 		expect(countCalls(parts.playerInput, "SuspendGameplayInput")).toBe(1)
-		expect(parts.screen.rendered).toBe("Keyboard")
+		expect(parts.screen.rendered).toBe("keyboard")
 	end)
 
 	it("closes on a second menu press, resuming gameplay input", function()
@@ -154,7 +154,7 @@ describe("ControlCustomizationUI", function()
 
 		parts.inputService:Press(Enum.UserInputType.Keyboard, Enum.KeyCode.J)
 
-		expect(parts.profile:GetScheme("Keyboard")[InputAction.Jump][Enum.KeyCode.J]).toBe(true)
+		expect(parts.profile:GetScheme("keyboard")[InputAction.Jump][Enum.KeyCode.J]).toBe(true)
 		expect(parts.screen.capturingAction).toBe(nil)
 		expect(countCalls(parts.playerInput, "EnableMenuKey")).toBe(0)
 
@@ -166,13 +166,13 @@ describe("ControlCustomizationUI", function()
 	it("leaves the bindings alone when the capture is cancelled", function()
 		local _, parts = makeMenu()
 		parts.playerInput.OnMenuPressed:Fire()
-		local before = parts.profile:GetScheme("Keyboard")
+		local before = parts.profile:GetScheme("keyboard")
 		parts.screen.OnRebindRequested:Fire(InputAction.Jump)
 
 		parts.inputService:Press(Enum.UserInputType.Keyboard, Enum.KeyCode.Escape)
 		parts.advanceFrame()
 
-		expect(parts.profile:GetScheme("Keyboard")).toBe(before)
+		expect(parts.profile:GetScheme("keyboard")).toBe(before)
 		expect(countCalls(parts.playerInput, "EnableMenuKey")).toBe(1)
 	end)
 
@@ -205,11 +205,11 @@ describe("ControlCustomizationUI", function()
 		parts.playerInput.OnMenuPressed:Fire()
 		parts.screen.OnRebindRequested:Fire(InputAction.Jump)
 
-		parts.detector.device = "Gamepad"
-		parts.detector.OnContextChanged:Fire("Gamepad")
+		parts.detector.device = "gamepad"
+		parts.detector.OnContextChanged:Fire("gamepad")
 
 		expect(parts.capture:IsCapturing()).toBe(false)
-		expect(parts.screen.rendered).toBe("Gamepad")
+		expect(parts.screen.rendered).toBe("gamepad")
 	end)
 
 	it("resets the device in use when asked", function()
@@ -220,7 +220,7 @@ describe("ControlCustomizationUI", function()
 
 		parts.screen.OnResetRequested:Fire()
 
-		expect(parts.profile:GetScheme("Keyboard")).toBe(KeyboardSchemes.Standard)
+		expect(parts.profile:GetScheme("keyboard")).toBe(KeyboardSchemes.Standard)
 	end)
 
 	it("removes a binding from the device in use when asked", function()
@@ -229,7 +229,7 @@ describe("ControlCustomizationUI", function()
 
 		parts.screen.OnUnbindRequested:Fire(InputAction.Jump, Enum.KeyCode.Space)
 
-		expect(parts.profile:GetScheme("Keyboard")[InputAction.Jump][Enum.KeyCode.Space]).toBeNil()
+		expect(parts.profile:GetScheme("keyboard")[InputAction.Jump][Enum.KeyCode.Space]).toBeNil()
 	end)
 
 	it("closes and gives gameplay input back when exit is pressed", function()
@@ -245,7 +245,7 @@ describe("ControlCustomizationUI", function()
 
 	it("does not open on a touch device, which has its own editor", function()
 		local menu, parts = makeMenu()
-		parts.detector.device = "Touch"
+		parts.detector.device = "touch"
 
 		parts.playerInput.OnMenuPressed:Fire()
 
@@ -257,8 +257,8 @@ describe("ControlCustomizationUI", function()
 	it("refuses rebinds when the device turns to touch while open", function()
 		local _, parts = makeMenu()
 		parts.playerInput.OnMenuPressed:Fire()
-		parts.detector.device = "Touch"
-		parts.detector.OnContextChanged:Fire("Touch")
+		parts.detector.device = "touch"
+		parts.detector.OnContextChanged:Fire("touch")
 
 		parts.screen.OnRebindRequested:Fire(InputAction.Jump)
 

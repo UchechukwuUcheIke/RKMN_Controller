@@ -36,9 +36,9 @@ end
 
 describe("DeviceDetector", function()
 	it("resolves the starting device from the preferred input", function()
-		expect(makeDetector(Enum.PreferredInput.KeyboardAndMouse):GetCurrentDevice()).toBe("Keyboard")
-		expect(makeDetector(Enum.PreferredInput.Touch):GetCurrentDevice()).toBe("Touch")
-		expect(makeDetector(Enum.PreferredInput.Gamepad):GetCurrentDevice()).toBe("Gamepad")
+		expect(makeDetector(Enum.PreferredInput.KeyboardAndMouse):GetCurrentDevice()).toBe("keyboard")
+		expect(makeDetector(Enum.PreferredInput.Touch):GetCurrentDevice()).toBe("touch")
+		expect(makeDetector(Enum.PreferredInput.Gamepad):GetCurrentDevice()).toBe("gamepad")
 	end)
 
 	it("loads the scheme for the starting device", function()
@@ -55,7 +55,7 @@ describe("DeviceDetector", function()
 
 		service:Switch(Enum.PreferredInput.Gamepad)
 
-		expect(announced).toEqual({ "Gamepad" })
+		expect(announced).toEqual({ "gamepad" })
 		expect(mapper:GetActionForKey(Enum.KeyCode.ButtonA)).toBe("Jump")
 		expect(mapper:GetActionForKey(Enum.KeyCode.Space)).toBeNil()
 	end)
@@ -82,7 +82,7 @@ describe("DeviceDetector", function()
 
 	it("loads the player's edited scheme for the device in use", function()
 		local _, service, mapper, profile = makeDetector(Enum.PreferredInput.KeyboardAndMouse)
-		profile:BindKey("Keyboard", "Jump", Enum.KeyCode.J)
+		profile:BindKey("keyboard", "Jump", Enum.KeyCode.J)
 
 		expect(mapper:GetActionForKey(Enum.KeyCode.J)).toBe("Jump")
 
@@ -95,7 +95,7 @@ describe("DeviceDetector", function()
 	it("applies an edit to the device in use straight away", function()
 		local _, _, mapper, profile = makeDetector(Enum.PreferredInput.Gamepad)
 
-		profile:BindKey("Gamepad", "Jump", Enum.KeyCode.ButtonY)
+		profile:BindKey("gamepad", "Jump", Enum.KeyCode.ButtonY)
 
 		expect(mapper:GetActionForKey(Enum.KeyCode.ButtonY)).toBe("Jump")
 	end)
@@ -103,7 +103,7 @@ describe("DeviceDetector", function()
 	it("leaves the mapper alone when a different device is edited", function()
 		local _, _, mapper, profile = makeDetector(Enum.PreferredInput.KeyboardAndMouse)
 
-		profile:BindKey("Gamepad", "Jump", Enum.KeyCode.ButtonY)
+		profile:BindKey("gamepad", "Jump", Enum.KeyCode.ButtonY)
 
 		expect(mapper:GetActionForKey(Enum.KeyCode.ButtonY)).toBeNil()
 	end)

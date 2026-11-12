@@ -96,7 +96,7 @@ local function makeFakeTouchGamepad()
 end
 
 local function makeEditor(startingDevice)
-	local detector = { device = startingDevice or "Touch", OnContextChanged = Signal.new() }
+	local detector = { device = startingDevice or "touch", OnContextChanged = Signal.new() }
 	function detector:GetCurrentDevice()
 		return self.device
 	end
@@ -162,7 +162,7 @@ describe("TouchLayoutEditor", function()
 		end)
 
 		it("stays closed when the menu is pressed on another device", function()
-			local editor, parts = makeEditor("Keyboard")
+			local editor, parts = makeEditor("keyboard")
 
 			parts.playerInput.OnMenuPressed:Fire()
 
@@ -192,7 +192,7 @@ describe("TouchLayoutEditor", function()
 		it("closes when the device stops being touch", function()
 			local editor, parts = makeOpenEditor()
 
-			parts.detector.OnContextChanged:Fire("Keyboard")
+			parts.detector.OnContextChanged:Fire("keyboard")
 
 			expect(editor:IsOpen()).toBe(false)
 			expect(count(parts.playerInput.calls, "ResumeGameplayInput")).toBe(1)

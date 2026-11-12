@@ -6,7 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Signal = require(ReplicatedStorage.DevPackages.goodsignal)
 local PlayerInputFolder = ReplicatedStorage.PlayerInput
 local InputAction = require(PlayerInputFolder.InputAction)
-local InputDevice = require(PlayerInputFolder.InputDevice)
+local InputDevice = require(ReplicatedStorage.Data.InputDevice)
 local InputSchemeTypes = require(PlayerInputFolder.InputScheme)
 local BindingRow = require(script.Parent.BindingRow)
 local UIComponents = script.Parent
@@ -52,6 +52,13 @@ local ROW_ORDER: {ActionID} = {
     InputAction.Dash,
     InputAction.Shoot,
     InputAction.Menu,
+}
+
+-- The device values are lowercase for storage, so the title needs its own wording.
+local DEVICE_NAMES: {[InputDevice]: string} = {
+    [InputDevice.Keyboard] = "Keyboard",
+    [InputDevice.Gamepad] = "Gamepad",
+    [InputDevice.Touch] = "Touch",
 }
 
 local APP_BAR_ORDER = 0
@@ -132,7 +139,7 @@ function BindingsScreen.new(parent: Instance): BindingsScreen
 end
 
 function BindingsScreen.Render(self: BindingsScreen, device: InputDevice, scheme: InputScheme): ()
-    self._appBar:SetTitle(device .. " controls")
+    self._appBar:SetTitle((DEVICE_NAMES[device] or "Unknown") .. " controls")
 
     for _, actionName in ipairs(ROW_ORDER) do
         self._rows[actionName]:SetBindings(scheme[actionName])

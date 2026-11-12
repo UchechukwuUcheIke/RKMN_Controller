@@ -2,8 +2,9 @@
 local BindingCapture = {}
 BindingCapture.__index = BindingCapture
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PlayerInputFolder = script.Parent
-local InputDevice = require(PlayerInputFolder.InputDevice)
+local InputDevice = require(ReplicatedStorage.Data.InputDevice)
 local InputSchemeTypes = require(PlayerInputFolder.InputScheme)
 
 type InputDevice = InputDevice.InputDevice
