@@ -21,6 +21,9 @@ local UITheme = {
         SliderKnob = Color3.fromRGB(235, 235, 240),
         SliderDisabled = Color3.fromRGB(85, 85, 97),
 
+        InputBackground = Color3.fromRGB(38, 38, 46),
+        PlaceholderText = Color3.fromRGB(140, 140, 150),
+
         Backdrop = Color3.fromRGB(0, 0, 0),
 
         Text = Color3.fromRGB(235, 235, 240),
@@ -44,6 +47,8 @@ local UITheme = {
     WindowCornerRadius = UDim.new(0, 12),
     ItemCornerRadius = UDim.new(0, 8),
     ImageBoxCornerRadius = UDim.new(0, 6),
+
+    InputPadding = 10,
 
     ButtonBorderThickness = 1,
     FocusRingThickness = 2,
