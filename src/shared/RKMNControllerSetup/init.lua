@@ -12,7 +12,7 @@ local RunServiceAdapter = require(ReplicatedStorage.RunServiceAdapter)
 local RenderPriorities = require(ReplicatedStorage.RenderPriorities)
 local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
 local MovementStats = require(RKMNControllerFolder.MovementStats)
-local TimerUtility = require(RKMNControllerFolder.TimerUtility)
+local TimerRegistry = require(RKMNControllerFolder.TimerRegistry)
 local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
 local PlayerInputFolder = ReplicatedStorage.PlayerInput
 local InputAction = require(PlayerInputFolder.InputAction)
@@ -52,7 +52,7 @@ local StateMachineContext = require(RKMNControllerFolder.FSMContext)
 local DiagnosticControllerQuery = require(DebugModuleFolder.DiagnosticCollisionQuery)
 
 type CollisionConstants = CollisionConstants.CollisionConstants
-type TimerUtility = TimerUtility.TimerUtility
+type TimerRegistry = TimerRegistry.TimerRegistry
 type CollisionQuery = CollisionQuery.CollisionQuery
 type RawInputObserver = RawInputObserver.RawInputObserver
 type DeviceDetector = DeviceDetector.DeviceDetector
@@ -90,22 +90,22 @@ end
 
 local function makeDependencies(character: Model, constants: CollisionConstants, collisionQuery: CollisionQuery, rawInputObserver: RawInputObserver): RKMNControllerDependencies
     local movementStats = MovementStats.new()
-    local timerUtility = TimerUtility.new()
-    local playerInput = PlayerInputFacade.new(timerUtility, rawInputObserver)
+    local timerRegistry = TimerRegistry.new()
+    local playerInput = PlayerInputFacade.new(timerRegistry, rawInputObserver)
     local physicsResolver = PhysicsResolver.new(character, movementStats, collisionQuery)
 
     local FSMContextDependencies: StateMachineContextDependencies = {
         PlayerInput = playerInput,
         CollisionQuery = collisionQuery,
         PhysicsResolver = physicsResolver,
-        TimerUtility = timerUtility
+        TimerRegistry = timerRegistry
     }
     local stateMachineContext = StateMachineContext.new(FSMContextDependencies)
     local movementStateMachine = MovementStateMachine.new(stateMachineContext)
 
     local dependencies: RKMNControllerDependencies = {
         Constants = constants,
-        TimerUtility = timerUtility,
+        TimerRegistry = timerRegistry,
         CollisionQuery = collisionQuery,
         PlayerInput = playerInput,
         MovementStateMachine = movementStateMachine,

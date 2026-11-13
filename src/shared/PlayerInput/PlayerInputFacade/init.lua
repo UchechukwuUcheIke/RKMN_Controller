@@ -7,8 +7,8 @@ local PlayerInputFolder = script.Parent
 local Signal = require(ReplicatedStorage:WaitForChild("DevPackages"):WaitForChild("goodsignal"))
 
 local Direction = require(ReplicatedStorage.Data.Direction)
-local Timers = require(ReplicatedStorage.RKMNController.TimerIDRegistry)
-local TimerUtility = require(ReplicatedStorage.RKMNController.TimerUtility)
+local Timers = require(ReplicatedStorage.RKMNController.TimerIDs)
+local TimerRegistry = require(ReplicatedStorage.RKMNController.TimerRegistry)
 local InputAction = require(PlayerInputFolder.InputAction)
 
 local RawInputObserver = require(PlayerInputFolder.RawInputObserver)
@@ -17,7 +17,7 @@ local DirectionResolver = require(PlayerInputFolder.DirectionResolver)
 
 type Signal = typeof(Signal)
 type Direction = Direction.Direction
-type TimerUtility = TimerUtility.TimerUtility
+type TimerRegistry = TimerRegistry.TimerRegistry
 type ActionID = InputAction.ActionID
 type InputBuffer = InputBuffer.InputBuffer
 type DirectionResolver = DirectionResolver.DirectionResolver
@@ -49,7 +49,7 @@ export type PlayerInputFacade = typeof(setmetatable({} :: PlayerInputFacadeData,
 
 local BUFFER_DURATION = 0.1
 
-function PlayerInputFacade.new(timerUtility: TimerUtility, rawInputObserver: RawInputObserver): PlayerInputFacade
+function PlayerInputFacade.new(timerRegistry: TimerRegistry, rawInputObserver: RawInputObserver): PlayerInputFacade
     local self = setmetatable({}, PlayerInputFacade)
 
     self._isEnabled = false
@@ -58,8 +58,8 @@ function PlayerInputFacade.new(timerUtility: TimerUtility, rawInputObserver: Raw
     self._isTriggerHeld = false
 
     self._rawInputObserver = rawInputObserver
-    self._jumpBuffer = InputBuffer.new(timerUtility, Timers.JumpBuffer, BUFFER_DURATION)
-    self._dashBuffer = InputBuffer.new(timerUtility, Timers.DashBuffer, BUFFER_DURATION)
+    self._jumpBuffer = InputBuffer.new(timerRegistry, Timers.JumpBuffer, BUFFER_DURATION)
+    self._dashBuffer = InputBuffer.new(timerRegistry, Timers.DashBuffer, BUFFER_DURATION)
     self._directionResolver = DirectionResolver.new()
 
     self.OnJumpPressed = Signal.new()

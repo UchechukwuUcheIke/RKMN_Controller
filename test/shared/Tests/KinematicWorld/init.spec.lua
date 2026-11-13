@@ -13,7 +13,7 @@ local RKMNControllerFolder = ReplicatedStorage.RKMNController
 local RKMNController = require(RKMNControllerFolder.RKMNController)
 local KinematicWorld = require(ReplicatedStorage.KinematicWorld)
 
-local TimerUtility = require(RKMNControllerFolder.TimerUtility)
+local TimerRegistry = require(RKMNControllerFolder.TimerRegistry)
 local PlayerInputFacade = require(ReplicatedStorage.PlayerInput.PlayerInputFacade)
 local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
@@ -22,7 +22,7 @@ local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
 -- Subsystems in the order _processEntity is expected to run them.
 -- `method` is the method the world calls; `takesDt` is whether it receives deltaTime.
 local SUBSYSTEMS = {
-	{ field = "TimerUtility", class = TimerUtility, method = "Step", takesDt = true },
+	{ field = "TimerRegistry", class = TimerRegistry, method = "Step", takesDt = true },
 	{ field = "PlayerInput", class = PlayerInputFacade, method = "Poll", takesDt = true },
 	{ field = "CollisionQuery", class = CollisionQuery, method = "UpdateState", takesDt = false },
 	{ field = "MovementStateMachine", class = MovementStateMachine, method = "Update", takesDt = true },
@@ -228,7 +228,7 @@ describe("KinematicWorld", function()
 			world:StepWorld(0.01)
 			world:StepWorld(0.02)
 
-			local timerStep = player.Mocks.TimerUtility
+			local timerStep = player.Mocks.TimerRegistry
 			expect(timerStep).toHaveBeenCalledTimes(2)
 			expect(callArg(timerStep, 1, 2)).toBeCloseTo(0.01, 5)
 			expect(callArg(timerStep, 2, 2)).toBeCloseTo(0.02, 5)

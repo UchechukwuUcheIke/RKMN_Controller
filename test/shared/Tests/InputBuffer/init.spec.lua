@@ -6,11 +6,11 @@ local describe = JestGlobals.describe
 local it = JestGlobals.it
 local expect = JestGlobals.expect
 
-local TimerUtility = require(ReplicatedStorage.RKMNController.TimerUtility)
+local TimerRegistry = require(ReplicatedStorage.RKMNController.TimerRegistry)
 local InputBuffer = require(ReplicatedStorage.PlayerInput.InputBuffer)
 
 local function makeBuffer()
-	local timer = TimerUtility.new()
+	local timer = TimerRegistry.new()
 	return InputBuffer.new(timer, "TestBuffer", 0.1), timer
 end
 

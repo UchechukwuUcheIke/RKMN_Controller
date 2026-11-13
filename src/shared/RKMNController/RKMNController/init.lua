@@ -4,7 +4,7 @@ RKMNController.__index = RKMNController
 
 local RKMNControllerFolder = script.Parent
 local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
-local TimerUtility = require(RKMNControllerFolder.TimerUtility)
+local TimerRegistry = require(RKMNControllerFolder.TimerRegistry)
 local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
 local PlayerInputFacade = require(game:GetService("ReplicatedStorage").PlayerInput.PlayerInputFacade)
 local FSMContext = require(RKMNControllerFolder.FSMContext)
@@ -15,7 +15,7 @@ local MovementState = require(RKMNControllerFolder.MovementStateIDRegistry)
 
 
 type CollisionConstants = CollisionConstants.CollisionConstants
-type TimerUtility = TimerUtility.TimerUtility
+type TimerRegistry = TimerRegistry.TimerRegistry
 type CollisionQuery = CollisionQuery.CollisionQuery
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type MovementStateMachine = MovementStateMachine.MovementStateMachine
@@ -26,7 +26,7 @@ type RKMNControllerData = {
     _inputEnabled: boolean,
     
     Constants: CollisionConstants,
-    TimerUtility: TimerUtility,
+    TimerRegistry: TimerRegistry,
     CollisionQuery: CollisionQuery,
     PlayerInput: PlayerInputFacade,
     MovementStateMachine: MovementStateMachine,
@@ -38,7 +38,7 @@ type FSMContextDependencies = FSMContext.FSMContextDependencies
 
 export type RKMNControllerDependencies = {
     Constants: CollisionConstants,
-    TimerUtility: TimerUtility,
+    TimerRegistry: TimerRegistry,
     CollisionQuery: CollisionQuery,
     PlayerInput: PlayerInputFacade,
     MovementStateMachine: MovementStateMachine,
@@ -52,7 +52,7 @@ function RKMNController.new(dependencies: RKMNControllerDependencies): RKMNContr
 
     self._inputEnabled = true
     self.Constants = dependencies.Constants
-    self.TimerUtility = dependencies.TimerUtility
+    self.TimerRegistry = dependencies.TimerRegistry
     self.CollisionQuery = dependencies.CollisionQuery
     self.PlayerInput = dependencies.PlayerInput
     self.PhysicsResolver = dependencies.PhysicsResolver
@@ -64,7 +64,7 @@ end
 
 function RKMNController.Reset(self: RKMNController): ()
 	self.MovementStateMachine:ChangeState(MovementState.Idle)
-	self.TimerUtility:FlushAll()
+	self.TimerRegistry:FlushAll()
 end
 
 function RKMNController.IsInputEnabled(self: RKMNController): boolean
@@ -79,7 +79,7 @@ end
 
 function RKMNController.Destroy(self: RKMNController)	
 	self.PlayerInput:Destroy()
-	self.TimerUtility:Destroy()
+	self.TimerRegistry:Destroy()
 	self.PhysicsResolver:Destroy()
 	self.MovementStateMachine:Destroy()
 	self.CollisionQuery:Destroy()

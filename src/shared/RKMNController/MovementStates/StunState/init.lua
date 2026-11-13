@@ -1,7 +1,7 @@
 local RKMNControllerFolder = script.Parent.Parent
 local BaseState = require(RKMNControllerFolder.BaseState)
 local MovementStateID = require(RKMNControllerFolder.MovementStateIDRegistry)
-local TimerID = require(RKMNControllerFolder.TimerIDRegistry)
+local TimerID = require(RKMNControllerFolder.TimerIDs)
 local StateMachine = require(RKMNControllerFolder.StateMachine)
 
 local StunState = setmetatable({}, BaseState)

@@ -1,22 +1,22 @@
 --!strict
 
-local TimerUtility = {}
-TimerUtility.__index = TimerUtility
+local TimerRegistry = {}
+TimerRegistry.__index = TimerRegistry
 
-type TimerUtilityData = {
+type TimerRegistryData = {
     _ActiveTimers: {[string]: number},
 }
 
-export type TimerUtility = typeof(setmetatable({} :: TimerUtilityData, TimerUtility))
+export type TimerRegistry = typeof(setmetatable({} :: TimerRegistryData, TimerRegistry))
 
-function TimerUtility.new(): TimerUtility
-    local self = setmetatable({}, TimerUtility)
+function TimerRegistry.new(): TimerRegistry
+    local self = setmetatable({}, TimerRegistry)
 
     self._ActiveTimers = {}
     return self
 end
 
-function TimerUtility:Step(dt: number): ()
+function TimerRegistry:Step(dt: number): ()
     for id: string, remainingTime: number in pairs(self._ActiveTimers) do
         local newTime: number = remainingTime - dt
         if newTime <= 0 then
@@ -27,36 +27,36 @@ function TimerUtility:Step(dt: number): ()
     end
 end
 
-function TimerUtility:StartTimer(id: string, duration: number): boolean    
+function TimerRegistry:StartTimer(id: string, duration: number): boolean    
     self._ActiveTimers[id] = duration
 
     return true
 end
 
-function TimerUtility:GetTimeRemaining(id: string): number
+function TimerRegistry:GetTimeRemaining(id: string): number
     return self._ActiveTimers[id] or 0
 end
 
-function TimerUtility:GetActiveTimers(): {[string]: number}
+function TimerRegistry:GetActiveTimers(): {[string]: number}
     local readOnlyTable = self._ActiveTimers
     return readOnlyTable
 end
 
-function TimerUtility:IsComplete(id: string): boolean
+function TimerRegistry:IsComplete(id: string): boolean
     return self._ActiveTimers[id] == nil
 end
 
-function TimerUtility:Cancel(id): ()
+function TimerRegistry:Cancel(id): ()
     self._ActiveTimers[id] = nil
 end
 
-function TimerUtility:FlushAll(): ()
+function TimerRegistry:FlushAll(): ()
     table.clear(self._ActiveTimers)
 end
 
-function TimerUtility:Destroy(): ()
+function TimerRegistry:Destroy(): ()
     self:FlushAll()
     setmetatable(self, nil)
 end
 
-return TimerUtility
+return TimerRegistry

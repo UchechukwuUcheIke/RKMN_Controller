@@ -6,18 +6,18 @@ local ParentDirectory = script.Parent
 local PlayerInputFacade = require(game:GetService("ReplicatedStorage").PlayerInput.PlayerInputFacade)
 local CollisionQuery = require(ParentDirectory.CollisionQuery)
 local PhysicsResolver = require(ParentDirectory.PhysicsResolver)
-local TimerUtility = require(ParentDirectory.TimerUtility)
+local TimerRegistry = require(ParentDirectory.TimerRegistry)
 
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type CollisionQuery = CollisionQuery.CollisionQuery
 type PhysicsResolver = PhysicsResolver.PhysicsResolver
-type TimerUtility = TimerUtility.TimerUtility
+type TimerRegistry = TimerRegistry.TimerRegistry
 
 export type FSMContextDependencies = {
 	PlayerInput: PlayerInputFacade,
 	CollisionQuery: CollisionQuery,
 	PhysicsResolver: PhysicsResolver,
-	TimerUtility: TimerUtility?
+	TimerRegistry: TimerRegistry?
 }
 
 export type FSMContext = typeof(setmetatable(
@@ -25,7 +25,7 @@ export type FSMContext = typeof(setmetatable(
 		PlayerInput: PlayerInputFacade,
         CollisionQuery: CollisionQuery,
         PhysicsResolver: PhysicsResolver,
-        TimerUtility: TimerUtility?,
+        TimerRegistry: TimerRegistry?,
 		PreviousStateId: string?,
         _flags: { [string]: boolean }
 	},
@@ -39,7 +39,7 @@ function FSMContext.new(deps: FSMContextDependencies): FSMContext
         PlayerInput = deps.PlayerInput,
         CollisionQuery = deps.CollisionQuery,
         PhysicsResolver = deps.PhysicsResolver,
-        TimerUtility = deps.TimerUtility,
+        TimerRegistry = deps.TimerRegistry,
 		PreviousStateId = nil,
         _flags =  {},
     }, FSMContext)

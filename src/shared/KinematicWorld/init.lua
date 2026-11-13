@@ -36,8 +36,8 @@ function KinematicWorld.StepWorld(self: KinematicWorld, deltaTime: number)
 end
 
 function KinematicWorld._processEntity(self: KinematicWorld, entityController: RKMNController, deltaTime: number)
-	if entityController.TimerUtility then 
-        entityController.TimerUtility:Step(deltaTime) 
+	if entityController.TimerRegistry then 
+        entityController.TimerRegistry:Step(deltaTime) 
     end
 
 	if entityController.PlayerInput then 

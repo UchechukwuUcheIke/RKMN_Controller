@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 return function()
-    local TimerUtility = require(ReplicatedStorage:WaitForChild("RKMNController"):WaitForChild("TimerUtility"))
+    local TimerRegistry = require(ReplicatedStorage:WaitForChild("RKMNController"):WaitForChild("TimerRegistry"))
 
     local function getDictionaryLength(tbl: { [any]: any }): number
         local count = 0
@@ -13,11 +13,11 @@ return function()
         return count
     end
 
-    describe("TimerUtility", function()
+    describe("TimerRegistry", function()
         local Timer
 
         beforeEach(function()
-            Timer = TimerUtility.new()
+            Timer = TimerRegistry.new()
         end)
 
         afterEach(function()
@@ -26,13 +26,13 @@ return function()
             end
         end)
 
-        it("TimerUtility Instantiation", function()
+        it("TimerRegistry Instantiation", function()
             local isEmpty = next(Timer:GetActiveTimers()) == nil
             expect(isEmpty).to.equal(true)
         end)
 
-        it("Two TimerUtility Instances Have Separate Timers", function()
-            local OtherTimer = TimerUtility.new()
+        it("Two TimerRegistry Instances Have Separate Timers", function()
+            local OtherTimer = TimerRegistry.new()
             expect(Timer:GetActiveTimers()).never.to.equal(OtherTimer:GetActiveTimers())
         end)
 

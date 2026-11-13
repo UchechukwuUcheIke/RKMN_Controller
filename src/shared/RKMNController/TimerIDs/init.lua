@@ -1,4 +1,4 @@
-local TimerIDregistry = {
+local TimerIDs = {
     Dash = "Dash",
     Stun = "Stun",
     JumpBuffer = "JumpBuffer",
@@ -7,4 +7,4 @@ local TimerIDregistry = {
 
 export type TimerID = string
 
-return TimerIDregistry
+return TimerIDs

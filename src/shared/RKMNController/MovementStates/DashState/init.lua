@@ -1,7 +1,7 @@
 local RKMNControllerFolder = script.Parent.Parent
 local BaseState = require(RKMNControllerFolder.BaseState)
 local MovementStateID = require(RKMNControllerFolder.MovementStateIDRegistry)
-local TimerID = require(RKMNControllerFolder.TimerIDRegistry)
+local TimerID = require(RKMNControllerFolder.TimerIDs)
 local StateMachine = require(RKMNControllerFolder.StateMachine)
 local MovementConfig = require(RKMNControllerFolder.MovementConfig)
 
@@ -21,7 +21,7 @@ end
 
 function DashState.OnEnter(self: DashState, stateMachine: StateMachine): ()
 	local context = stateMachine.Context
-	context.TimerUtility:StartTimer(TimerID.Dash, MovementConfig.MaxDashDuration)
+	context.TimerRegistry:StartTimer(TimerID.Dash, MovementConfig.MaxDashDuration)
 	context.CollisionQuery:SetLedgeGuard(true)
 end
 
@@ -40,7 +40,7 @@ local function attemptExitToIdleState(stateMachine: StateMachine)
 	local context = stateMachine.Context
 	local lastSweep = context.CollisionQuery.LastSweepResolution
 	local isBlocked: boolean = lastSweep ~= nil and (lastSweep.SurfaceHits.HitWall or lastSweep.SurfaceHits.HitLedge)
-	local isDashFinished: boolean = context.TimerUtility:IsComplete(TimerID.Dash)
+	local isDashFinished: boolean = context.TimerRegistry:IsComplete(TimerID.Dash)
 	local hasReleasedDash: boolean = not context.PlayerInput:IsHoldingDash()
 
 	if isBlocked or isDashFinished or hasReleasedDash then
@@ -92,7 +92,7 @@ end
 
 function DashState.OnExit(self: DashState, stateMachine: StateMachine)
 	local context = stateMachine.Context
-	context.TimerUtility:Cancel(TimerID.Dash)
+	context.TimerRegistry:Cancel(TimerID.Dash)
 	context.CollisionQuery:SetLedgeGuard(false)
 end
 
