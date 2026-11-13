@@ -306,6 +306,14 @@ function RKMNControllerSetup.Setup(character: Model): RKMNController
     replaceBugReport(bugReport)
     bugReport:Enable()
 
+    -- The report button is hidden whenever the controls panel or touch editor is open.
+    controlCustomization.OpenChanged:Connect(function(isOpen: boolean)
+        bugReport:SetAvailable(not isOpen)
+    end)
+    touchLayoutEditing.Editor.OpenChanged:Connect(function(isOpen: boolean)
+        bugReport:SetAvailable(not isOpen)
+    end)
+
     local debugTool = DebugFacade.new(world, screenGui, kinematicWorld, kinematicController, runServiceAdapter)
     kinematicWorld:RegisterPlayer(kinematicController)
     runServiceAdapter:Start()

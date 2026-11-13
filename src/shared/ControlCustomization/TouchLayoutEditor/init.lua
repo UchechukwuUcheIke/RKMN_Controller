@@ -4,6 +4,7 @@ TouchLayoutEditor.__index = TouchLayoutEditor
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PlayerInputFolder = ReplicatedStorage.PlayerInput
+local Signal = require(ReplicatedStorage.DevPackages.goodsignal)
 local InputDevice = require(ReplicatedStorage.Data.InputDevice)
 local DeviceDetector = require(PlayerInputFolder.DeviceDetector)
 local PlayerInputFacade = require(PlayerInputFolder.PlayerInputFacade)
@@ -30,6 +31,7 @@ type TouchLayoutEditSession = TouchLayoutEditSession.TouchLayoutEditSession
 type TouchLayoutCanvas = TouchLayoutCanvas.TouchLayoutCanvas
 type TouchLayoutScreen = TouchLayoutScreen.TouchLayoutScreen
 type UnsavedChangesChoice = UnsavedChangesChoice.UnsavedChangesChoice
+type Signal = typeof(Signal)
 type Connection = { Disconnect: (self: any) -> () }
 
 -- Dragging a control and pulling a slider both edit the layout, and the session has room for one gesture at a time.
@@ -59,7 +61,10 @@ type TouchLayoutEditorData = {
     _session: TouchLayoutEditSession?,
     _sessionConnection: Connection?,
     _gestureOwner: GestureOwner?,
-    _connections: {Connection}
+    _connections: {Connection},
+
+    -- Fires true when the editor opens and false when it closes.
+    OpenChanged: Signal
 }
 
 export type TouchLayoutEditor = typeof(setmetatable({} :: TouchLayoutEditorData, TouchLayoutEditor))
@@ -80,6 +85,7 @@ function TouchLayoutEditor.new(dependencies: TouchLayoutEditorDependencies): Tou
     self._sessionConnection = nil
     self._gestureOwner = nil
     self._connections = {}
+    self.OpenChanged = Signal.new()
 
     return self :: TouchLayoutEditor
 end
@@ -122,6 +128,7 @@ function TouchLayoutEditor.Open(self: TouchLayoutEditor): ()
     self._playerInput:SuspendGameplayInput()
     self._screen:SetVisible(true)
     self:_refresh()
+    self.OpenChanged:Fire(true)
 end
 
 -- Anything not saved is dropped. Exit asks first; this is for when the editor has to go regardless.
@@ -141,6 +148,7 @@ function TouchLayoutEditor.Close(self: TouchLayoutEditor): ()
     self._screen:SetVisible(false)
     self._touchGamepad:Resume()
     self._playerInput:ResumeGameplayInput()
+    self.OpenChanged:Fire(false)
 end
 
 function TouchLayoutEditor._subscribeToGame(self: TouchLayoutEditor): ()
@@ -401,6 +409,7 @@ end
 
 function TouchLayoutEditor.Destroy(self: TouchLayoutEditor): ()
     self:Disable()
+    self.OpenChanged:DisconnectAll()
     setmetatable(self :: any, nil)
     table.freeze(self)
 end

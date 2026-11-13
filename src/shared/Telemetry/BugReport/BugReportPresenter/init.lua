@@ -148,6 +148,7 @@ function BugReportPresenter.Open(self: BugReportPresenter): ()
     self._platform = self._getPlatform()
 
     self._playerInput:SuspendGameplayInput()
+    self._playerInput:DisableMenuKey()
     self._screen:Clear()
     self._screen:SetSending(false)
     self._screen:SetVisible(true)
@@ -161,7 +162,13 @@ function BugReportPresenter.Close(self: BugReportPresenter): ()
     self._isOpen = false
     self._inputSnapshot = {}
     self._screen:SetVisible(false)
+    self._playerInput:EnableMenuKey()
     self._playerInput:ResumeGameplayInput()
+end
+
+-- The controls panel and touch editor take the screen themselves, so the button is hidden while either is open.
+function BugReportPresenter.SetAvailable(self: BugReportPresenter, isAvailable: boolean): ()
+    self._button:SetVisible(isAvailable)
 end
 
 function BugReportPresenter._captureInputSnapshot(self: BugReportPresenter): {InputLogEntry}

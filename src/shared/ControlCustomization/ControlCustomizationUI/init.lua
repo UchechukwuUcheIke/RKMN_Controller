@@ -4,6 +4,7 @@ ControlCustomizationUI.__index = ControlCustomizationUI
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PlayerInputFolder = ReplicatedStorage.PlayerInput
+local Signal = require(ReplicatedStorage.DevPackages.goodsignal)
 local InputAction = require(PlayerInputFolder.InputAction)
 local InputDevice = require(ReplicatedStorage.Data.InputDevice)
 local InputSchemeTypes = require(PlayerInputFolder.InputScheme)
@@ -23,6 +24,7 @@ type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type BindingCapture = BindingCapture.BindingCapture
 type ControlCustomizationView = ControlCustomizationView.ControlCustomizationView
 type BindingsScreen = BindingsScreen.BindingsScreen
+type Signal = typeof(Signal)
 type Connection = { Disconnect: (self: any) -> () }
 -- Runs the callback on a later frame, so it lands after the input event that triggered it has been seen by everyone.
 type NextFrameScheduler = (callback: () -> ()) -> ()
@@ -37,7 +39,10 @@ type ControlCustomizationUIData = {
     _runNextFrame: NextFrameScheduler,
 
     _isOpen: boolean,
-    _connections: {Connection}
+    _connections: {Connection},
+
+    -- Fires true when the panel opens and false when it closes.
+    OpenChanged: Signal
 }
 
 export type ControlCustomizationUI = typeof(setmetatable({} :: ControlCustomizationUIData, ControlCustomizationUI))
@@ -68,6 +73,7 @@ function ControlCustomizationUI.new(
 
     self._isOpen = false
     self._connections = {}
+    self.OpenChanged = Signal.new()
 
     return self :: ControlCustomizationUI
 end
@@ -122,6 +128,7 @@ function ControlCustomizationUI.Open(self: ControlCustomizationUI): ()
     self._playerInput:SuspendGameplayInput()
     self._view:SetVisible(true)
     self:_refresh()
+    self.OpenChanged:Fire(true)
 end
 
 function ControlCustomizationUI.Close(self: ControlCustomizationUI): ()
@@ -133,6 +140,7 @@ function ControlCustomizationUI.Close(self: ControlCustomizationUI): ()
     self._bindingCapture:Cancel()
     self._view:SetVisible(false)
     self._playerInput:ResumeGameplayInput()
+    self.OpenChanged:Fire(false)
 end
 
 -- A touch device edits its layout in the touch editor, so this panel does not open for it.
@@ -216,6 +224,7 @@ end
 function ControlCustomizationUI.Destroy(self: ControlCustomizationUI): ()
     self:Disable()
     self._view:Destroy()
+    self.OpenChanged:DisconnectAll()
     setmetatable(self :: any, nil)
     table.freeze(self)
 end
