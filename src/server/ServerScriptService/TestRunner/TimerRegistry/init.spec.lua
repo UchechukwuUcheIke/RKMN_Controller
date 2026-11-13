@@ -3,16 +3,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 return function()
     local TimerRegistry = require(ReplicatedStorage:WaitForChild("RKMNController"):WaitForChild("TimerRegistry"))
 
-    local function getDictionaryLength(tbl: { [any]: any }): number
-        local count = 0
-        for _, value in pairs(tbl) do
-            if (value) then
-                count += 1
-            end
-        end
-        return count
-    end
-
     describe("TimerRegistry", function()
         local Timer
 
@@ -24,16 +14,6 @@ return function()
             if (Timer) then
                 Timer:Destroy()
             end
-        end)
-
-        it("TimerRegistry Instantiation", function()
-            local isEmpty = next(Timer:GetActiveTimers()) == nil
-            expect(isEmpty).to.equal(true)
-        end)
-
-        it("Two TimerRegistry Instances Have Separate Timers", function()
-            local OtherTimer = TimerRegistry.new()
-            expect(Timer:GetActiveTimers()).never.to.equal(OtherTimer:GetActiveTimers())
         end)
 
         it("Starting a new timer with a positive duration adds it with that exact value", function()
@@ -93,13 +73,6 @@ return function()
             expect(Timer:IsComplete(timerId)).to.equal(true)
         end)
 
-        it("Timer dropping below 0 after Step is removed, not left negative", function()
-            local timerId = "timer"
-            Timer:StartTimer(timerId, 5)
-            Timer:Step(10)
-            expect(getDictionaryLength(Timer:GetActiveTimers())).to.equal(0)
-        end)
-
         it("Step decrements multiple timers independently, only removing ones that cross zero", function()
             Timer:StartTimer("Short", 2)
             Timer:StartTimer("Long", 10)
@@ -113,7 +86,6 @@ return function()
             expect(function()
                 Timer:Step(1)
             end).never.to.throw()
-            expect(getDictionaryLength(Timer:GetActiveTimers())).to.equal(0)
         end)
 
         it("Step with dt of 0 leaves all timers unchanged", function()
@@ -174,13 +146,6 @@ return function()
             expect(Timer:IsComplete(timerId)).to.equal(false)
         end)
 
-        it("Cancel removes an active timer from ActiveTimers", function()
-            local timerId = "timer"
-            Timer:StartTimer(timerId, 5)
-            Timer:Cancel(timerId)
-            expect(getDictionaryLength(Timer:GetActiveTimers())).to.equal(0)
-        end)
-
         it("Cancel on a nonexistent id is a safe no-op", function()
             expect(function()
                 Timer:Cancel("Nonexistent")
@@ -193,14 +158,6 @@ return function()
             Timer:Cancel(timerId)
             Timer:StartTimer(timerId, 8)
             expect(Timer:GetTimeRemaining(timerId)).to.equal(8)
-        end)
-
-        it("FlushAll removes all entries regardless of count", function()
-            Timer:StartTimer("A", 5)
-            Timer:StartTimer("B", 10)
-            Timer:StartTimer("C", 15)
-            Timer:FlushAll()
-            expect(getDictionaryLength(Timer:GetActiveTimers())).to.equal(0)
         end)
 
         it("FlushAll on an empty timer set is a safe no-op", function()

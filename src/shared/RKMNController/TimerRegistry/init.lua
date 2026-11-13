@@ -37,11 +37,6 @@ function TimerRegistry:GetTimeRemaining(id: string): number
     return self._ActiveTimers[id] or 0
 end
 
-function TimerRegistry:GetActiveTimers(): {[string]: number}
-    local readOnlyTable = self._ActiveTimers
-    return readOnlyTable
-end
-
 function TimerRegistry:IsComplete(id: string): boolean
     return self._ActiveTimers[id] == nil
 end
