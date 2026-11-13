@@ -18,6 +18,8 @@ local PlayerInputFolder = ReplicatedStorage.PlayerInput
 local InputAction = require(PlayerInputFolder.InputAction)
 local InputMapper = require(PlayerInputFolder.InputMapper)
 local RawInputObserver = require(PlayerInputFolder.RawInputObserver)
+local HardwareInputSource = require(PlayerInputFolder.HardwareInputSource)
+local VirtualButtonInputSource = require(PlayerInputFolder.VirtualButtonInputSource)
 local ControlProfile = require(PlayerInputFolder.ControlProfile)
 local KeyboardSchemes = require(PlayerInputFolder.KeyboardSchemes)
 local GamepadSchemes = require(PlayerInputFolder.GamepadSchemes)
@@ -143,7 +145,10 @@ local controlProfile = ControlProfile.new(KeyboardSchemes.Standard, GamepadSchem
 -- Created once for the same reason, so a log attached to the observer survives respawns. Each character's
 -- DeviceDetector loads the player's scheme into this mapper.
 local inputMapper = InputMapper.new()
-local rawInputObserver = RawInputObserver.new(inputMapper)
+local rawInputObserver = RawInputObserver.new(
+    HardwareInputSource.new(inputMapper, UserInputService),
+    VirtualButtonInputSource.new()
+)
 
 -- Also once, so a report filed right after a death still has the inputs that led to it.
 local bugReportInputLog = InputActionLog.new(
