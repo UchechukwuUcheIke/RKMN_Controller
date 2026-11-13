@@ -9,18 +9,18 @@ local expect = JestGlobals.expect
 local Direction = require(ReplicatedStorage.Data.Direction)
 local TimerRegistry = require(ReplicatedStorage.RKMNController.TimerRegistry)
 local InputMapper = require(ReplicatedStorage.PlayerInput.InputMapper)
-local RawInputObserver = require(ReplicatedStorage.PlayerInput.RawInputObserver)
+local InputActionMerger = require(ReplicatedStorage.PlayerInput.InputActionMerger)
 local HardwareInputSource = require(ReplicatedStorage.PlayerInput.HardwareInputSource)
 local VirtualButtonInputSource = require(ReplicatedStorage.PlayerInput.VirtualButtonInputSource)
 local KeyboardSchemes = require(ReplicatedStorage.PlayerInput.KeyboardSchemes)
 local PlayerInputFacade = require(ReplicatedStorage.PlayerInput.PlayerInputFacade)
 
--- Real keyboard state can't be driven from a test, so actions are fed through the observer's signals.
+-- Real keyboard state can't be driven from a test, so actions are fed through the merger's signals.
 local function makeFacade()
 	local timer = TimerRegistry.new()
 	local mapper = InputMapper.new()
 	mapper:LoadControlScheme(KeyboardSchemes.Standard)
-	local observer = RawInputObserver.new(
+	local observer = InputActionMerger.new(
 		HardwareInputSource.new(mapper, game:GetService("UserInputService")),
 		VirtualButtonInputSource.new()
 	)
@@ -33,10 +33,10 @@ local function makeFacade()
 	facade.OnTriggerReleased:Connect(function() events.released += 1 end)
 
 	local function press(action)
-		facade._rawInputObserver.OnActionBegan:Fire(action)
+		facade._inputActionMerger.OnActionBegan:Fire(action)
 	end
 	local function release(action)
-		facade._rawInputObserver.OnActionEnded:Fire(action)
+		facade._inputActionMerger.OnActionEnded:Fire(action)
 	end
 
 	return facade, timer, events, press, release
@@ -231,7 +231,7 @@ describe("PlayerInputFacade", function()
 	it("stops reacting once destroyed", function()
 		local facade, _, events = makeFacade()
 		facade:SetEnabled(true)
-		local observer = facade._rawInputObserver
+		local observer = facade._inputActionMerger
 
 		facade:Destroy()
 		observer.OnActionBegan:Fire("Jump")

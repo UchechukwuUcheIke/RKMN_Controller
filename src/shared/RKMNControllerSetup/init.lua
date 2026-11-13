@@ -17,7 +17,7 @@ local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
 local PlayerInputFolder = ReplicatedStorage.PlayerInput
 local InputAction = require(PlayerInputFolder.InputAction)
 local InputMapper = require(PlayerInputFolder.InputMapper)
-local RawInputObserver = require(PlayerInputFolder.RawInputObserver)
+local InputActionMerger = require(PlayerInputFolder.InputActionMerger)
 local HardwareInputSource = require(PlayerInputFolder.HardwareInputSource)
 local VirtualButtonInputSource = require(PlayerInputFolder.VirtualButtonInputSource)
 local ControlProfile = require(PlayerInputFolder.ControlProfile)
@@ -56,7 +56,7 @@ local DiagnosticControllerQuery = require(DebugModuleFolder.DiagnosticCollisionQ
 type CollisionConstants = CollisionConstants.CollisionConstants
 type TimerRegistry = TimerRegistry.TimerRegistry
 type CollisionQuery = CollisionQuery.CollisionQuery
-type RawInputObserver = RawInputObserver.RawInputObserver
+type InputActionMerger = InputActionMerger.InputActionMerger
 type DeviceDetector = DeviceDetector.DeviceDetector
 type BugReportPresenter = BugReportPresenter.BugReportPresenter
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
@@ -90,10 +90,10 @@ local function mountScreenGui(): ScreenGui
     return screenGui
 end
 
-local function makeDependencies(character: Model, constants: CollisionConstants, collisionQuery: CollisionQuery, rawInputObserver: RawInputObserver): RKMNControllerDependencies
+local function makeDependencies(character: Model, constants: CollisionConstants, collisionQuery: CollisionQuery, inputActionMerger: InputActionMerger): RKMNControllerDependencies
     local movementStats = MovementStats.new()
     local timerRegistry = TimerRegistry.new()
-    local playerInput = PlayerInputFacade.new(timerRegistry, rawInputObserver)
+    local playerInput = PlayerInputFacade.new(timerRegistry, inputActionMerger)
     local physicsResolver = PhysicsResolver.new(character, movementStats, collisionQuery)
 
     local FSMContextDependencies: StateMachineContextDependencies = {
@@ -117,18 +117,18 @@ local function makeDependencies(character: Model, constants: CollisionConstants,
     return dependencies
 end
 
-local function makeDebugDependencies(character: Model, rawInputObserver: RawInputObserver): RKMNControllerDependencies
+local function makeDebugDependencies(character: Model, inputActionMerger: InputActionMerger): RKMNControllerDependencies
     local world = game.Workspace
     local constants = CollisionConstants.new(character)
     local collisionQuery = DiagnosticControllerQuery.new(world, character, constants)
-    return makeDependencies(character, constants, collisionQuery, rawInputObserver)
+    return makeDependencies(character, constants, collisionQuery, inputActionMerger)
 end
 
-local function _makeProdDependencies(character: Model, rawInputObserver: RawInputObserver): RKMNControllerDependencies
+local function _makeProdDependencies(character: Model, inputActionMerger: InputActionMerger): RKMNControllerDependencies
     local world = game.Workspace
     local constants = CollisionConstants.new(character)
     local collisionQuery = CollisionQuery.new(world, character, constants)
-    return makeDependencies(character, constants, collisionQuery, rawInputObserver)
+    return makeDependencies(character, constants, collisionQuery, inputActionMerger)
 end
 
 local touchLayoutProfile = TouchLayoutProfile.new(TouchGamepadLayoutRegistry.Standard)
@@ -142,17 +142,17 @@ end
 -- The player's controls outlive any one character, so the profile is created once rather than per Setup.
 local controlProfile = ControlProfile.new(KeyboardSchemes.Standard, GamepadSchemes.Standard)
 
--- Created once for the same reason, so a log attached to the observer survives respawns. Each character's
+-- Created once for the same reason, so a log attached to the merger survives respawns. Each character's
 -- DeviceDetector loads the player's scheme into this mapper.
 local inputMapper = InputMapper.new()
-local rawInputObserver = RawInputObserver.new(
+local inputActionMerger = InputActionMerger.new(
     HardwareInputSource.new(inputMapper, UserInputService),
     VirtualButtonInputSource.new()
 )
 
 -- Also once, so a report filed right after a death still has the inputs that led to it.
 local bugReportInputLog = InputActionLog.new(
-    rawInputObserver,
+    inputActionMerger,
     BugReportDraft.MAX_INPUT_LOG_ENTRIES,
     BugReportDraft.MAX_INPUT_LOG_AGE_SECONDS
 )
@@ -286,7 +286,7 @@ function RKMNControllerSetup.Setup(character: Model): RKMNController
     -- The detector loads the profile's scheme for the device in use into the mapper.
     local deviceDetector = DeviceDetector.new(UserInputService, inputMapper, controlProfile)
 
-    local dependencies: RKMNControllerDependencies = makeDebugDependencies(character, rawInputObserver)
+    local dependencies: RKMNControllerDependencies = makeDebugDependencies(character, inputActionMerger)
     local kinematicController = RKMNController.new(dependencies)
     kinematicController:SetInputEnabled(true)
 

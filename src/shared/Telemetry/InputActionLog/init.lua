@@ -5,7 +5,7 @@ InputActionLog.__index = InputActionLog
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PlayerInputFolder = ReplicatedStorage.PlayerInput
 local InputAction = require(PlayerInputFolder.InputAction)
-local RawInputObserver = require(PlayerInputFolder.RawInputObserver)
+local InputActionMerger = require(PlayerInputFolder.InputActionMerger)
 local InputPhase = require(script.InputPhase)
 local LogEntry = require(script.LogEntry)
 local RecordedEntry = require(script.RecordedEntry)
@@ -14,7 +14,7 @@ type ActionID = InputAction.ActionID
 type InputPhase = InputPhase.InputPhase
 type LogEntry = LogEntry.LogEntry
 type RecordedEntry = RecordedEntry.RecordedEntry
-type RawInputObserver = RawInputObserver.RawInputObserver
+type InputActionMerger = InputActionMerger.InputActionMerger
 type Connection = { Disconnect: (self: any) -> () }
 
 type InputActionLogData = {
@@ -33,7 +33,7 @@ local function validateArguments(capacity: number, maxAgeSeconds: number): ()
     assert(maxAgeSeconds > 0, "An input log's maximum age must be above zero")
 end
 
-function InputActionLog.new(observer: RawInputObserver, capacity: number, maxAgeSeconds: number): InputActionLog
+function InputActionLog.new(merger: InputActionMerger, capacity: number, maxAgeSeconds: number): InputActionLog
     validateArguments(capacity, maxAgeSeconds)
 
     local self = setmetatable({}, InputActionLog)
@@ -45,10 +45,10 @@ function InputActionLog.new(observer: RawInputObserver, capacity: number, maxAge
     self._count = 0
     self._connections = {}
 
-    table.insert(self._connections, observer.OnActionBegan:Connect(function(actionName: ActionID)
+    table.insert(self._connections, merger.OnActionBegan:Connect(function(actionName: ActionID)
         self:_recordInputAction(actionName, InputPhase.Began)
     end))
-    table.insert(self._connections, observer.OnActionEnded:Connect(function(actionName: ActionID)
+    table.insert(self._connections, merger.OnActionEnded:Connect(function(actionName: ActionID)
         self:_recordInputAction(actionName, InputPhase.Ended)
     end))
 

@@ -11,7 +11,7 @@ local Timers = require(ReplicatedStorage.RKMNController.TimerIDs)
 local TimerRegistry = require(ReplicatedStorage.RKMNController.TimerRegistry)
 local InputAction = require(PlayerInputFolder.InputAction)
 
-local RawInputObserver = require(PlayerInputFolder.RawInputObserver)
+local InputActionMerger = require(PlayerInputFolder.InputActionMerger)
 local InputBuffer = require(PlayerInputFolder.InputBuffer)
 local DirectionResolver = require(PlayerInputFolder.DirectionResolver)
 
@@ -21,11 +21,11 @@ type TimerRegistry = TimerRegistry.TimerRegistry
 type ActionID = InputAction.ActionID
 type InputBuffer = InputBuffer.InputBuffer
 type DirectionResolver = DirectionResolver.DirectionResolver
-type RawInputObserver = RawInputObserver.RawInputObserver
+type InputActionMerger = InputActionMerger.InputActionMerger
 type Connection = { Disconnect: (self: any) -> () }
 
 type PlayerInputFacadeData = {
-    _rawInputObserver: RawInputObserver,
+    _inputActionMerger: InputActionMerger,
     _jumpBuffer: InputBuffer,
     _dashBuffer: InputBuffer,
     _directionResolver: DirectionResolver,
@@ -49,7 +49,7 @@ export type PlayerInputFacade = typeof(setmetatable({} :: PlayerInputFacadeData,
 
 local BUFFER_DURATION = 0.1
 
-function PlayerInputFacade.new(timerRegistry: TimerRegistry, rawInputObserver: RawInputObserver): PlayerInputFacade
+function PlayerInputFacade.new(timerRegistry: TimerRegistry, inputActionMerger: InputActionMerger): PlayerInputFacade
     local self = setmetatable({}, PlayerInputFacade)
 
     self._isEnabled = false
@@ -57,7 +57,7 @@ function PlayerInputFacade.new(timerRegistry: TimerRegistry, rawInputObserver: R
     self._isMenuKeyDisabled = false
     self._isTriggerHeld = false
 
-    self._rawInputObserver = rawInputObserver
+    self._inputActionMerger = inputActionMerger
     self._jumpBuffer = InputBuffer.new(timerRegistry, Timers.JumpBuffer, BUFFER_DURATION)
     self._dashBuffer = InputBuffer.new(timerRegistry, Timers.DashBuffer, BUFFER_DURATION)
     self._directionResolver = DirectionResolver.new()
@@ -68,11 +68,11 @@ function PlayerInputFacade.new(timerRegistry: TimerRegistry, rawInputObserver: R
     self.OnTriggerReleased = Signal.new()
     self.OnMenuPressed = Signal.new()
 
-    self._actionConnectionBegan = self._rawInputObserver.OnActionBegan:Connect(function(actionName: ActionID)
+    self._actionConnectionBegan = self._inputActionMerger.OnActionBegan:Connect(function(actionName: ActionID)
         self:_handleActionBegan(actionName)
     end)
 
-    self._actionConnectionEnded = self._rawInputObserver.OnActionEnded:Connect(function(actionName: ActionID)
+    self._actionConnectionEnded = self._inputActionMerger.OnActionEnded:Connect(function(actionName: ActionID)
         self:_handleActionEnded(actionName)
     end)
 
@@ -135,8 +135,8 @@ function PlayerInputFacade._releaseTrigger(self: PlayerInputFacade): ()
 end
 
 function PlayerInputFacade._resolveMovement(self: PlayerInputFacade): ()
-    local isLeft = self._rawInputObserver:IsActionHeld(InputAction.Left)
-    local isRight = self._rawInputObserver:IsActionHeld(InputAction.Right)
+    local isLeft = self._inputActionMerger:IsActionHeld(InputAction.Left)
+    local isRight = self._inputActionMerger:IsActionHeld(InputAction.Right)
     self._directionResolver:Resolve(isLeft, isRight)
 end
 
@@ -191,11 +191,11 @@ function PlayerInputFacade.EnableMenuKey(self: PlayerInputFacade): ()
 end
 
 function PlayerInputFacade.BindVirtualButton(self: PlayerInputFacade, actionName: ActionID, button: GuiButton): ()
-    self._rawInputObserver:BindVirtualButton(actionName, button)
+    self._inputActionMerger:BindVirtualButton(actionName, button)
 end
 
 function PlayerInputFacade.ReleaseVirtualHolds(self: PlayerInputFacade): ()
-    self._rawInputObserver:ReleaseAllVirtual()
+    self._inputActionMerger:ReleaseAllVirtual()
 end
 
 function PlayerInputFacade.GetMoveDirection(self: PlayerInputFacade): Direction
@@ -211,15 +211,15 @@ function PlayerInputFacade.HasBufferedDash(self: PlayerInputFacade): boolean
 end
 
 function PlayerInputFacade.IsHoldingJump(self: PlayerInputFacade): boolean
-    return self:_isGameplayActive() and self._rawInputObserver:IsActionHeld(InputAction.Jump)
+    return self:_isGameplayActive() and self._inputActionMerger:IsActionHeld(InputAction.Jump)
 end
 
 function PlayerInputFacade.IsHoldingDash(self: PlayerInputFacade): boolean
-    return self:_isGameplayActive() and self._rawInputObserver:IsActionHeld(InputAction.Dash)
+    return self:_isGameplayActive() and self._inputActionMerger:IsActionHeld(InputAction.Dash)
 end
 
 function PlayerInputFacade.IsCharging(self: PlayerInputFacade): boolean
-    return self:_isGameplayActive() and self._rawInputObserver:IsActionHeld(InputAction.Shoot)
+    return self:_isGameplayActive() and self._inputActionMerger:IsActionHeld(InputAction.Shoot)
 end
 
 function PlayerInputFacade.ConsumeJumpBuffer(self: PlayerInputFacade): ()

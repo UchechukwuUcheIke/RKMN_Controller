@@ -10,7 +10,7 @@ local Signal = require(ReplicatedStorage.DevPackages.goodsignal)
 local InputMapper = require(ReplicatedStorage.PlayerInput.InputMapper)
 local HardwareInputSource = require(ReplicatedStorage.PlayerInput.HardwareInputSource)
 local VirtualButtonInputSource = require(ReplicatedStorage.PlayerInput.VirtualButtonInputSource)
-local RawInputObserver = require(ReplicatedStorage.PlayerInput.RawInputObserver)
+local InputActionMerger = require(ReplicatedStorage.PlayerInput.InputActionMerger)
 
 local function makeFakeInputService()
 	local service = {
@@ -52,7 +52,7 @@ local function makeObserver()
 		Dash = { [Enum.KeyCode.LeftShift] = true },
 	})
 	local service = makeFakeInputService()
-	local observer = RawInputObserver.new(HardwareInputSource.new(mapper, service), VirtualButtonInputSource.new())
+	local observer = InputActionMerger.new(HardwareInputSource.new(mapper, service), VirtualButtonInputSource.new())
 	local button = makeFakeButton()
 	observer:BindVirtualButton("Jump", button)
 
@@ -66,7 +66,7 @@ local function makeObserver()
 	return observer, service, button, events
 end
 
-describe("RawInputObserver", function()
+describe("InputActionMerger", function()
 	it("begins and ends an action held on the keyboard", function()
 		local observer, service, _, events = makeObserver()
 

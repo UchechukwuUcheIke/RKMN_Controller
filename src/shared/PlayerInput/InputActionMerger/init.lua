@@ -1,6 +1,6 @@
 --!strict
-local RawInputObserver = {}
-RawInputObserver.__index = RawInputObserver
+local InputActionMerger = {}
+InputActionMerger.__index = InputActionMerger
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DevPackages = ReplicatedStorage.DevPackages
@@ -16,7 +16,7 @@ type HardwareInputSource = HardwareInputSource.HardwareInputSource
 type VirtualButtonInputSource = VirtualButtonInputSource.VirtualButtonInputSource
 type Connection = { Disconnect: (self: any) -> () }
 
-type RawInputObserverData = {
+type InputActionMergerData = {
     _hardwareInputSource: HardwareInputSource,
     _virtualInputSource: VirtualButtonInputSource,
     _connections: {Connection},
@@ -24,10 +24,10 @@ type RawInputObserverData = {
     OnActionEnded: Signal
 }
 
-export type RawInputObserver = typeof(setmetatable({} :: RawInputObserverData, RawInputObserver))
+export type InputActionMerger = typeof(setmetatable({} :: InputActionMergerData, InputActionMerger))
 
-function RawInputObserver.new(hardwareInputSource: HardwareInputSource, virtualInputSource: VirtualButtonInputSource): RawInputObserver
-    local self = setmetatable({}, RawInputObserver)
+function InputActionMerger.new(hardwareInputSource: HardwareInputSource, virtualInputSource: VirtualButtonInputSource): InputActionMerger
+    local self = setmetatable({}, InputActionMerger)
 
     self._hardwareInputSource = hardwareInputSource
     self._virtualInputSource = virtualInputSource
@@ -38,10 +38,10 @@ function RawInputObserver.new(hardwareInputSource: HardwareInputSource, virtualI
     self:_bindActionEvents(hardwareInputSource)
     self:_bindActionEvents(virtualInputSource)
 
-    return self :: RawInputObserver
+    return self :: InputActionMerger
 end
 
-function RawInputObserver._bindActionEvents(self: RawInputObserver, source: any): ()
+function InputActionMerger._bindActionEvents(self: InputActionMerger, source: any): ()
     table.insert(self._connections, source.OnActionPressed:Connect(function(actionName: ActionID)
         self:_handleSourcePressed(actionName)
     end))
@@ -51,12 +51,12 @@ function RawInputObserver._bindActionEvents(self: RawInputObserver, source: any)
     end))
 end
 
-function RawInputObserver.IsActionHeld(self: RawInputObserver, actionName: ActionID): boolean
+function InputActionMerger.IsActionHeld(self: InputActionMerger, actionName: ActionID): boolean
     return (self._hardwareInputSource:IsActionHeld(actionName) 
         or self._virtualInputSource:IsActionHeld(actionName))
 end
 
-function RawInputObserver._countHolders(self: RawInputObserver, actionName: ActionID): number
+function InputActionMerger._countHolders(self: InputActionMerger, actionName: ActionID): number
     local holders = 0
     if self._hardwareInputSource:IsActionHeld(actionName) then
         holders += 1
@@ -67,27 +67,27 @@ function RawInputObserver._countHolders(self: RawInputObserver, actionName: Acti
     return holders
 end
 
-function RawInputObserver._handleSourcePressed(self: RawInputObserver, actionName: ActionID): ()
+function InputActionMerger._handleSourcePressed(self: InputActionMerger, actionName: ActionID): ()
     if self:_countHolders(actionName) == 1 then
         self.OnActionBegan:Fire(actionName)
     end
 end
 
-function RawInputObserver._handleSourceReleased(self: RawInputObserver, actionName: ActionID): ()
+function InputActionMerger._handleSourceReleased(self: InputActionMerger, actionName: ActionID): ()
     if self:_countHolders(actionName) == 0 then
         self.OnActionEnded:Fire(actionName)
     end
 end
 
-function RawInputObserver.BindVirtualButton(self: RawInputObserver, actionName: ActionID, button: GuiButton): ()
+function InputActionMerger.BindVirtualButton(self: InputActionMerger, actionName: ActionID, button: GuiButton): ()
     self._virtualInputSource:BindButton(actionName, button)
 end
 
-function RawInputObserver.ReleaseAllVirtual(self: RawInputObserver): ()
+function InputActionMerger.ReleaseAllVirtual(self: InputActionMerger): ()
     self._virtualInputSource:ReleaseAll()
 end
 
-function RawInputObserver._unbindConnections(self: RawInputObserver): ()
+function InputActionMerger._unbindConnections(self: InputActionMerger): ()
     for _, connection in ipairs(self._connections) do
         connection:Disconnect()
     end
@@ -96,7 +96,7 @@ function RawInputObserver._unbindConnections(self: RawInputObserver): ()
     self.OnActionEnded:DisconnectAll()
 end 
 
-function RawInputObserver.Destroy(self: RawInputObserver): ()
+function InputActionMerger.Destroy(self: InputActionMerger): ()
     self:_unbindConnections()
     self._hardwareInputSource:Destroy()
     self._virtualInputSource:Destroy()
@@ -105,5 +105,5 @@ function RawInputObserver.Destroy(self: RawInputObserver): ()
     table.freeze(self)
 end
 
-table.freeze(RawInputObserver)
-return RawInputObserver
+table.freeze(InputActionMerger)
+return InputActionMerger
