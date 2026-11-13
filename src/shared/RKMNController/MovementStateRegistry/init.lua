@@ -1,6 +1,6 @@
 local RKMNControllerFolder = script.Parent
 local MovementStatesFolder = RKMNControllerFolder.MovementStates
-local MovementStateID = require(RKMNControllerFolder.MovementStateIDRegistry)
+local MovementStateID = require(RKMNControllerFolder.MovementStateIDs)
 local GroundedState = require(MovementStatesFolder.GroundedState)
 local AirborneState = require(MovementStatesFolder.AirborneState)
 local WallSlideState = require(MovementStatesFolder.WallSlideState)

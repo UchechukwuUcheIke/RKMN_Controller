@@ -5,7 +5,7 @@ local BaseState = require(ParentDirectory.BaseState)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local FSMContext = require(ParentDirectory.FSMContext)
 local Signal = require(ReplicatedStorage:WaitForChild("DevPackages"):WaitForChild("goodsignal"))
-local MovementStateID = require(ParentDirectory.MovementStateIDRegistry)
+local MovementStateID = require(ParentDirectory.MovementStateIDs)
 local MovementStateRegistry = require(ParentDirectory.MovementStateRegistry)
 
 

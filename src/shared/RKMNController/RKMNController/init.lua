@@ -11,7 +11,7 @@ local FSMContext = require(RKMNControllerFolder.FSMContext)
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
 local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
 
-local MovementState = require(RKMNControllerFolder.MovementStateIDRegistry)
+local MovementState = require(RKMNControllerFolder.MovementStateIDs)
 
 
 type CollisionConstants = CollisionConstants.CollisionConstants

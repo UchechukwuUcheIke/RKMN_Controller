@@ -1,6 +1,6 @@
 local RKMNControllerFolder = script.Parent.Parent
 local BaseState = require(RKMNControllerFolder.BaseState)
-local MovementStateID = require(RKMNControllerFolder.MovementStateIDRegistry)
+local MovementStateID = require(RKMNControllerFolder.MovementStateIDs)
 local StateMachine = require(RKMNControllerFolder.StateMachine)
 local MovementConfig = require(RKMNControllerFolder.MovementConfig)
 local Direction = require(game:GetService("ReplicatedStorage").Data.Direction)
