@@ -29,9 +29,12 @@ local function makeFakeDetector(startingDevice)
 end
 
 local function makeFakePlayerInput()
-	local playerInput = { boundCount = 0 }
+	local playerInput = { boundCount = 0, unboundCount = 0 }
 	function playerInput:BindVirtualButton()
 		self.boundCount += 1
+	end
+	function playerInput:UnbindVirtualButton()
+		self.unboundCount += 1
 	end
 	function playerInput:ReleaseVirtualHolds() end
 	return playerInput
@@ -162,5 +165,23 @@ describe("TouchGamepadPresenter", function()
 		presenter:Disable()
 		expect(GuiService.TouchControlsEnabled).toBe(true)
 		presenter:Destroy()
+	end)
+
+	it("lets go of every button it bound when destroyed", function()
+		local presenter, parts = makePresenter("touch")
+		presenter:Enable()
+
+		presenter:Destroy()
+
+		expect(parts.playerInput.unboundCount).toBe(parts.playerInput.boundCount)
+	end)
+
+	it("has nothing to unbind when it never bound any buttons", function()
+		local presenter, parts = makePresenter("keyboard")
+		presenter:Enable()
+
+		presenter:Destroy()
+
+		expect(parts.playerInput.unboundCount).toBe(0)
 	end)
 end)

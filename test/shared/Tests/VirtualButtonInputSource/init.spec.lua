@@ -139,4 +139,59 @@ describe("VirtualButtonInputSource", function()
 
 		expect(events).toEqual({})
 	end)
+
+	it("ignores a button once it is unbound", function()
+		local source, events = makeSource()
+		local button = makeFakeButton()
+		source:BindButton("Jump", button)
+
+		source:UnbindButton("Jump")
+		button:Press()
+
+		expect(events).toEqual({})
+	end)
+
+	it("releases an action that is held when it is unbound", function()
+		local source, events = makeSource()
+		local button = makeFakeButton()
+		source:BindButton("Jump", button)
+		button:Press()
+
+		source:UnbindButton("Jump")
+
+		expect(source:IsActionHeld("Jump")).toBe(false)
+		expect(events).toEqual({ "pressed Jump", "released Jump" })
+	end)
+
+	it("leaves other actions bound when one is unbound", function()
+		local source, events = makeSource()
+		local jump, dash = makeFakeButton(), makeFakeButton()
+		source:BindButton("Jump", jump)
+		source:BindButton("Dash", dash)
+
+		source:UnbindButton("Jump")
+		dash:Press()
+
+		expect(events).toEqual({ "pressed Dash" })
+	end)
+
+	it("replaces the old button when an action is bound again", function()
+		local source, events = makeSource()
+		local oldButton, newButton = makeFakeButton(), makeFakeButton()
+		source:BindButton("Jump", oldButton)
+
+		source:BindButton("Jump", newButton)
+		oldButton:Press()
+		newButton:Press()
+
+		expect(events).toEqual({ "pressed Jump" })
+	end)
+
+	it("does nothing when unbinding an action that was never bound", function()
+		local source, events = makeSource()
+
+		source:UnbindButton("Jump")
+
+		expect(events).toEqual({})
+	end)
 end)

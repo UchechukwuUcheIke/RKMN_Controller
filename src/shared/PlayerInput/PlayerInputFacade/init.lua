@@ -194,6 +194,10 @@ function PlayerInputFacade.BindVirtualButton(self: PlayerInputFacade, actionName
     self._inputActionMerger:BindVirtualButton(actionName, button)
 end
 
+function PlayerInputFacade.UnbindVirtualButton(self: PlayerInputFacade, actionName: ActionID): ()
+    self._inputActionMerger:UnbindVirtualButton(actionName)
+end
+
 function PlayerInputFacade.ReleaseVirtualHolds(self: PlayerInputFacade): ()
     self._inputActionMerger:ReleaseAllVirtual()
 end

@@ -83,6 +83,10 @@ function InputActionMerger.BindVirtualButton(self: InputActionMerger, actionName
     self._virtualInputSource:BindButton(actionName, button)
 end
 
+function InputActionMerger.UnbindVirtualButton(self: InputActionMerger, actionName: ActionID): ()
+    self._virtualInputSource:UnbindButton(actionName)
+end
+
 function InputActionMerger.ReleaseAllVirtual(self: InputActionMerger): ()
     self._virtualInputSource:ReleaseAll()
 end

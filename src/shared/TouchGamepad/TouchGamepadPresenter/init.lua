@@ -145,6 +145,18 @@ function TouchGamepadPresenter._initializeButtons(self: TouchGamepadPresenter): 
     self._positioner:ApplyLayout(self._layoutProfile:GetLayout())
 end
 
+-- The input source outlives this presenter, so the buttons it bound have to be let go or their connections pile up.
+function TouchGamepadPresenter._unbindButtons(self: TouchGamepadPresenter): ()
+    if not self._hasBoundButtons then
+        return
+    end
+    self._hasBoundButtons = false
+
+    for _, actionName in pairs(InputAction) do
+        self._playerInput:UnbindVirtualButton(actionName)
+    end
+end
+
 function TouchGamepadPresenter._unbindConnection(self: TouchGamepadPresenter): ()
     if self._contextConnection then
         self._contextConnection:Disconnect()
@@ -158,6 +170,7 @@ end
 
 function TouchGamepadPresenter.Destroy(self: TouchGamepadPresenter): ()
     self:Disable()
+    self:_unbindButtons()
     self._positioner:Destroy()
     self._gamepadUI:Destroy()
     setmetatable(self :: any, nil)

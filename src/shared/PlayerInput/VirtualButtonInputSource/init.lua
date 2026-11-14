@@ -12,7 +12,7 @@ type Signal = typeof(Signal)
 type ActionID = InputAction.ActionID
 
 type VirtualButtonInputSourceData = {
-    _connections: {RBXScriptConnection},
+    _connections: {[ActionID]: {RBXScriptConnection}},
     _heldActions: {[ActionID]: boolean},
     OnActionPressed: Signal,
     OnActionReleased: Signal
@@ -57,22 +57,44 @@ function VirtualButtonInputSource._release(self: VirtualButtonInputSource, actio
     self.OnActionReleased:Fire(actionName)
 end
 
-function VirtualButtonInputSource.BindButton(self: VirtualButtonInputSource, actionName: ActionID, button: GuiButton): ()
-    table.insert(self._connections, button.InputBegan:Connect(function(input: InputObject)
+function VirtualButtonInputSource._addButtonConnections(self: VirtualButtonInputSource, actionName: ActionID, button: GuiButton): ()
+    local connections = {}
+    self._connections[actionName] = connections
+
+    table.insert(connections, button.InputBegan:Connect(function(input: InputObject)
         if isPointerPress(input) then
             self:_press(actionName)
         end
     end))
 
-    table.insert(self._connections, button.InputEnded:Connect(function(input: InputObject)
+    table.insert(connections, button.InputEnded:Connect(function(input: InputObject)
         if isPointerPress(input) then
             self:_release(actionName)
         end
     end))
 
-    table.insert(self._connections, button.MouseLeave:Connect(function()
+    table.insert(connections, button.MouseLeave:Connect(function()
         self:_release(actionName)
     end))
+end
+
+function VirtualButtonInputSource.BindButton(self: VirtualButtonInputSource, actionName: ActionID, button: GuiButton): ()
+    self:UnbindButton(actionName)
+    self:_addButtonConnections(actionName, button)
+end
+
+function VirtualButtonInputSource.UnbindButton(self: VirtualButtonInputSource, actionName: ActionID): ()
+    self:_release(actionName)
+
+    local connections = self._connections[actionName]
+    if not connections then
+        return
+    end
+
+    for _, connection in ipairs(connections) do
+        connection:Disconnect()
+    end
+    self._connections[actionName] = nil
 end
 
 function VirtualButtonInputSource.ReleaseAll(self: VirtualButtonInputSource): ()
@@ -82,8 +104,10 @@ function VirtualButtonInputSource.ReleaseAll(self: VirtualButtonInputSource): ()
 end
 
 function VirtualButtonInputSource._unbindConnections(self: VirtualButtonInputSource): ()
-    for _, connection in ipairs(self._connections) do
-        connection:Disconnect()
+    for _, connections in pairs(self._connections) do
+        for _, connection in ipairs(connections) do
+            connection:Disconnect()
+        end
     end
     table.clear(self._connections)
     self.OnActionPressed:DisconnectAll()
