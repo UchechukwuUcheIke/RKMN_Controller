@@ -28,7 +28,6 @@ type TextInputData = {
     _isEnabled: boolean,
     _isFocused: boolean,
     TextChanged: Signal
-    textBox.MaxGraphemes
 }
 
 export type TextInput = typeof(setmetatable({} :: TextInputData, TextInput))
