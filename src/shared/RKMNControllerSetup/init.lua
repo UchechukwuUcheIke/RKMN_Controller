@@ -204,7 +204,7 @@ type TouchLayoutEditing = {
 }
 
 -- The editor's ghost controls are a second TouchGamepadUI that is never given to the player's input.
-local function makeTouchLayoutEditing(deviceDetector: DeviceDetector, playerInput: PlayerInputFacade, touchGamepad: TouchGamepadPresenter): TouchLayoutEditing
+local function makeTouchLayoutEditing(deviceDetector: DeviceDetector, playerInput: PlayerInputFacade): TouchLayoutEditing
     local playerGui = LocalPlayer:WaitForChild("PlayerGui")
     local gamepadUI = TouchGamepadUI.new(playerGui)
     local positioner = MobileButtonPositioner.new()
@@ -221,7 +221,6 @@ local function makeTouchLayoutEditing(deviceDetector: DeviceDetector, playerInpu
         DeviceDetector = deviceDetector,
         LayoutProfile = touchLayoutProfile,
         PlayerInput = playerInput,
-        TouchGamepad = touchGamepad,
         Canvas = canvas,
         Screen = screen,
         Presets = TouchLayoutPresets.All,
@@ -262,7 +261,7 @@ local function replaceControlCustomization(controlCustomization: ControlCustomiz
     activeControlCustomization = controlCustomization
 end
 
--- The editor hands the previous character's touch controls and input back when it closes, so it goes before them.
+-- The editor hands the previous character's input back when it closes, so it goes before that character's controls.
 local function destroyTouchLayoutEditing(): ()
     local editing = activeTouchLayoutEditing
     if not editing then
@@ -306,7 +305,7 @@ function RKMNControllerSetup.Setup(character: Model): RKMNController
     replaceTouchControls(deviceDetector, touchGamepad)
     touchGamepad:Enable()
 
-    local touchLayoutEditing = makeTouchLayoutEditing(deviceDetector, dependencies.PlayerInput, touchGamepad)
+    local touchLayoutEditing = makeTouchLayoutEditing(deviceDetector, dependencies.PlayerInput)
     activeTouchLayoutEditing = touchLayoutEditing
     touchLayoutEditing.Editor:Enable()
 

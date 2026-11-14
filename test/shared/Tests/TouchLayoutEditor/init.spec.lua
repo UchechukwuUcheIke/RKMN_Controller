@@ -85,16 +85,6 @@ local function makeFakePlayerInput()
 	return playerInput
 end
 
-local function makeFakeTouchGamepad()
-	local touchGamepad = { calls = {} }
-	for _, methodName in ipairs({ "Suspend", "Resume" }) do
-		touchGamepad[methodName] = function(self)
-			table.insert(self.calls, methodName)
-		end
-	end
-	return touchGamepad
-end
-
 local function makeEditor(startingDevice)
 	local detector = { device = startingDevice or "touch", OnContextChanged = Signal.new() }
 	function detector:GetCurrentDevice()
@@ -105,7 +95,6 @@ local function makeEditor(startingDevice)
 		detector = detector,
 		profile = TouchLayoutProfile.new(STANDARD),
 		playerInput = makeFakePlayerInput(),
-		touchGamepad = makeFakeTouchGamepad(),
 		canvas = makeFakeCanvas(),
 		screen = makeFakeScreen(),
 	}
@@ -113,7 +102,6 @@ local function makeEditor(startingDevice)
 		DeviceDetector = detector,
 		LayoutProfile = parts.profile,
 		PlayerInput = parts.playerInput,
-		TouchGamepad = parts.touchGamepad,
 		Canvas = parts.canvas,
 		Screen = parts.screen,
 		Presets = { makePreset() },
@@ -157,7 +145,6 @@ describe("TouchLayoutEditor", function()
 			expect(editor:IsOpen()).toBe(true)
 			expect(parts.screen.isVisible).toBe(true)
 			expect(parts.screen.layout).toBe(STANDARD)
-			expect(parts.touchGamepad.calls).toEqual({ "Suspend" })
 			expect(parts.playerInput.calls).toEqual({ "SuspendGameplayInput" })
 		end)
 
@@ -175,7 +162,7 @@ describe("TouchLayoutEditor", function()
 
 			parts.playerInput.OnMenuPressed:Fire()
 
-			expect(count(parts.touchGamepad.calls, "Suspend")).toBe(1)
+			expect(count(parts.playerInput.calls, "SuspendGameplayInput")).toBe(1)
 		end)
 
 		it("closes through Exit when nothing has changed, handing the screen back", function()
@@ -185,7 +172,6 @@ describe("TouchLayoutEditor", function()
 
 			expect(editor:IsOpen()).toBe(false)
 			expect(parts.screen.isVisible).toBe(false)
-			expect(parts.touchGamepad.calls).toEqual({ "Suspend", "Resume" })
 			expect(parts.playerInput.calls).toEqual({ "SuspendGameplayInput", "ResumeGameplayInput" })
 		end)
 

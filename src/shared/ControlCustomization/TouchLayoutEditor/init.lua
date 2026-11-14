@@ -10,7 +10,6 @@ local DeviceDetector = require(PlayerInputFolder.DeviceDetector)
 local PlayerInputFacade = require(PlayerInputFolder.PlayerInputFacade)
 local TouchGamepadFolder = ReplicatedStorage.TouchGamepad
 local TouchGamepadLayoutRegistry = require(TouchGamepadFolder.TouchGamepadLayoutRegistry)
-local TouchGamepadPresenter = require(TouchGamepadFolder.TouchGamepadPresenter)
 local TouchLayoutPresets = require(TouchGamepadFolder.TouchLayoutPresets)
 local TouchLayoutProfile = require(TouchGamepadFolder.TouchLayoutProfile)
 local TouchLayoutEditSession = require(script.Parent.TouchLayoutEditSession)
@@ -23,7 +22,6 @@ type InputDevice = InputDevice.InputDevice
 type DeviceDetector = DeviceDetector.DeviceDetector
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type ControlID = TouchGamepadLayoutRegistry.ControlID
-type TouchGamepadPresenter = TouchGamepadPresenter.TouchGamepadPresenter
 type LayoutPreset = TouchLayoutPresets.LayoutPreset
 type TouchGamepadLayout = TouchGamepadLayoutRegistry.TouchGamepadLayout
 type TouchLayoutProfile = TouchLayoutProfile.TouchLayoutProfile
@@ -40,7 +38,6 @@ export type TouchLayoutEditorDependencies = {
     DeviceDetector: DeviceDetector,
     LayoutProfile: TouchLayoutProfile,
     PlayerInput: PlayerInputFacade,
-    TouchGamepad: TouchGamepadPresenter,
     Canvas: TouchLayoutCanvas,
     Screen: TouchLayoutScreen,
     Presets: {LayoutPreset},
@@ -51,7 +48,6 @@ type TouchLayoutEditorData = {
     _deviceDetector: DeviceDetector,
     _layoutProfile: TouchLayoutProfile,
     _playerInput: PlayerInputFacade,
-    _touchGamepad: TouchGamepadPresenter,
     _canvas: TouchLayoutCanvas,
     _screen: TouchLayoutScreen,
     _presets: {LayoutPreset},
@@ -73,7 +69,6 @@ function TouchLayoutEditor.new(dependencies: TouchLayoutEditorDependencies): Tou
     self._deviceDetector = dependencies.DeviceDetector
     self._layoutProfile = dependencies.LayoutProfile
     self._playerInput = dependencies.PlayerInput
-    self._touchGamepad = dependencies.TouchGamepad
     self._canvas = dependencies.Canvas
     self._screen = dependencies.Screen
     self._presets = dependencies.Presets
@@ -132,7 +127,6 @@ function TouchLayoutEditor.Open(self: TouchLayoutEditor): ()
         self:_refresh()
     end)
 
-    self._touchGamepad:Suspend()
     self._playerInput:SuspendGameplayInput()
     self._screen:SetVisible(true)
     self:_refresh()
@@ -153,7 +147,6 @@ function TouchLayoutEditor.Close(self: TouchLayoutEditor): ()
     self._screen:HideUnsavedChangesPrompt()
     self._screen:SetSelection(nil, nil)
     self._screen:SetVisible(false)
-    self._touchGamepad:Resume()
     self._playerInput:ResumeGameplayInput()
     self.IsOpenChanged:Fire(false)
 end
