@@ -8,17 +8,17 @@ local InputAction = require(PlayerInputFolder.InputAction)
 local InputActionMerger = require(PlayerInputFolder.InputActionMerger)
 local InputPhase = require(script.InputPhase)
 local InputActionLogEntry = require(script.InputActionLogEntry)
-local RecordedEntry = require(script.RecordedEntry)
+local RecordedInputActionLogEntry = require(script.RecordedInputActionLogEntry)
 
 type ActionID = InputAction.ActionID
 type InputPhase = InputPhase.InputPhase
 type InputActionLogEntry = InputActionLogEntry.InputActionLogEntry
-type RecordedEntry = RecordedEntry.RecordedEntry
+type RecordedInputActionLogEntry = RecordedInputActionLogEntry.RecordedInputActionLogEntry
 type InputActionMerger = InputActionMerger.InputActionMerger
 type Connection = { Disconnect: (self: any) -> () }
 
 type InputActionLogData = {
-    _entries: {RecordedEntry},
+    _entries: {RecordedInputActionLogEntry},
     _capacity: number,
     _maxAgeSeconds: number,
     _nextSlot: number,
@@ -73,7 +73,7 @@ function InputActionLog.CreateSnapshot(self: InputActionLog): {InputActionLogEnt
 end
 
 function InputActionLog._recordInputAction(self: InputActionLog, actionName: ActionID, phase: InputPhase): ()
-    self._entries[self._nextSlot] = RecordedEntry.new(actionName, phase)
+    self._entries[self._nextSlot] = RecordedInputActionLogEntry.new(actionName, phase)
     self._nextSlot = self._nextSlot % self._capacity + 1
     self._count = math.min(self._count + 1, self._capacity)
 end

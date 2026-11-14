@@ -1,19 +1,20 @@
 --!strict
-local RecordedEntry = {}
+local RecordedInputActionLogEntry = {}
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local InputAction = require(ReplicatedStorage.PlayerInput.InputAction)
 local InputPhase = require(script.Parent.InputPhase)
 
 type InputPhase = InputPhase.InputPhase
+type ActionID = InputAction.ActionID
 
-export type RecordedEntry = {
-    Action: InputAction.ActionID,
+export type RecordedInputActionLogEntry = {
+    Action: ActionID,
     Phase: InputPhase,
     Time: number
 }
 
-function RecordedEntry.new(action: InputAction.ActionID, phase: InputPhase, clock: number?): RecordedEntry
+function RecordedInputActionLogEntry.new(action: InputAction.ActionID, phase: InputPhase, clock: number?): RecordedInputActionLogEntry
     local currentTime = clock or os.clock()
     return table.freeze({
         Action = action,
@@ -22,5 +23,5 @@ function RecordedEntry.new(action: InputAction.ActionID, phase: InputPhase, cloc
     })
 end
 
-table.freeze(RecordedEntry)
-return RecordedEntry
+table.freeze(RecordedInputActionLogEntry)
+return RecordedInputActionLogEntry
