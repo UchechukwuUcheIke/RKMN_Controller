@@ -34,7 +34,6 @@ type UnsavedChangesChoice = UnsavedChangesChoice.UnsavedChangesChoice
 type Signal = typeof(Signal)
 type Connection = { Disconnect: (self: any) -> () }
 
--- Dragging a control and pulling a slider both edit the layout, and the session has room for one gesture at a time.
 type GestureOwner = "Canvas" | "Sliders"
 
 export type TouchLayoutEditorDependencies = {
@@ -61,10 +60,9 @@ type TouchLayoutEditorData = {
     _session: TouchLayoutEditSession?,
     _sessionConnection: Connection?,
     _gestureOwner: GestureOwner?,
+    _isOpenAllowed: boolean,
     _connections: {Connection},
-
-    -- Fires true when the editor opens and false when it closes.
-    OpenChanged: Signal
+    IsOpenChanged: Signal
 }
 
 export type TouchLayoutEditor = typeof(setmetatable({} :: TouchLayoutEditorData, TouchLayoutEditor))
@@ -84,20 +82,26 @@ function TouchLayoutEditor.new(dependencies: TouchLayoutEditorDependencies): Tou
     self._session = nil
     self._sessionConnection = nil
     self._gestureOwner = nil
+    self._isOpenAllowed = true
     self._connections = {}
-    self.OpenChanged = Signal.new()
+    self.IsOpenChanged = Signal.new()
 
     return self :: TouchLayoutEditor
 end
 
-function TouchLayoutEditor.Enable(self: TouchLayoutEditor): ()
-    if #self._connections > 0 then
+function TouchLayoutEditor._bindConnections(self: TouchLayoutEditor): ()
+    local hasConnections = #self._connections > 0
+    if hasConnections then
         return
     end
 
     self:_subscribeToGame()
     self:_subscribeToCanvas()
     self:_subscribeToScreen()
+end
+
+function TouchLayoutEditor.Enable(self: TouchLayoutEditor): ()
+    self:_bindConnections()
 end
 
 function TouchLayoutEditor.Disable(self: TouchLayoutEditor): ()
@@ -113,8 +117,12 @@ function TouchLayoutEditor.IsOpen(self: TouchLayoutEditor): boolean
     return self._session ~= nil
 end
 
+function TouchLayoutEditor.SetOpenAllowed(self: TouchLayoutEditor, isAllowed: boolean): ()
+    self._isOpenAllowed = isAllowed
+end
+
 function TouchLayoutEditor.Open(self: TouchLayoutEditor): ()
-    if self:IsOpen() or self._deviceDetector:GetCurrentDevice() ~= InputDevice.Touch then
+    if self:IsOpen() or not self._isOpenAllowed or self._deviceDetector:GetCurrentDevice() ~= InputDevice.Touch then
         return
     end
 
@@ -128,10 +136,9 @@ function TouchLayoutEditor.Open(self: TouchLayoutEditor): ()
     self._playerInput:SuspendGameplayInput()
     self._screen:SetVisible(true)
     self:_refresh()
-    self.OpenChanged:Fire(true)
+    self.IsOpenChanged:Fire(true)
 end
 
--- Anything not saved is dropped. Exit asks first; this is for when the editor has to go regardless.
 function TouchLayoutEditor.Close(self: TouchLayoutEditor): ()
     local session = self._session
     if not session then
@@ -148,7 +155,7 @@ function TouchLayoutEditor.Close(self: TouchLayoutEditor): ()
     self._screen:SetVisible(false)
     self._touchGamepad:Resume()
     self._playerInput:ResumeGameplayInput()
-    self.OpenChanged:Fire(false)
+    self.IsOpenChanged:Fire(false)
 end
 
 function TouchLayoutEditor._subscribeToGame(self: TouchLayoutEditor): ()
@@ -215,7 +222,6 @@ function TouchLayoutEditor._subscribeToScreen(self: TouchLayoutEditor): ()
     end))
 end
 
--- The menu button only opens the editor; the editor's own Exit button is the way out.
 function TouchLayoutEditor._handleMenuPressed(self: TouchLayoutEditor): ()
     self:Open()
 end
@@ -409,7 +415,7 @@ end
 
 function TouchLayoutEditor.Destroy(self: TouchLayoutEditor): ()
     self:Disable()
-    self.OpenChanged:DisconnectAll()
+    self.IsOpenChanged:DisconnectAll()
     setmetatable(self :: any, nil)
     table.freeze(self)
 end

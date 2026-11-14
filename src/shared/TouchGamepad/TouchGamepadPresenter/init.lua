@@ -84,7 +84,6 @@ function TouchGamepadPresenter.Disable(self: TouchGamepadPresenter): ()
     self:_hide()
 end
 
--- Hides the controls without handing Roblox's own touch controls back, for while something else is using the screen.
 function TouchGamepadPresenter.Suspend(self: TouchGamepadPresenter): ()
     self._isSuspended = true
     self:_hide()
@@ -95,6 +94,14 @@ function TouchGamepadPresenter.Resume(self: TouchGamepadPresenter): ()
 
     if self._contextConnection then
         self:_handleContextChange(self._deviceDetector:GetCurrentDevice())
+    end
+end
+
+function TouchGamepadPresenter.SetEntryVisible(self: TouchGamepadPresenter, isVisible: boolean): ()
+    if isVisible then
+        self:Resume()
+    else
+        self:Suspend()
     end
 end
 

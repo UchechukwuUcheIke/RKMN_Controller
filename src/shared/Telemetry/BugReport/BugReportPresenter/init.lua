@@ -3,6 +3,7 @@ local BugReportPresenter = {}
 BugReportPresenter.__index = BugReportPresenter
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Signal = require(ReplicatedStorage.DevPackages.goodsignal)
 local BugReport = ReplicatedStorage.Telemetry.BugReport
 local BugReportDraft = require(BugReport.BugReportDraft)
 local Platform = require(BugReport.BugReportDraft.Platform)
@@ -26,6 +27,7 @@ type BugReportScreen = BugReportScreen.BugReportScreen
 type InputActionLog = InputActionLog.InputActionLog
 type DeviceDetector = DeviceDetector.DeviceDetector
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
+type Signal = typeof(Signal)
 type Connection = { Disconnect: (self: any) -> () }
 
 export type BugReportPresenterDependencies = {
@@ -50,12 +52,15 @@ type BugReportPresenterData = {
     _delay: (seconds: number, callback: () -> ()) -> (),
 
     _isOpen: boolean,
+    _isOpenAllowed: boolean,
     _isSendingBugReport: boolean,
     _isDestroyed: boolean,
     _inputSnapshot: {InputActionLogEntry},
     _device: InputDevice,
     _platform: Platform,
-    _connections: {Connection}
+    _connections: {Connection},
+
+    IsOpenChanged: Signal
 }
 
 export type BugReportPresenter = typeof(setmetatable({} :: BugReportPresenterData, BugReportPresenter))
@@ -100,12 +105,14 @@ function BugReportPresenter.new(dependencies: BugReportPresenterDependencies): B
     self._delay = dependencies.Delay
 
     self._isOpen = false
+    self._isOpenAllowed = true
     self._isSendingBugReport = false
     self._isDestroyed = false
     self._inputSnapshot = {}
     self._device = InputDevice.Unknown
     self._platform = Platform.Unknown
     self._connections = {}
+    self.IsOpenChanged = Signal.new()
 
     return self :: BugReportPresenter
 end
@@ -144,8 +151,16 @@ function BugReportPresenter.IsOpen(self: BugReportPresenter): boolean
     return self._isOpen
 end
 
+function BugReportPresenter.SetOpenAllowed(self: BugReportPresenter, isAllowed: boolean): ()
+    self._isOpenAllowed = isAllowed
+end
+
+function BugReportPresenter.SetEntryVisible(self: BugReportPresenter, isVisible: boolean): ()
+    self._button:SetVisible(isVisible)
+end
+
 function BugReportPresenter.Open(self: BugReportPresenter): ()
-    if self._isOpen then
+    if self._isOpen or not self._isOpenAllowed then
         return
     end
 
@@ -155,10 +170,10 @@ function BugReportPresenter.Open(self: BugReportPresenter): ()
     self._platform = self._getPlatform()
 
     self._playerInput:SuspendGameplayInput()
-    self._playerInput:DisableMenuKey()
     self._screen:Clear()
     self._screen:SetSending(false)
     self._screen:SetVisible(true)
+    self.IsOpenChanged:Fire(true)
 end
 
 function BugReportPresenter.Close(self: BugReportPresenter): ()
@@ -169,12 +184,8 @@ function BugReportPresenter.Close(self: BugReportPresenter): ()
     self._isOpen = false
     self._inputSnapshot = {}
     self._screen:SetVisible(false)
-    self._playerInput:EnableMenuKey()
     self._playerInput:ResumeGameplayInput()
-end
-
-function BugReportPresenter.SetAvailable(self: BugReportPresenter, isAvailable: boolean): ()
-    self._button:SetVisible(isAvailable)
+    self.IsOpenChanged:Fire(false)
 end
 
 function BugReportPresenter._buildDraft(self: BugReportPresenter, description: string): BugReportDraft
@@ -230,6 +241,7 @@ function BugReportPresenter.Destroy(self: BugReportPresenter): ()
     self._isDestroyed = true
     self._screen:Destroy()
     self._button:Destroy()
+    self.IsOpenChanged:DisconnectAll()
 
     setmetatable(self :: any, nil)
     table.freeze(self)

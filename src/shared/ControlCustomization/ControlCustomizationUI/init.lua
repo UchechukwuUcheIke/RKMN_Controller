@@ -26,7 +26,7 @@ type ControlCustomizationView = ControlCustomizationView.ControlCustomizationVie
 type BindingsScreen = BindingsScreen.BindingsScreen
 type Signal = typeof(Signal)
 type Connection = { Disconnect: (self: any) -> () }
--- Runs the callback on a later frame, so it lands after the input event that triggered it has been seen by everyone.
+
 type NextFrameScheduler = (callback: () -> ()) -> ()
 
 type ControlCustomizationUIData = {
@@ -39,15 +39,14 @@ type ControlCustomizationUIData = {
     _runNextFrame: NextFrameScheduler,
 
     _isOpen: boolean,
+    _isOpenAllowed: boolean,
     _connections: {Connection},
 
-    -- Fires true when the panel opens and false when it closes.
-    OpenChanged: Signal
+    IsOpenChanged: Signal
 }
 
 export type ControlCustomizationUI = typeof(setmetatable({} :: ControlCustomizationUIData, ControlCustomizationUI))
 
--- Escape works on every device, but a gamepad-only player has to be told about Select instead.
 local CANCEL_KEY_NAMES: {[InputDevice]: string} = {
     [InputDevice.Keyboard] = "Escape",
     [InputDevice.Gamepad] = "Select",
@@ -72,10 +71,11 @@ function ControlCustomizationUI.new(
     self._runNextFrame = runNextFrame
 
     self._isOpen = false
+    self._isOpenAllowed = true
     self._connections = {}
-    self.OpenChanged = Signal.new()
+    self.IsOpenChanged = Signal.new()
 
-    return self :: ControlCustomizationUI
+    return self
 end
 
 function ControlCustomizationUI.Enable(self: ControlCustomizationUI): ()
@@ -119,8 +119,12 @@ function ControlCustomizationUI.IsOpen(self: ControlCustomizationUI): boolean
     return self._isOpen
 end
 
+function ControlCustomizationUI.SetOpenAllowed(self: ControlCustomizationUI, isAllowed: boolean): ()
+    self._isOpenAllowed = isAllowed
+end
+
 function ControlCustomizationUI.Open(self: ControlCustomizationUI): ()
-    if self._isOpen then
+    if self._isOpen or not self._isOpenAllowed then
         return
     end
 
@@ -128,7 +132,7 @@ function ControlCustomizationUI.Open(self: ControlCustomizationUI): ()
     self._playerInput:SuspendGameplayInput()
     self._view:SetVisible(true)
     self:_refresh()
-    self.OpenChanged:Fire(true)
+    self.IsOpenChanged:Fire(true)
 end
 
 function ControlCustomizationUI.Close(self: ControlCustomizationUI): ()
@@ -140,10 +144,9 @@ function ControlCustomizationUI.Close(self: ControlCustomizationUI): ()
     self._bindingCapture:Cancel()
     self._view:SetVisible(false)
     self._playerInput:ResumeGameplayInput()
-    self.OpenChanged:Fire(false)
+    self.IsOpenChanged:Fire(false)
 end
 
--- A touch device edits its layout in the touch editor, so this panel does not open for it.
 function ControlCustomizationUI._toggle(self: ControlCustomizationUI): ()
     if self._isOpen then
         self:Close()
@@ -224,7 +227,7 @@ end
 function ControlCustomizationUI.Destroy(self: ControlCustomizationUI): ()
     self:Disable()
     self._view:Destroy()
-    self.OpenChanged:DisconnectAll()
+    self.IsOpenChanged:DisconnectAll()
     setmetatable(self :: any, nil)
     table.freeze(self)
 end

@@ -26,6 +26,7 @@ local GamepadSchemes = require(PlayerInputFolder.GamepadSchemes)
 local DeviceDetector = require(PlayerInputFolder.DeviceDetector)
 local PlayerInputFacade = require(PlayerInputFolder.PlayerInputFacade)
 local BindingCapture = require(PlayerInputFolder.BindingCapture)
+local ExclusiveScreenMediator = require(ReplicatedStorage.ExclusiveScreenMediator)
 local ControlCustomizationFolder = ReplicatedStorage.ControlCustomization
 local ControlCustomizationUI = require(ControlCustomizationFolder.ControlCustomizationUI)
 local ControlCustomizationView = require(ControlCustomizationFolder.ControlCustomizationView)
@@ -59,6 +60,7 @@ type CollisionQuery = CollisionQuery.CollisionQuery
 type InputActionMerger = InputActionMerger.InputActionMerger
 type DeviceDetector = DeviceDetector.DeviceDetector
 type BugReportPresenter = BugReportPresenter.BugReportPresenter
+type ExclusiveScreenMediator = ExclusiveScreenMediator.ExclusiveScreenMediator
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type TouchGamepadPresenter = TouchGamepadPresenter.TouchGamepadPresenter
 type ControlCustomizationUI = ControlCustomizationUI.ControlCustomizationUI
@@ -236,6 +238,15 @@ local activeTouchGamepad: TouchGamepadPresenter? = nil
 local activeControlCustomization: ControlCustomizationUI? = nil
 local activeTouchLayoutEditing: TouchLayoutEditing? = nil
 local activeBugReport: BugReportPresenter? = nil
+local activeScreenMediator: ExclusiveScreenMediator? = nil
+
+-- It goes before the screens it watches, which fire a closing signal as they are torn down.
+local function destroyScreenMediator(): ()
+    if activeScreenMediator then
+        activeScreenMediator:Destroy()
+        activeScreenMediator = nil
+    end
+end
 
 local function replaceBugReport(bugReport: BugReportPresenter): ()
     if activeBugReport then
@@ -278,6 +289,7 @@ local function replaceTouchControls(deviceDetector: DeviceDetector, touchGamepad
 end
 
 function RKMNControllerSetup.Setup(character: Model): RKMNController
+    destroyScreenMediator()
     destroyTouchLayoutEditing()
 
     local screenGui = mountScreenGui()
@@ -306,13 +318,14 @@ function RKMNControllerSetup.Setup(character: Model): RKMNController
     replaceBugReport(bugReport)
     bugReport:Enable()
 
-    -- The report button is hidden whenever the controls panel or touch editor is open.
-    controlCustomization.OpenChanged:Connect(function(isOpen: boolean)
-        bugReport:SetAvailable(not isOpen)
-    end)
-    touchLayoutEditing.Editor.OpenChanged:Connect(function(isOpen: boolean)
-        bugReport:SetAvailable(not isOpen)
-    end)
+    -- Only one of these screens is ever open; while one is, the others refuse to open and every entry point hides.
+    local screenMediator = ExclusiveScreenMediator.new()
+    screenMediator:AddScreen(controlCustomization)
+    screenMediator:AddScreen(touchLayoutEditing.Editor)
+    screenMediator:AddScreen(bugReport)
+    screenMediator:AddEntryPoint(bugReport)
+    screenMediator:AddEntryPoint(touchGamepad)
+    activeScreenMediator = screenMediator
 
     local debugTool = DebugFacade.new(world, screenGui, kinematicWorld, kinematicController, runServiceAdapter)
     kinematicWorld:RegisterPlayer(kinematicController)
