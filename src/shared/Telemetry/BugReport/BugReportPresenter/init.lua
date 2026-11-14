@@ -5,17 +5,21 @@ BugReportPresenter.__index = BugReportPresenter
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local BugReport = ReplicatedStorage.Telemetry.BugReport
 local BugReportDraft = require(BugReport.BugReportDraft)
+local Platform = require(BugReport.BugReportDraft.Platform)
+local InputDevice = require(ReplicatedStorage.Data.InputDevice)
 local BugReportSubmitStatus = require(BugReport.BugReportSubmitStatus)
 local BugReportButton = require(BugReport.UserInterface.BugReportButton)
 local BugReportScreen = require(BugReport.UserInterface.BugReportScreen)
+local StringUtils = require(ReplicatedStorage.Utility.StringUtils)
 local InputActionLog = require(ReplicatedStorage.Telemetry.InputActionLog)
+local InputActionLogEntry = require(ReplicatedStorage.Telemetry.InputActionLog.InputActionLogEntry)
 local DeviceDetector = require(ReplicatedStorage.PlayerInput.DeviceDetector)
 local PlayerInputFacade = require(ReplicatedStorage.PlayerInput.PlayerInputFacade)
 
 type BugReportDraft = BugReportDraft.BugReportDraft
-type InputLogEntry = BugReportDraft.InputLogEntry
-type Platform = BugReportDraft.Platform
-type InputDevice = BugReportDraft.InputDevice
+type InputActionLogEntry = InputActionLogEntry.InputActionLogEntry
+type Platform = Platform.Platform
+type InputDevice = InputDevice.InputDevice
 type BugReportSubmitStatus = BugReportSubmitStatus.BugReportSubmitStatus
 type BugReportButton = BugReportButton.BugReportButton
 type BugReportScreen = BugReportScreen.BugReportScreen
@@ -46,9 +50,9 @@ type BugReportPresenterData = {
     _delay: (seconds: number, callback: () -> ()) -> (),
 
     _isOpen: boolean,
-    _isSending: boolean,
+    _isSendingBugReport: boolean,
     _isDestroyed: boolean,
-    _inputSnapshot: {InputLogEntry},
+    _inputSnapshot: {InputActionLogEntry},
     _device: InputDevice,
     _platform: Platform,
     _connections: {Connection}
@@ -58,24 +62,22 @@ export type BugReportPresenter = typeof(setmetatable({} :: BugReportPresenterDat
 
 local SENT_MESSAGE_SECONDS = 1.5
 
-local STATUS_MESSAGES: {[string]: string} = {
+local STATUS_MESSAGES: {[BugReportSubmitStatus]: string} = {
     [BugReportSubmitStatus.Sent] = "Report sent. Thank you!",
     [BugReportSubmitStatus.Cooldown] = "Please wait a little before sending another report.",
     [BugReportSubmitStatus.Invalid] = "That report could not be sent. Check the description and try again.",
     [BugReportSubmitStatus.Failed] = "The report could not be sent. Please try again later.",
 }
 
-local function trim(text: string): string
-    return (text:gsub("^%s+", ""):gsub("%s+$", ""))
-end
-
-local function findDescriptionProblem(description: string): string?
-    if description == "" then
+local function validateDescription(description: string): string?
+    local descriptionEmpty = description == ""
+    if descriptionEmpty then
         return "Please describe the bug first."
     end
 
     local length = utf8.len(description)
-    if length == nil then
+    local hasOnlyValidCharacters = length == nil
+    if hasOnlyValidCharacters then
         return "The description contains characters that cannot be sent."
     end
     if length > BugReportDraft.MAX_DESCRIPTION_LENGTH then
@@ -98,21 +100,17 @@ function BugReportPresenter.new(dependencies: BugReportPresenterDependencies): B
     self._delay = dependencies.Delay
 
     self._isOpen = false
-    self._isSending = false
+    self._isSendingBugReport = false
     self._isDestroyed = false
     self._inputSnapshot = {}
-    self._device = "unknown"
-    self._platform = "unknown"
+    self._device = InputDevice.Unknown
+    self._platform = Platform.Unknown
     self._connections = {}
 
     return self :: BugReportPresenter
 end
 
-function BugReportPresenter.Enable(self: BugReportPresenter): ()
-    if #self._connections > 0 then
-        return
-    end
-
+function BugReportPresenter._bindConnections(self: BugReportPresenter): ()
     table.insert(self._connections, self._button.Activated:Connect(function()
         self:Open()
     end))
@@ -122,6 +120,15 @@ function BugReportPresenter.Enable(self: BugReportPresenter): ()
     table.insert(self._connections, self._screen.OnCancelRequested:Connect(function()
         self:Close()
     end))
+end
+
+function BugReportPresenter.Enable(self: BugReportPresenter): ()
+    local alreadyHasConnections = #self._connections > 0
+    if alreadyHasConnections then
+        return
+    end
+
+    self:_bindConnections()
 end
 
 function BugReportPresenter.Disable(self: BugReportPresenter): ()
@@ -143,7 +150,7 @@ function BugReportPresenter.Open(self: BugReportPresenter): ()
     end
 
     self._isOpen = true
-    self._inputSnapshot = self:_captureInputSnapshot()
+    self._inputSnapshot = self._inputLog:CreateSnapshot()
     self._device = self._deviceDetector:GetCurrentDevice()
     self._platform = self._getPlatform()
 
@@ -166,45 +173,27 @@ function BugReportPresenter.Close(self: BugReportPresenter): ()
     self._playerInput:ResumeGameplayInput()
 end
 
--- The controls panel and touch editor take the screen themselves, so the button is hidden while either is open.
 function BugReportPresenter.SetAvailable(self: BugReportPresenter, isAvailable: boolean): ()
     self._button:SetVisible(isAvailable)
 end
 
-function BugReportPresenter._captureInputSnapshot(self: BugReportPresenter): {InputLogEntry}
-    local entries: {InputLogEntry} = {}
-    for _, entry in ipairs(self._inputLog:CreateSnapshot()) do
-        table.insert(entries, {
-            Action = entry.Action,
-            Phase = entry.Phase,
-            SecondsAgo = entry.SecondsAgo,
-        })
-    end
-    return entries
-end
-
 function BugReportPresenter._buildDraft(self: BugReportPresenter, description: string): BugReportDraft
-    return {
-        Description = description,
-        Platform = self._platform,
-        InputDevice = self._device,
-        InputLog = self._inputSnapshot,
-    }
+    return BugReportDraft.new(description, self._platform, self._device, self._inputSnapshot)
 end
 
 function BugReportPresenter._handleSubmitRequested(self: BugReportPresenter, rawDescription: string): ()
-    if self._isSending then
+    if self._isSendingBugReport then
         return
     end
 
-    local description = trim(rawDescription)
-    local problem = findDescriptionProblem(description)
+    local description = StringUtils.TrimWhitespace(rawDescription)
+    local problem = validateDescription(description)
     if problem then
         self._screen:SetStatus(problem)
         return
     end
 
-    self._isSending = true
+    self._isSendingBugReport = true
     self._screen:SetSending(true)
     self._screen:SetStatus("Sending...")
 
@@ -214,11 +203,11 @@ function BugReportPresenter._handleSubmitRequested(self: BugReportPresenter, raw
     if self._isDestroyed then
         return
     end
-    self._isSending = false
+    self._isSendingBugReport = false
     self:_showResult(status)
 end
 
-function BugReportPresenter._showResult(self: BugReportPresenter, status: string): ()
+function BugReportPresenter._showResult(self: BugReportPresenter, status: BugReportSubmitStatus): ()
     self._screen:SetStatus(STATUS_MESSAGES[status] or STATUS_MESSAGES[BugReportSubmitStatus.Failed])
 
     if status == BugReportSubmitStatus.Sent then

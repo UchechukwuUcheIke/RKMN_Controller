@@ -6,15 +6,16 @@ local BugReportDraft = require(ReplicatedStorage.Telemetry.BugReport.BugReportDr
 local Platform = require(ReplicatedStorage.Telemetry.BugReport.BugReportDraft.Platform)
 local InputDevice = require(ReplicatedStorage.Data.InputDevice)
 local StringEnum = require(ReplicatedStorage.Utility.StringEnum)
+local StringUtils = require(ReplicatedStorage.Utility.StringUtils)
 local InputAction = require(ReplicatedStorage.PlayerInput.InputAction)
 local InputPhase = require(ReplicatedStorage.Telemetry.InputActionLog.InputPhase)
-local LogEntry = require(ReplicatedStorage.Telemetry.InputActionLog.LogEntry)
+local InputActionLogEntry = require(ReplicatedStorage.Telemetry.InputActionLog.InputActionLogEntry)
 local BugReportRow = require(script.Parent.BugReportRow)
 local BugReportInputLogRow = require(script.Parent.BugReportInputLogRow)
 
 type BugReportRow = BugReportRow.BugReportRow
 type BugReportInputLogRow = BugReportInputLogRow.BugReportInputLogRow
-type LogEntry = LogEntry.LogEntry
+type InputActionLogEntry = InputActionLogEntry.InputActionLogEntry
 type ReportContext = BugReportRow.ReportContext
 
 export type ValidationResult = {
@@ -31,18 +32,14 @@ local function failure(reason: string): ValidationResult
     })
 end
 
-local function trim(text: string): string
-    return (text:gsub("^%s+", ""):gsub("%s+$", ""))
-end
-
 local function isPlausibleAge(value: any): boolean
     return typeof(value) == "number" and value >= 0 and value <= BugReportDraft.MAX_INPUT_LOG_AGE_SECONDS
 end
 
 -- The log is a bonus on a report, so entries that are wrong are dropped without rejecting the report.
 -- A client keeps its newest entries; when too many arrive, the oldest are the ones cut.
-local function cleanInputLog(rawLog: any): {LogEntry}
-    local entries: {LogEntry} = {}
+local function cleanInputLog(rawLog: any): {InputActionLogEntry}
+    local entries: {InputActionLogEntry} = {}
     if typeof(rawLog) ~= "table" then
         return entries
     end
@@ -53,7 +50,7 @@ local function cleanInputLog(rawLog: any): {LogEntry}
             and InputPhase.IsValid(rawEntry.Phase)
             and isPlausibleAge(rawEntry.SecondsAgo)
         then
-            table.insert(entries, LogEntry.new(rawEntry.Action, rawEntry.Phase, rawEntry.SecondsAgo))
+            table.insert(entries, InputActionLogEntry.new(rawEntry.Action, rawEntry.Phase, rawEntry.SecondsAgo))
         end
     end
 
@@ -72,7 +69,7 @@ function BugReportValidator.Validate(draft: any, context: ReportContext): Valida
         return failure("Description must be text")
     end
 
-    local description = trim(draft.Description)
+    local description = StringUtils.TrimWhitespace(draft.Description)
     if description == "" then
         return failure("Description is empty")
     end

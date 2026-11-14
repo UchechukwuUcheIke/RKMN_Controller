@@ -7,12 +7,12 @@ local PlayerInputFolder = ReplicatedStorage.PlayerInput
 local InputAction = require(PlayerInputFolder.InputAction)
 local InputActionMerger = require(PlayerInputFolder.InputActionMerger)
 local InputPhase = require(script.InputPhase)
-local LogEntry = require(script.LogEntry)
+local InputActionLogEntry = require(script.InputActionLogEntry)
 local RecordedEntry = require(script.RecordedEntry)
 
 type ActionID = InputAction.ActionID
 type InputPhase = InputPhase.InputPhase
-type LogEntry = LogEntry.LogEntry
+type InputActionLogEntry = InputActionLogEntry.InputActionLogEntry
 type RecordedEntry = RecordedEntry.RecordedEntry
 type InputActionMerger = InputActionMerger.InputActionMerger
 type Connection = { Disconnect: (self: any) -> () }
@@ -55,9 +55,9 @@ function InputActionLog.new(merger: InputActionMerger, capacity: number, maxAgeS
     return self :: InputActionLog
 end
 
-function InputActionLog.CreateSnapshot(self: InputActionLog): {LogEntry}
+function InputActionLog.CreateSnapshot(self: InputActionLog): {InputActionLogEntry}
     local currentTime = os.clock()
-    local snapshot: {LogEntry} = {}
+    local snapshot: {InputActionLogEntry} = {}
     local oldestSlot = if self._count < self._capacity then 1 else self._nextSlot
 
     for offset = 0, self._count - 1 do
@@ -65,7 +65,7 @@ function InputActionLog.CreateSnapshot(self: InputActionLog): {LogEntry}
         local entry = self._entries[slot]
         local secondsAgo = currentTime - entry.Time
         if secondsAgo <= self._maxAgeSeconds then
-            table.insert(snapshot, LogEntry.new(entry.Action, entry.Phase, secondsAgo))
+            table.insert(snapshot, InputActionLogEntry.new(entry.Action, entry.Phase, secondsAgo))
         end
     end
 
