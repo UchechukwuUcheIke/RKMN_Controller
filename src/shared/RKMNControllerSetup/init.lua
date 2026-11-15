@@ -42,7 +42,10 @@ local TouchLayoutPresets = require(TouchGamepadFolder.TouchLayoutPresets)
 local TouchLayoutProfile = require(TouchGamepadFolder.TouchLayoutProfile)
 local TelemetryFolder = ReplicatedStorage.Telemetry
 local BugReportFolder = TelemetryFolder.BugReport
+local ControlPreferencesFolder = TelemetryFolder.ControlPreferences
 local InputActionLog = require(TelemetryFolder.InputActionLog)
+local ControlPreferencePacket = require(ControlPreferencesFolder.ControlPreferencePacket)
+local ControlPreferenceReporter = require(ControlPreferencesFolder.ControlPreferenceReporter)
 local BugReportDraft = require(BugReportFolder.BugReportDraft)
 local BugReportPacket = require(BugReportFolder.BugReportPacket)
 local BugReportButton = require(BugReportFolder.UserInterface.BugReportButton)
@@ -61,6 +64,7 @@ type InputActionMerger = InputActionMerger.InputActionMerger
 type DeviceDetector = DeviceDetector.DeviceDetector
 type BugReportPresenter = BugReportPresenter.BugReportPresenter
 type ExclusiveScreenMediator = ExclusiveScreenMediator.ExclusiveScreenMediator
+type ControlPreferenceReporter = ControlPreferenceReporter.ControlPreferenceReporter
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type TouchGamepadPresenter = TouchGamepadPresenter.TouchGamepadPresenter
 type ControlCustomizationUI = ControlCustomizationUI.ControlCustomizationUI
@@ -238,6 +242,7 @@ local activeControlCustomization: ControlCustomizationUI? = nil
 local activeTouchLayoutEditing: TouchLayoutEditing? = nil
 local activeBugReport: BugReportPresenter? = nil
 local activeScreenMediator: ExclusiveScreenMediator? = nil
+local activeControlPreferenceReporter: ControlPreferenceReporter? = nil
 
 -- It goes before the screens it watches, which fire a closing signal as they are torn down.
 local function destroyScreenMediator(): ()
@@ -245,6 +250,14 @@ local function destroyScreenMediator(): ()
         activeScreenMediator:Destroy()
         activeScreenMediator = nil
     end
+end
+
+-- It replaces the old reporter only after the old screens are gone, so an edit still open at respawn is sent as they close.
+local function replaceControlPreferenceReporter(reporter: ControlPreferenceReporter): ()
+    if activeControlPreferenceReporter then
+        activeControlPreferenceReporter:Destroy()
+    end
+    activeControlPreferenceReporter = reporter
 end
 
 local function replaceBugReport(bugReport: BugReportPresenter): ()
@@ -312,6 +325,15 @@ function RKMNControllerSetup.Setup(character: Model): RKMNController
     local controlCustomization = makeControlCustomization(screenGui, deviceDetector, dependencies.PlayerInput)
     replaceControlCustomization(controlCustomization)
     controlCustomization:Enable()
+
+    replaceControlPreferenceReporter(ControlPreferenceReporter.new({
+        ControlProfile = controlProfile,
+        TouchLayoutProfile = touchLayoutProfile,
+        EditingScreens = { controlCustomization, touchLayoutEditing.Editor },
+        Submit = function(report)
+            ControlPreferencePacket:Fire(report)
+        end,
+    }))
 
     local bugReport = makeBugReport(deviceDetector, dependencies.PlayerInput)
     replaceBugReport(bugReport)
