@@ -1,8 +1,9 @@
 --!strict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packet = require(ReplicatedStorage.Packet)
+local PacketIDs = require(ReplicatedStorage.PacketIDs)
 
-local ControlPreferencePacket = Packet("ReportControlPreference", {
+local ControlPreferencePacket = Packet(PacketIDs.ReportControlPreference, {
     Device = Packet.String,
     Bindings = { {
         Action = Packet.String,
