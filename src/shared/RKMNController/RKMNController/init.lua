@@ -3,7 +3,6 @@ local RKMNController = {}
 RKMNController.__index = RKMNController
 
 local RKMNControllerFolder = script.Parent
-local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
 local TimerRegistry = require(RKMNControllerFolder.TimerRegistry)
 local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
 local PlayerInputFacade = require(game:GetService("ReplicatedStorage").PlayerInput.PlayerInputFacade)
@@ -14,7 +13,6 @@ local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
 local MovementState = require(RKMNControllerFolder.MovementStateIDs)
 
 
-type CollisionConstants = CollisionConstants.CollisionConstants
 type TimerRegistry = TimerRegistry.TimerRegistry
 type CollisionQuery = CollisionQuery.CollisionQuery
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
@@ -24,8 +22,7 @@ type PhysicsResolver = PhysicsResolver.PhysicsResolver
 -- TODO: Add Action FSM and AnimationController back
 type RKMNControllerData = {
     _inputEnabled: boolean,
-    
-    Constants: CollisionConstants,
+
     TimerRegistry: TimerRegistry,
     CollisionQuery: CollisionQuery,
     PlayerInput: PlayerInputFacade,
@@ -37,7 +34,6 @@ type FSMContext = FSMContext.FSMContext
 type FSMContextDependencies = FSMContext.FSMContextDependencies
 
 export type RKMNControllerDependencies = {
-    Constants: CollisionConstants,
     TimerRegistry: TimerRegistry,
     CollisionQuery: CollisionQuery,
     PlayerInput: PlayerInputFacade,
@@ -51,7 +47,6 @@ function RKMNController.new(dependencies: RKMNControllerDependencies): RKMNContr
     local self = {}
 
     self._inputEnabled = true
-    self.Constants = dependencies.Constants
     self.TimerRegistry = dependencies.TimerRegistry
     self.CollisionQuery = dependencies.CollisionQuery
     self.PlayerInput = dependencies.PlayerInput

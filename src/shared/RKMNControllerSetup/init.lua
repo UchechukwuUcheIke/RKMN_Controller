@@ -96,7 +96,7 @@ local function mountScreenGui(): ScreenGui
     return screenGui
 end
 
-local function makeDependencies(character: Model, constants: CollisionConstants, collisionQuery: CollisionQuery, inputActionMerger: InputActionMerger): RKMNControllerDependencies
+local function makeDependencies(character: Model, collisionQuery: CollisionQuery, inputActionMerger: InputActionMerger): RKMNControllerDependencies
     local movementStats = MovementStats.new()
     local timerRegistry = TimerRegistry.new()
     local playerInput = PlayerInputFacade.new(timerRegistry, inputActionMerger)
@@ -112,7 +112,6 @@ local function makeDependencies(character: Model, constants: CollisionConstants,
     local movementStateMachine = MovementStateMachine.new(stateMachineContext)
 
     local dependencies: RKMNControllerDependencies = {
-        Constants = constants,
         TimerRegistry = timerRegistry,
         CollisionQuery = collisionQuery,
         PlayerInput = playerInput,
@@ -127,14 +126,14 @@ local function makeDebugDependencies(character: Model, inputActionMerger: InputA
     local world = game.Workspace
     local constants = CollisionConstants.new(character)
     local collisionQuery = DiagnosticControllerQuery.new(world, character, constants)
-    return makeDependencies(character, constants, collisionQuery, inputActionMerger)
+    return makeDependencies(character, collisionQuery, inputActionMerger)
 end
 
 local function _makeProdDependencies(character: Model, inputActionMerger: InputActionMerger): RKMNControllerDependencies
     local world = game.Workspace
     local constants = CollisionConstants.new(character)
     local collisionQuery = CollisionQuery.new(world, character, constants)
-    return makeDependencies(character, constants, collisionQuery, inputActionMerger)
+    return makeDependencies(character, collisionQuery, inputActionMerger)
 end
 
 local touchLayoutProfile = TouchLayoutProfile.new(TouchGamepadLayoutRegistry.Standard)
