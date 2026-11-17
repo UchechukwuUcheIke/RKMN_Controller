@@ -79,7 +79,7 @@ end
 
 local function driveDashMovement(stateMachine: StateMachine): ()
 	local physicsResolver = stateMachine.Context.PhysicsResolver
-	physicsResolver:MoveInDirection(physicsResolver.FacingDirection, MovementConfig.DashSpeed)
+	physicsResolver:MoveInDirection(physicsResolver:GetFacingDirection(), MovementConfig.DashSpeed)
 end
 
 function DashState.OnStep(self: DashState, stateMachine: StateMachine, dt: number): ()

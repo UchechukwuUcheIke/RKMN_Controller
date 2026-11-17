@@ -8,7 +8,7 @@ local CollisionQueryFacade = require(RKMNControllerFolder.CollisionQuery.Collisi
 local PlayerInputFacade = require(game:GetService("ReplicatedStorage").PlayerInput.PlayerInputFacade)
 local FSMContext = require(RKMNControllerFolder.FSMContext)
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
-local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
+local PhysicsResolverFacade = require(RKMNControllerFolder.PhysicsResolver.PhysicsResolverFacade)
 
 local MovementState = require(RKMNControllerFolder.MovementStateIDs)
 
@@ -17,7 +17,7 @@ type TimerRegistry = TimerRegistry.TimerRegistry
 type CollisionQueryFacade = CollisionQueryFacade.CollisionQueryFacade
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type MovementStateMachine = MovementStateMachine.MovementStateMachine
-type PhysicsResolver = PhysicsResolver.PhysicsResolver
+type PhysicsResolverFacade = PhysicsResolverFacade.PhysicsResolverFacade
 
 -- TODO: Add Action FSM and AnimationController back
 type RKMNControllerFacadeData = {
@@ -27,7 +27,7 @@ type RKMNControllerFacadeData = {
     CollisionQuery: CollisionQueryFacade,
     PlayerInput: PlayerInputFacade,
     MovementStateMachine: MovementStateMachine,
-    PhysicsResolver: PhysicsResolver,
+    PhysicsResolver: PhysicsResolverFacade,
 }
 
 type FSMContext = FSMContext.FSMContext
@@ -38,7 +38,7 @@ export type RKMNControllerFacadeDependencies = {
     CollisionQuery: CollisionQueryFacade,
     PlayerInput: PlayerInputFacade,
     MovementStateMachine: MovementStateMachine,
-    PhysicsResolver: PhysicsResolver
+    PhysicsResolver: PhysicsResolverFacade
 }
 
 export type RKMNControllerFacade = typeof(setmetatable({} :: RKMNControllerFacadeData, RKMNControllerFacade))

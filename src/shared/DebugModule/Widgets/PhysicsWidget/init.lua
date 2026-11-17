@@ -4,16 +4,16 @@ PhysicsWidget.__index = PhysicsWidget
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RKMNControllerFolder = ReplicatedStorage.RKMNController
-local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
+local PhysicsResolverFacade = require(RKMNControllerFolder.PhysicsResolver.PhysicsResolverFacade)
 local WidgetsFolder = script.Parent
 local DataRow = require(WidgetsFolder.DataRow)
 
-type PhysicsResolver = PhysicsResolver.PhysicsResolver
+type PhysicsResolverFacade = PhysicsResolverFacade.PhysicsResolverFacade
 type DataRow = DataRow.DataRow
 
 type PhysicsWidgetData = {
 	IsMounted: boolean,
-	_physicsResolver: PhysicsResolver,
+	_physicsResolver: PhysicsResolverFacade,
 	_canvas: Frame,
 	_velocityXRow: DataRow,
 	_velocityYRow: DataRow,
@@ -27,7 +27,7 @@ export type PhysicsWidget = typeof(setmetatable(
 	{} :: PhysicsWidgetPrototype
 ))
 
-function PhysicsWidget.new(physicsResolver: PhysicsResolver): PhysicsWidget
+function PhysicsWidget.new(physicsResolver: PhysicsResolverFacade): PhysicsWidget
 	local data = {
 		IsMounted = false,
 		_physicsResolver = physicsResolver,
@@ -45,10 +45,10 @@ function PhysicsWidget.MountTo(self: PhysicsWidget, layerCollector: LayerCollect
 end
 
 function PhysicsWidget.Render(self: PhysicsWidget)
-	local physicsResolver: PhysicsResolver = self._physicsResolver
-	self._velocityXRow:UpdateValue(string.format("%.2f", physicsResolver.Velocity.X))
-	self._velocityYRow:UpdateValue(string.format("%.2f", physicsResolver.Velocity.Y))
-	self._facingDirectionRow:UpdateValue(tostring(physicsResolver.FacingDirection))
+	local physicsResolver: PhysicsResolverFacade = self._physicsResolver
+	self._velocityXRow:UpdateValue(string.format("%.2f", physicsResolver:GetVelocity().X))
+	self._velocityYRow:UpdateValue(string.format("%.2f", physicsResolver:GetVelocity().Y))
+	self._facingDirectionRow:UpdateValue(tostring(physicsResolver:GetFacingDirection()))
 end
 
 function PhysicsWidget:Destroy()

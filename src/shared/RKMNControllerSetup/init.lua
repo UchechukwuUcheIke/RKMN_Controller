@@ -54,7 +54,7 @@ local BugReportScreen = require(BugReportFolder.UserInterface.BugReportScreen)
 local BugReportPresenter = require(BugReportFolder.BugReportPresenter)
 local PlatformDetector = require(BugReportFolder.PlatformDetector)
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
-local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
+local PhysicsResolverFacade = require(RKMNControllerFolder.PhysicsResolver.PhysicsResolverFacade)
 local StateMachineContext = require(RKMNControllerFolder.FSMContext)
 local DiagnosticControllerQuery = require(DebugModuleFolder.DiagnosticCollisionQuery)
 
@@ -75,7 +75,7 @@ type TouchLayoutScreen = TouchLayoutScreen.TouchLayoutScreen
 type TouchGamepadUI = TouchGamepadUI.TouchGamepadUI
 type MobileButtonPositioner = MobileButtonPositioner.MobileButtonPositioner
 type MovementStateMachine = MovementStateMachine.MovementStateMachine
-type PhysicsResolver = PhysicsResolver.PhysicsResolver
+type PhysicsResolverFacade = PhysicsResolverFacade.PhysicsResolverFacade
 type RKMNControllerFacade = RKMNControllerFacade.RKMNControllerFacade
 type RKMNControllerFacadeDependencies = RKMNControllerFacade.RKMNControllerFacadeDependencies
 type StateMachineContext = StateMachineContext.FSMContext
@@ -100,7 +100,7 @@ local function makeDependencies(character: Model, collisionQuery: CollisionQuery
     local movementStats = MovementStats.new()
     local timerRegistry = TimerRegistry.new()
     local playerInput = PlayerInputFacade.new(timerRegistry, inputActionMerger)
-    local physicsResolver = PhysicsResolver.new(character, movementStats, collisionQuery)
+    local physicsResolver = PhysicsResolverFacade.new(character, movementStats, collisionQuery)
 
     local FSMContextDependencies: StateMachineContextDependencies = {
         PlayerInput = playerInput,

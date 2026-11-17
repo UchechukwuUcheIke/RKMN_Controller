@@ -58,7 +58,7 @@ end
 
 local function attemptExitToIdleState(stateMachine: StateMachine): boolean
     local context = stateMachine.Context
-    local isRising: boolean = context.PhysicsResolver.Velocity.Y > 0
+    local isRising: boolean = context.PhysicsResolver:GetVelocity().Y > 0
     if isRising or not context.CollisionQuery:IsGrounded() then
         return false
     end
@@ -91,7 +91,7 @@ local function attemptExitToFreefallState(stateMachine: StateMachine): boolean
         return false
     end
 
-    if stateMachine.Context.PhysicsResolver.Velocity.Y > 0 then
+    if stateMachine.Context.PhysicsResolver:GetVelocity().Y > 0 then
         return false
     end
 
@@ -117,7 +117,7 @@ end
 
 local function attemptCutJumpEarly(stateMachine: StateMachine): ()
     local context = stateMachine.Context
-    if context.PlayerInput:IsHoldingJump() or context.PhysicsResolver.Velocity.Y <= 0 then
+    if context.PlayerInput:IsHoldingJump() or context.PhysicsResolver:GetVelocity().Y <= 0 then
         return
     end
 

@@ -61,7 +61,7 @@ function PlayerCombatSetup.Setup(controller: RKMNControllerFacade, character: Mo
 	local weapon = MegaBuster.new(projectiles, Players.LocalPlayer.UserId, Team.Player, function()
 		local rootPosition = (character.PrimaryPart :: BasePart).Position
 		local center = Vector2.new(rootPosition.X, rootPosition.Y)
-		local direction = controller.PhysicsResolver.FacingDirection
+		local direction = controller.PhysicsResolver:GetFacingDirection()
 		local muzzle = center + Vector2.new(MUZZLE_OFFSET.X * direction.X, MUZZLE_OFFSET.Y)
 		-- Against a wall the muzzle can be inside it, where the shot would fly through.
 		return {
