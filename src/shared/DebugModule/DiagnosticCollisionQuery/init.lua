@@ -10,7 +10,8 @@ local DebugFolder = script.Parent
 local DebugDataFolder = DebugFolder.Data
 local CollisionQuerySnapshot = require(DebugDataFolder.CollisionQuerySnapshot)
 local Direction = require(ReplicatedStorage.Data.Direction)
-local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
+local CollisionBody = require(RKMNControllerFolder.CollisionBody)
+local CollisionTolerances = require(RKMNControllerFolder.CollisionTolerances)
 
 type SweepResolution = SweepResolution.SweepResolution
 type Direction = Direction.Direction
@@ -19,7 +20,7 @@ type CollisionQueryData = CollisionQuery.CollisionQueryData
 type CollisionQueryPrototype = CollisionQuery.CollisionQueryPrototype
 type CollisionQuerySnapshot = CollisionQuerySnapshot.CollisionQuerySnapshot
 type CollisionQuery = CollisionQuery.CollisionQuery
-type CollisionConstants = CollisionConstants.CollisionConstants
+type CollisionBody = CollisionBody.CollisionBody
 
 local DiagnosticCollisionQuery = setmetatable({}, { __index = CollisionQuery })
 DiagnosticCollisionQuery.__index = DiagnosticCollisionQuery
@@ -35,8 +36,8 @@ export type DiagnosticCollisionQuery = typeof(setmetatable(
     {} :: DiagnosticCollisionQueryData,
     {} :: DiagnosticCollisionQueryPrototype))
 
-function DiagnosticCollisionQuery.new(world: WorldRoot, characterModel: Model, collisionConstants: CollisionConstants): DiagnosticCollisionQuery
-	local self = CollisionQuery.new(world, characterModel, collisionConstants) :: any
+function DiagnosticCollisionQuery.new(world: WorldRoot, characterModel: Model, collisionBody: CollisionBody): DiagnosticCollisionQuery
+	local self = CollisionQuery.new(world, characterModel, collisionBody) :: any
 	setmetatable(self, DiagnosticCollisionQuery)
 	self.IsRecording = false
 	self.Snapshot = CollisionQuerySnapshot.new()
@@ -68,12 +69,12 @@ function DiagnosticCollisionQuery.UpdateState(self: DiagnosticCollisionQuery)
 	local super: CollisionQuery = (self :: any) :: CollisionQuery
 	CollisionQuery.UpdateState(super)
 
-	local constants: CollisionConstants = super._constants
-	local castDistance: number = constants.GroundCheckDistance + constants.SkinWidth
+	local body: CollisionBody = super._body
+	local castDistance: number = CollisionTolerances.GroundCheckDistance + CollisionTolerances.SkinWidth
 	self.Snapshot.GroundContactCheck = DiagnosticCastRecord.fromBlockcast(
 		super:IsGrounded(),
-		constants:GetFootCFrame(),
-		constants.FootSize,
+		body:GetFootCFrame(),
+		body.FootSize,
 		Vector3.new(0, -castDistance, 0)
 	)
 end

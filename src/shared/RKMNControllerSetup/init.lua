@@ -10,7 +10,7 @@ local RKMNController = require(RKMNControllerFolder.RKMNController)
 local KinematicWorld = require(ReplicatedStorage.KinematicWorld)
 local RunServiceAdapter = require(ReplicatedStorage.RunServiceAdapter)
 local RenderPriorities = require(ReplicatedStorage.RenderPriorities)
-local CollisionConstants = require(RKMNControllerFolder.CollisionConstants)
+local CollisionBody = require(RKMNControllerFolder.CollisionBody)
 local MovementStats = require(RKMNControllerFolder.MovementStats)
 local TimerRegistry = require(RKMNControllerFolder.TimerRegistry)
 local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
@@ -57,7 +57,6 @@ local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
 local StateMachineContext = require(RKMNControllerFolder.FSMContext)
 local DiagnosticControllerQuery = require(DebugModuleFolder.DiagnosticCollisionQuery)
 
-type CollisionConstants = CollisionConstants.CollisionConstants
 type TimerRegistry = TimerRegistry.TimerRegistry
 type CollisionQuery = CollisionQuery.CollisionQuery
 type InputActionMerger = InputActionMerger.InputActionMerger
@@ -124,15 +123,15 @@ end
 
 local function makeDebugDependencies(character: Model, inputActionMerger: InputActionMerger): RKMNControllerDependencies
     local world = game.Workspace
-    local constants = CollisionConstants.new(character)
-    local collisionQuery = DiagnosticControllerQuery.new(world, character, constants)
+    local body = CollisionBody.new(character)
+    local collisionQuery = DiagnosticControllerQuery.new(world, character, body)
     return makeDependencies(character, collisionQuery, inputActionMerger)
 end
 
 local function _makeProdDependencies(character: Model, inputActionMerger: InputActionMerger): RKMNControllerDependencies
     local world = game.Workspace
-    local constants = CollisionConstants.new(character)
-    local collisionQuery = CollisionQuery.new(world, character, constants)
+    local body = CollisionBody.new(character)
+    local collisionQuery = CollisionQuery.new(world, character, body)
     return makeDependencies(character, collisionQuery, inputActionMerger)
 end
 
