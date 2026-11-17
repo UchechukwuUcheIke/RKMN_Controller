@@ -15,7 +15,7 @@ local KinematicWorld = require(ReplicatedStorage.KinematicWorld)
 
 local TimerRegistry = require(RKMNControllerFolder.TimerRegistry)
 local PlayerInputFacade = require(ReplicatedStorage.PlayerInput.PlayerInputFacade)
-local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
+local CollisionQuery = require(RKMNControllerFolder.CollisionQuery.CollisionQueryFacade)
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
 local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
 

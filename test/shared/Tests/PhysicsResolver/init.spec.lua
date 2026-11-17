@@ -4,7 +4,7 @@ local RKMNControllerFolder = ReplicatedStorage:WaitForChild("RKMNController")
 local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver)
 local Direction = require(ReplicatedStorage.Data.Direction)
 local MovementStats = require(RKMNControllerFolder.MovementStats)
-local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
+local CollisionQuery = require(RKMNControllerFolder.CollisionQuery.CollisionQueryFacade)
 local SweepResolution = require(RKMNControllerFolder.SweepResolution)
 local MockUtils = require(script.Parent.Parent.Parent.TestUtils.MockUtils)
 
@@ -19,7 +19,7 @@ local jest = JestGlobals.jest
 local createMockClass = MockUtils.createMockClass
 
 type MovementStats = MovementStats.MovementStats
-type CollisionQuery = CollisionQuery.CollisionQuery
+type CollisionQuery = CollisionQuery.CollisionQueryFacade
 type SweepResolution = SweepResolution.SweepResolution
 type MethodMap = MockUtils.MethodMap
 type MockResult<T> = MockUtils.MockResult<T>

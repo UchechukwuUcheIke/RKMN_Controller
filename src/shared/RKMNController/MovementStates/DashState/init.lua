@@ -38,7 +38,7 @@ end
 
 local function attemptExitToIdleState(stateMachine: StateMachine)
 	local context = stateMachine.Context
-	local lastSweep = context.CollisionQuery.LastSweepResolution
+	local lastSweep = context.CollisionQuery:GetLastSweepResolution()
 	local isBlocked: boolean = lastSweep ~= nil and (lastSweep.SurfaceHits.HitWall or lastSweep.SurfaceHits.HitLedge)
 	local isDashFinished: boolean = context.TimerRegistry:IsComplete(TimerID.Dash)
 	local hasReleasedDash: boolean = not context.PlayerInput:IsHoldingDash()

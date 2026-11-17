@@ -4,7 +4,7 @@ RKMNController.__index = RKMNController
 
 local RKMNControllerFolder = script.Parent
 local TimerRegistry = require(RKMNControllerFolder.TimerRegistry)
-local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
+local CollisionQueryFacade = require(RKMNControllerFolder.CollisionQuery.CollisionQueryFacade)
 local PlayerInputFacade = require(game:GetService("ReplicatedStorage").PlayerInput.PlayerInputFacade)
 local FSMContext = require(RKMNControllerFolder.FSMContext)
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
@@ -14,7 +14,7 @@ local MovementState = require(RKMNControllerFolder.MovementStateIDs)
 
 
 type TimerRegistry = TimerRegistry.TimerRegistry
-type CollisionQuery = CollisionQuery.CollisionQuery
+type CollisionQueryFacade = CollisionQueryFacade.CollisionQueryFacade
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type MovementStateMachine = MovementStateMachine.MovementStateMachine
 type PhysicsResolver = PhysicsResolver.PhysicsResolver
@@ -24,7 +24,7 @@ type RKMNControllerData = {
     _inputEnabled: boolean,
 
     TimerRegistry: TimerRegistry,
-    CollisionQuery: CollisionQuery,
+    CollisionQuery: CollisionQueryFacade,
     PlayerInput: PlayerInputFacade,
     MovementStateMachine: MovementStateMachine,
     PhysicsResolver: PhysicsResolver,
@@ -35,7 +35,7 @@ type FSMContextDependencies = FSMContext.FSMContextDependencies
 
 export type RKMNControllerDependencies = {
     TimerRegistry: TimerRegistry,
-    CollisionQuery: CollisionQuery,
+    CollisionQuery: CollisionQueryFacade,
     PlayerInput: PlayerInputFacade,
     MovementStateMachine: MovementStateMachine,
     PhysicsResolver: PhysicsResolver

@@ -2,84 +2,100 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RKMNControllerFolder = ReplicatedStorage.RKMNController
-local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
+local CollisionQueryFacade = require(RKMNControllerFolder.CollisionQuery.CollisionQueryFacade)
 local SweepResolution = require(RKMNControllerFolder.SweepResolution)
 local DiagnosticCastRecord = require(RKMNControllerFolder.DiagnosticCastRecord)
-
-local DebugFolder = script.Parent
-local DebugDataFolder = DebugFolder.Data
-local CollisionQuerySnapshot = require(DebugDataFolder.CollisionQuerySnapshot)
-local Direction = require(ReplicatedStorage.Data.Direction)
 local CollisionBody = require(RKMNControllerFolder.CollisionBody)
 local CollisionTolerances = require(RKMNControllerFolder.CollisionTolerances)
+
+local DebugFolder = script.Parent
+local CollisionQuerySnapshot = require(DebugFolder.Data.CollisionQuerySnapshot)
+local Direction = require(ReplicatedStorage.Data.Direction)
 
 type SweepResolution = SweepResolution.SweepResolution
 type Direction = Direction.Direction
 type DiagnosticCastRecord = DiagnosticCastRecord.DiagnosticCastRecord
-type CollisionQueryData = CollisionQuery.CollisionQueryData
-type CollisionQueryPrototype = CollisionQuery.CollisionQueryPrototype
+type CollisionQueryFacade = CollisionQueryFacade.CollisionQueryFacade
 type CollisionQuerySnapshot = CollisionQuerySnapshot.CollisionQuerySnapshot
-type CollisionQuery = CollisionQuery.CollisionQuery
 type CollisionBody = CollisionBody.CollisionBody
 type CollisionTolerances = CollisionTolerances.CollisionTolerances
 
-local DiagnosticCollisionQuery = setmetatable({}, { __index = CollisionQuery })
+-- Decorates a CollisionQueryFacade: forwards every call to it and records what was queried into Snapshot.
+local DiagnosticCollisionQuery = {}
 DiagnosticCollisionQuery.__index = DiagnosticCollisionQuery
 DiagnosticCollisionQuery.ClassName = "DiagnosticCollisionQuery"
 
-type DiagnosticCollisionQueryData = CollisionQueryData & {
+type DiagnosticCollisionQueryData = {
 	Snapshot: CollisionQuerySnapshot,
+	_inner: CollisionQueryFacade,
+	_body: CollisionBody,
+	_tolerances: CollisionTolerances,
 }
 
-type DiagnosticCollisionQueryPrototype = CollisionQueryPrototype & typeof(DiagnosticCollisionQuery)
+type DiagnosticCollisionQueryPrototype = typeof({__index = DiagnosticCollisionQuery})
 
 export type DiagnosticCollisionQuery = typeof(setmetatable(
-    {} :: DiagnosticCollisionQueryData,
-    {} :: DiagnosticCollisionQueryPrototype))
+	{} :: DiagnosticCollisionQueryData,
+	{} :: DiagnosticCollisionQueryPrototype))
 
-function DiagnosticCollisionQuery.new(world: WorldRoot, characterModel: Model, collisionBody: CollisionBody, collisionTolerances: CollisionTolerances): DiagnosticCollisionQuery
-	local self = CollisionQuery.new(world, characterModel, collisionBody, collisionTolerances) :: any
-	setmetatable(self, DiagnosticCollisionQuery)
-	self.IsRecording = false
-	self.Snapshot = CollisionQuerySnapshot.new()
-	
-	return self :: DiagnosticCollisionQuery
+function DiagnosticCollisionQuery.new(
+	inner: CollisionQueryFacade,
+	collisionBody: CollisionBody,
+	collisionTolerances: CollisionTolerances): DiagnosticCollisionQuery
+
+	local data: DiagnosticCollisionQueryData = {
+		Snapshot = CollisionQuerySnapshot.new(),
+		_inner = inner,
+		_body = collisionBody,
+		_tolerances = collisionTolerances,
+	}
+
+	return setmetatable(data, DiagnosticCollisionQuery)
 end
 
-function DiagnosticCollisionQuery.GetSweepResolution(self: DiagnosticCollisionQuery, desiredDelta: Vector3): SweepResolution
-	local super: CollisionQuery = (self :: any) :: CollisionQuery
-	local sweepResolution: SweepResolution = CollisionQuery.GetSweepResolution(super, desiredDelta)
-	
-	self.Snapshot.SweepResolution = sweepResolution
+function DiagnosticCollisionQuery.UpdateState(self: DiagnosticCollisionQuery): ()
+	self.Snapshot:Clear()
+	self._inner:UpdateState()
 
-	return sweepResolution
+	local castDistance: number = self._tolerances.GroundCheckDistance + self._tolerances.SkinWidth
+	self.Snapshot.GroundContactCheck = DiagnosticCastRecord.fromBlockcast(
+		self._inner:IsGrounded(),
+		self._body:GetFootCFrame(),
+		self._body:GetFootSize(),
+		Vector3.new(0, -castDistance, 0)
+	)
+end
+
+function DiagnosticCollisionQuery.IsGrounded(self: DiagnosticCollisionQuery): boolean
+	return self._inner:IsGrounded()
 end
 
 function DiagnosticCollisionQuery.CheckWallContact(self: DiagnosticCollisionQuery, direction: Direction): DiagnosticCastRecord
-	local super: CollisionQuery = (self :: any) :: CollisionQuery
-	local wallContactHitResult: DiagnosticCastRecord = CollisionQuery.CheckWallContact(super, direction)
-
+	local wallContactHitResult: DiagnosticCastRecord = self._inner:CheckWallContact(direction)
 	self.Snapshot.WallContactCheck = wallContactHitResult
 
 	return wallContactHitResult
 end
 
-function DiagnosticCollisionQuery.UpdateState(self: DiagnosticCollisionQuery)
-	self.Snapshot:Clear()
-
-	local super: CollisionQuery = (self :: any) :: CollisionQuery
-	CollisionQuery.UpdateState(super)
-
-	local body: CollisionBody = super._body
-	local tolerances: CollisionTolerances = super._tolerances
-	local castDistance: number = tolerances.GroundCheckDistance + tolerances.SkinWidth
-	self.Snapshot.GroundContactCheck = DiagnosticCastRecord.fromBlockcast(
-		super:IsGrounded(),
-		body:GetFootCFrame(),
-		body:GetFootSize(),
-		Vector3.new(0, -castDistance, 0)
-	)
+function DiagnosticCollisionQuery.SetLedgeGuard(self: DiagnosticCollisionQuery, enabled: boolean): ()
+	self._inner:SetLedgeGuard(enabled)
 end
 
-return DiagnosticCollisionQuery
+function DiagnosticCollisionQuery.GetSweepResolution(self: DiagnosticCollisionQuery, desiredDelta: Vector3): SweepResolution
+	local sweepResolution: SweepResolution = self._inner:GetSweepResolution(desiredDelta)
+	self.Snapshot.SweepResolution = sweepResolution
 
+	return sweepResolution
+end
+
+function DiagnosticCollisionQuery.GetLastSweepResolution(self: DiagnosticCollisionQuery): SweepResolution?
+	return self._inner:GetLastSweepResolution()
+end
+
+function DiagnosticCollisionQuery.Destroy(self: DiagnosticCollisionQuery): ()
+	self._inner:Destroy()
+end
+
+table.freeze(DiagnosticCollisionQuery)
+
+return DiagnosticCollisionQuery

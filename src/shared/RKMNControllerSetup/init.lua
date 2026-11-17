@@ -14,7 +14,7 @@ local CollisionBody = require(RKMNControllerFolder.CollisionBody)
 local CollisionTolerances = require(RKMNControllerFolder.CollisionTolerances)
 local MovementStats = require(RKMNControllerFolder.MovementStats)
 local TimerRegistry = require(RKMNControllerFolder.TimerRegistry)
-local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
+local CollisionQueryFacade = require(RKMNControllerFolder.CollisionQuery.CollisionQueryFacade)
 local PlayerInputFolder = ReplicatedStorage.PlayerInput
 local InputAction = require(PlayerInputFolder.InputAction)
 local InputMapper = require(PlayerInputFolder.InputMapper)
@@ -59,7 +59,7 @@ local StateMachineContext = require(RKMNControllerFolder.FSMContext)
 local DiagnosticControllerQuery = require(DebugModuleFolder.DiagnosticCollisionQuery)
 
 type TimerRegistry = TimerRegistry.TimerRegistry
-type CollisionQuery = CollisionQuery.CollisionQuery
+type CollisionQueryFacade = CollisionQueryFacade.CollisionQueryFacade
 type InputActionMerger = InputActionMerger.InputActionMerger
 type DeviceDetector = DeviceDetector.DeviceDetector
 type BugReportPresenter = BugReportPresenter.BugReportPresenter
@@ -96,7 +96,7 @@ local function mountScreenGui(): ScreenGui
     return screenGui
 end
 
-local function makeDependencies(character: Model, collisionQuery: CollisionQuery, inputActionMerger: InputActionMerger): RKMNControllerDependencies
+local function makeDependencies(character: Model, collisionQuery: CollisionQueryFacade, inputActionMerger: InputActionMerger): RKMNControllerDependencies
     local movementStats = MovementStats.new()
     local timerRegistry = TimerRegistry.new()
     local playerInput = PlayerInputFacade.new(timerRegistry, inputActionMerger)
@@ -125,14 +125,16 @@ end
 local function makeDebugDependencies(character: Model, inputActionMerger: InputActionMerger): RKMNControllerDependencies
     local world = game.Workspace
     local body = CollisionBody.new(character)
-    local collisionQuery = DiagnosticControllerQuery.new(world, character, body, CollisionTolerances.Default)
-    return makeDependencies(character, collisionQuery, inputActionMerger)
+    local collisionQuery = CollisionQueryFacade.new(world, character, body, CollisionTolerances.Default)
+    local diagnosticQuery = DiagnosticControllerQuery.new(collisionQuery, body, CollisionTolerances.Default)
+    -- The decorator exposes the facade's whole API, but is a different class, so the type checker needs the cast.
+    return makeDependencies(character, (diagnosticQuery :: any) :: CollisionQueryFacade, inputActionMerger)
 end
 
 local function _makeProdDependencies(character: Model, inputActionMerger: InputActionMerger): RKMNControllerDependencies
     local world = game.Workspace
     local body = CollisionBody.new(character)
-    local collisionQuery = CollisionQuery.new(world, character, body, CollisionTolerances.Default)
+    local collisionQuery = CollisionQueryFacade.new(world, character, body, CollisionTolerances.Default)
     return makeDependencies(character, collisionQuery, inputActionMerger)
 end
 

@@ -5,11 +5,11 @@ PhysicsResolver.__index = PhysicsResolver
 local RKMNControllerFolder = script.Parent
 local SweepResolution = require(RKMNControllerFolder.SweepResolution)
 local MovementStats = require(RKMNControllerFolder.MovementStats)
-local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
+local CollisionQueryFacade = require(RKMNControllerFolder.CollisionQuery.CollisionQueryFacade)
 local Direction = require(game:GetService("ReplicatedStorage").Data.Direction)
 
 type MovementStats = MovementStats.MovementStats
-type CollisionQuery = CollisionQuery.CollisionQuery
+type CollisionQueryFacade = CollisionQueryFacade.CollisionQueryFacade
 type Direction = Direction.Direction
 type SweepResolution = SweepResolution.SweepResolution
 
@@ -18,7 +18,7 @@ type PhysicsResolverData = {
 		_rootPart: BasePart,
         _humanoid: Humanoid,
         _movementStats: MovementStats,
-        _collisionQuery: CollisionQuery,
+        _collisionQuery: CollisionQueryFacade,
         Velocity: Vector3,
         -- I'll bite for now
         FacingDirection: Direction,
@@ -40,7 +40,7 @@ local function validateCharacterModel(characterModel: Model): ()
     assert(characterModel:FindFirstChild("Humanoid"))
 end
 
-function PhysicsResolver.new(characterModel: Model, movementStats: MovementStats, collisionQuery: CollisionQuery): PhysicsResolver
+function PhysicsResolver.new(characterModel: Model, movementStats: MovementStats, collisionQuery: CollisionQueryFacade): PhysicsResolver
     validateCharacterModel(characterModel)
 
 	local self = setmetatable({}, PhysicsResolver)
