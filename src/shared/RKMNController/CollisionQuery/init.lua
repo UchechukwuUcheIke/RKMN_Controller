@@ -12,6 +12,7 @@ local SweepResolution = require(RKMNControllerFolder.SweepResolution)
 local SurfaceHits = require(RKMNControllerFolder.SurfaceHits)
 
 type CollisionBody = CollisionBody.CollisionBody
+type CollisionTolerances = CollisionTolerances.CollisionTolerances
 type Direction = Direction.Direction
 type SweepResolution = SweepResolution.SweepResolution
 type DiagnosticCastRecord = DiagnosticCastRecord.DiagnosticCastRecord
@@ -30,6 +31,7 @@ export type CollisionQueryData = {
 	_characterModel: Model,
 	_primaryPart: BasePart,
 	_body: CollisionBody,
+	_tolerances: CollisionTolerances,
 	_maxSlopeDot: number,
 	_raycastParams: RaycastParams,
 	_isGrounded: boolean,
@@ -49,7 +51,7 @@ function createRaycastParams(characterModel: Model): RaycastParams
 	return raycastParams
 end
 
-function CollisionQuery.new(world: WorldRoot, characterModel: Model, collisionBody: CollisionBody): CollisionQuery
+function CollisionQuery.new(world: WorldRoot, characterModel: Model, collisionBody: CollisionBody, collisionTolerances: CollisionTolerances): CollisionQuery
 	local primaryPart = characterModel.PrimaryPart
 	assert(primaryPart, "CharacterModel must have a PrimaryPart set before CollisionQuery.new()")
 
@@ -65,7 +67,8 @@ function CollisionQuery.new(world: WorldRoot, characterModel: Model, collisionBo
 		_characterModel = characterModel,
 		_primaryPart = primaryPart,
 		_body = collisionBody,
-		_maxSlopeDot = math.cos(math.rad(CollisionTolerances.MaxSlopeAngle)),
+		_tolerances = collisionTolerances,
+		_maxSlopeDot = math.cos(math.rad(collisionTolerances.MaxSlopeAngle)),
 		_raycastParams = raycastParams,
 	}, CollisionQuery) :: CollisionQuery
 
@@ -79,7 +82,7 @@ end
 function CollisionQuery._raycastToGround(self: CollisionQuery, offset: Vector3?): RaycastResult<BasePart>?
 	local origin = self._body:GetFootCFrame() + (offset or Vector3.zero)
     local footSize = self._body.FootSize
-	local castDistance = CollisionTolerances.GroundCheckDistance + CollisionTolerances.SkinWidth
+	local castDistance = self._tolerances.GroundCheckDistance + self._tolerances.SkinWidth
 
 	local raycastResult: RaycastResult<BasePart>? = self._world:Blockcast(
 		origin,
@@ -128,7 +131,7 @@ function CollisionQuery.CheckWallContact(
 	direction: Direction): DiagnosticCastRecord
 
 	local halfWidth: number = self._body:GetHalfExtentAlong(direction)
-	local castDistance: number = CollisionTolerances.WallCheckDistance + CollisionTolerances.SkinWidth
+	local castDistance: number = self._tolerances.WallCheckDistance + self._tolerances.SkinWidth
 	local origin: Vector3 = self._body:GetBodyCFrame().Position
 
 	local rayOrigin: Vector3 = origin + direction * halfWidth
@@ -140,7 +143,7 @@ function CollisionQuery.CheckWallContact(
 end
 
 function CollisionQuery._clampSweepResolution(self: CollisionQuery, castRecord: DiagnosticCastRecord, velocityDelta: Vector3, raycastResult: RaycastResult<BasePart>)
-	local safeDistance = math.max(raycastResult.Distance - CollisionTolerances.SkinWidth, 0)
+	local safeDistance = math.max(raycastResult.Distance - self._tolerances.SkinWidth, 0)
 	local direction = velocityDelta.Unit
 	local safeDelta = direction * safeDistance
 

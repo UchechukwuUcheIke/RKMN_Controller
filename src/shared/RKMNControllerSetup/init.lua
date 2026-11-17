@@ -11,6 +11,7 @@ local KinematicWorld = require(ReplicatedStorage.KinematicWorld)
 local RunServiceAdapter = require(ReplicatedStorage.RunServiceAdapter)
 local RenderPriorities = require(ReplicatedStorage.RenderPriorities)
 local CollisionBody = require(RKMNControllerFolder.CollisionBody)
+local CollisionTolerances = require(RKMNControllerFolder.CollisionTolerances)
 local MovementStats = require(RKMNControllerFolder.MovementStats)
 local TimerRegistry = require(RKMNControllerFolder.TimerRegistry)
 local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
@@ -124,14 +125,14 @@ end
 local function makeDebugDependencies(character: Model, inputActionMerger: InputActionMerger): RKMNControllerDependencies
     local world = game.Workspace
     local body = CollisionBody.new(character)
-    local collisionQuery = DiagnosticControllerQuery.new(world, character, body)
+    local collisionQuery = DiagnosticControllerQuery.new(world, character, body, CollisionTolerances.Default)
     return makeDependencies(character, collisionQuery, inputActionMerger)
 end
 
 local function _makeProdDependencies(character: Model, inputActionMerger: InputActionMerger): RKMNControllerDependencies
     local world = game.Workspace
     local body = CollisionBody.new(character)
-    local collisionQuery = CollisionQuery.new(world, character, body)
+    local collisionQuery = CollisionQuery.new(world, character, body, CollisionTolerances.Default)
     return makeDependencies(character, collisionQuery, inputActionMerger)
 end
 

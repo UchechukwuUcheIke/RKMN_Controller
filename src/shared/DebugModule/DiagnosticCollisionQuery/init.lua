@@ -21,6 +21,7 @@ type CollisionQueryPrototype = CollisionQuery.CollisionQueryPrototype
 type CollisionQuerySnapshot = CollisionQuerySnapshot.CollisionQuerySnapshot
 type CollisionQuery = CollisionQuery.CollisionQuery
 type CollisionBody = CollisionBody.CollisionBody
+type CollisionTolerances = CollisionTolerances.CollisionTolerances
 
 local DiagnosticCollisionQuery = setmetatable({}, { __index = CollisionQuery })
 DiagnosticCollisionQuery.__index = DiagnosticCollisionQuery
@@ -36,8 +37,8 @@ export type DiagnosticCollisionQuery = typeof(setmetatable(
     {} :: DiagnosticCollisionQueryData,
     {} :: DiagnosticCollisionQueryPrototype))
 
-function DiagnosticCollisionQuery.new(world: WorldRoot, characterModel: Model, collisionBody: CollisionBody): DiagnosticCollisionQuery
-	local self = CollisionQuery.new(world, characterModel, collisionBody) :: any
+function DiagnosticCollisionQuery.new(world: WorldRoot, characterModel: Model, collisionBody: CollisionBody, collisionTolerances: CollisionTolerances): DiagnosticCollisionQuery
+	local self = CollisionQuery.new(world, characterModel, collisionBody, collisionTolerances) :: any
 	setmetatable(self, DiagnosticCollisionQuery)
 	self.IsRecording = false
 	self.Snapshot = CollisionQuerySnapshot.new()
@@ -70,7 +71,8 @@ function DiagnosticCollisionQuery.UpdateState(self: DiagnosticCollisionQuery)
 	CollisionQuery.UpdateState(super)
 
 	local body: CollisionBody = super._body
-	local castDistance: number = CollisionTolerances.GroundCheckDistance + CollisionTolerances.SkinWidth
+	local tolerances: CollisionTolerances = super._tolerances
+	local castDistance: number = tolerances.GroundCheckDistance + tolerances.SkinWidth
 	self.Snapshot.GroundContactCheck = DiagnosticCastRecord.fromBlockcast(
 		super:IsGrounded(),
 		body:GetFootCFrame(),

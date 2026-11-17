@@ -14,7 +14,6 @@ local CollisionQuery = require(RKMNControllerFolder.CollisionQuery)
 local CollisionBody = require(RKMNControllerFolder.CollisionBody)
 local Direction = require(ReplicatedStorage.Data.Direction)
 
--- The tolerances are fixed: ground and wall check distance 0.05, skin width 0.1, max slope angle 90.
 local function makeBody(character)
 	local body = CollisionBody.new(character)
 
@@ -23,6 +22,13 @@ local function makeBody(character)
 
 	return body
 end
+
+local tolerances = table.freeze({
+	GroundCheckDistance = 0.5,
+	WallCheckDistance = 0.5,
+	SkinWidth = 0.1,
+	MaxSlopeAngle = 45,
+})
 
 describe("CollisionQuery", function()
 	local world
@@ -83,7 +89,7 @@ describe("CollisionQuery", function()
 		world = MockWorld.new()
 		character = world:SpawnCharacter()
 		body = makeBody(character)
-		query = CollisionQuery.new(world, character, body)
+		query = CollisionQuery.new(world, character, body, tolerances)
 	end)
 
 	afterEach(function()
@@ -102,6 +108,10 @@ describe("CollisionQuery", function()
 			expect(query.FloorNormal == Vector3.zero).toBe(true)
 		end)
 
+		it("should precompute the max slope dot from the max slope angle", function()
+			expect(query._maxSlopeDot).toBeCloseTo(math.cos(math.rad(45)), 5)
+		end)
+
 		it("should exclude the character from the raycast filter", function()
 			local params = query._raycastParams
 
@@ -113,7 +123,7 @@ describe("CollisionQuery", function()
 			character.PrimaryPart = nil
 
 			expect(function()
-				CollisionQuery.new(world, character, body)
+				CollisionQuery.new(world, character, body, tolerances)
 			end).toThrow("PrimaryPart")
 		end)
 	end)
@@ -128,7 +138,7 @@ describe("CollisionQuery", function()
 		end)
 
 		it("should be grounded on a floor within check distance", function()
-			local floor = spawnFloor(-1.03)
+			local floor = spawnFloor(-1.3)
 
 			query:UpdateState()
 
@@ -138,8 +148,8 @@ describe("CollisionQuery", function()
 		end)
 
 		it("should include the skin width in the ground check distance", function()
-			-- Gap of 0.1: beyond GroundCheckDistance (0.05) but inside GroundCheckDistance + SkinWidth (0.15)
-			spawnFloor(-1.1)
+			-- Gap of 0.55: beyond GroundCheckDistance (0.5) but inside GroundCheckDistance + SkinWidth (0.6)
+			spawnFloor(-1.55)
 
 			query:UpdateState()
 
@@ -147,8 +157,8 @@ describe("CollisionQuery", function()
 		end)
 
 		it("should not be grounded when the floor is beyond check distance plus skin width", function()
-			-- Gap of 0.2 > 0.15
-			spawnFloor(-1.2)
+			-- Gap of 0.7 > 0.6
+			spawnFloor(-1.7)
 
 			query:UpdateState()
 
@@ -157,7 +167,7 @@ describe("CollisionQuery", function()
 		end)
 
 		it("should be grounded on a slope below the max slope angle", function()
-			local slope = spawnSlab(Vector3.new(0, -1.1, 0), 30)
+			local slope = spawnSlab(Vector3.new(0, -1.4, 0), 30)
 
 			query:UpdateState()
 
@@ -167,10 +177,20 @@ describe("CollisionQuery", function()
 			expect(query.FloorNormal.Y).toBeCloseTo(math.cos(math.rad(30)), 3)
 		end)
 
+		it("should not be grounded on a slope steeper than the max slope angle", function()
+			spawnSlab(Vector3.new(0, -1.4, 0), 70)
+
+			query:UpdateState()
+
+			expect(query.IsGrounded).toBe(false)
+			expect(query.CurrentFloorPart).toBeNil()
+			expect(query.FloorNormal == Vector3.zero).toBe(true)
+		end)
+
 		it("should ignore parts that belong to the character model", function()
 			local accessory = world:SpawnPart({
 				Size = Vector3.new(4, 1, 4),
-				Position = Vector3.new(0, -1.53, 0), -- top at -1.03, would be in range
+				Position = Vector3.new(0, -1.8, 0), -- top at -1.3, would be in range
 			})
 			accessory.Parent = character
 
@@ -180,7 +200,7 @@ describe("CollisionQuery", function()
 		end)
 
 		it("should clear grounded state when the floor goes away", function()
-			local floor = spawnFloor(-1.03)
+			local floor = spawnFloor(-1.3)
 			query:UpdateState()
 			expect(query.IsGrounded).toBe(true)
 
@@ -194,12 +214,12 @@ describe("CollisionQuery", function()
 		end)
 
 		it("should track a new floor part when the floor changes", function()
-			local platformA = spawnFloor(-1.03)
+			local platformA = spawnFloor(-1.3)
 			query:UpdateState()
 			expect(query.CurrentFloorPart).toBe(platformA)
 
 			platformA.Position = Vector3.new(0, -100, 0)
-			local platformB = spawnFloor(-1.04)
+			local platformB = spawnFloor(-1.4)
 			query:UpdateState()
 
 			expect(query.IsGrounded).toBe(true)
@@ -207,12 +227,12 @@ describe("CollisionQuery", function()
 		end)
 
 		it("should update the floor normal when moving from a flat floor to a slope", function()
-			local floor = spawnFloor(-1.03)
+			local floor = spawnFloor(-1.3)
 			query:UpdateState()
 			expectVector(query.FloorNormal, Vector3.yAxis)
 
 			floor.Position = Vector3.new(0, -100, 0)
-			spawnSlab(Vector3.new(0, -1.1, 0), 30)
+			spawnSlab(Vector3.new(0, -1.4, 0), 30)
 			query:UpdateState()
 
 			expect(query.FloorNormal.Y).toBeCloseTo(math.cos(math.rad(30)), 3)
@@ -228,19 +248,19 @@ describe("CollisionQuery", function()
 		end)
 
 		it("should detect a wall on the right", function()
-			spawnWall(1.05)
+			spawnWall(1.3)
 
 			expect(hasContact(query:CheckWallContact(Direction.Right))).toBe(true)
 		end)
 
 		it("should detect a wall on the left", function()
-			spawnWall(-1.05)
+			spawnWall(-1.3)
 
 			expect(hasContact(query:CheckWallContact(Direction.Left))).toBe(true)
 		end)
 
 		it("should only check the requested direction", function()
-			spawnWall(1.05)
+			spawnWall(1.3)
 
 			expect(hasContact(query:CheckWallContact(Direction.Left))).toBe(false)
 		end)
@@ -252,28 +272,34 @@ describe("CollisionQuery", function()
 		end)
 
 		it("should include the skin width in the wall check distance", function()
-			-- Gap of 0.1 from the ray origin: beyond WallCheckDistance (0.05), inside +SkinWidth (0.15)
-			spawnWall(1.1)
+			-- Gap of 0.55 from the ray origin: beyond WallCheckDistance (0.5), inside +SkinWidth (0.6)
+			spawnWall(1.55)
 
 			expect(hasContact(query:CheckWallContact(Direction.Right))).toBe(true)
 		end)
 
 		it("should return no contact for Direction.None", function()
-			spawnWall(1.05)
-			spawnWall(-1.05)
+			spawnWall(1.3)
+			spawnWall(-1.3)
 
 			expect(hasContact(query:CheckWallContact(Direction.None))).toBe(false)
 		end)
 
 		it("should not treat a walkable slope as a wall", function()
-			-- Gentle slope whose top face crosses the +X ray at x = 1.05
-			spawnSlab(Vector3.new(1.05, 0, 0), 30)
+			-- Gentle slope whose top face crosses the +X ray at x = 1.3
+			spawnSlab(Vector3.new(1.3, 0, 0), 30)
 
 			expect(hasContact(query:CheckWallContact(Direction.Right))).toBe(false)
 		end)
 
+		it("should treat a too-steep slope as a wall", function()
+			spawnSlab(Vector3.new(1.3, 0, 0), 70)
+
+			expect(hasContact(query:CheckWallContact(Direction.Right))).toBe(true)
+		end)
+
 		it("should ignore parts that belong to the character model", function()
-			local accessory = spawnWall(1.05)
+			local accessory = spawnWall(1.3)
 			accessory.Parent = character
 
 			expect(hasContact(query:CheckWallContact(Direction.Right))).toBe(false)
@@ -282,7 +308,7 @@ describe("CollisionQuery", function()
 
 	describe("GetSweepResolution", function()
 		it("should return the default resolution for a zero delta", function()
-			spawnWall(1.05)
+			spawnWall(1.3)
 
 			local resolution = query:GetSweepResolution(Vector3.zero)
 
@@ -360,6 +386,16 @@ describe("CollisionQuery", function()
 			expect(resolution.safeDelta.Magnitude).toBeLessThan(delta.Magnitude)
 		end)
 
+		it("should flag hitWall when sweeping down onto a too-steep slope", function()
+			spawnSlab(Vector3.new(0, -2, 0), 70)
+			local delta = Vector3.new(0, -3, 0)
+
+			local resolution = query:GetSweepResolution(delta)
+
+			expect(resolution.hitFloor).toBe(false)
+			expect(resolution.hitWall).toBe(true)
+		end)
+
 		it("should not move when the gap is smaller than the skin width", function()
 			spawnWall(1.05) -- 0.05 gap < 0.1 skin
 			local delta = Vector3.new(1, 0, 0)
@@ -395,7 +431,7 @@ describe("CollisionQuery", function()
 
 	describe("Destroy", function()
 		it("should clear floor state", function()
-			spawnFloor(-1.03)
+			spawnFloor(-1.3)
 			query:UpdateState()
 			expect(query.CurrentFloorPart).toBeDefined()
 

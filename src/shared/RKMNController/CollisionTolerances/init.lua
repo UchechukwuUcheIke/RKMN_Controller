@@ -1,5 +1,7 @@
 --!strict
 
+local CollisionTolerances = {}
+
 export type CollisionTolerances = {
     GroundCheckDistance: number,
     WallCheckDistance: number,
@@ -7,11 +9,11 @@ export type CollisionTolerances = {
     MaxSlopeAngle: number,
 }
 
-local CollisionTolerances: CollisionTolerances = {
+CollisionTolerances.Default = table.freeze({
     GroundCheckDistance = 0.05,
     WallCheckDistance = 0.05,
     SkinWidth = 0.1,
     MaxSlopeAngle = 90,
-}
+} :: CollisionTolerances)
 
 return table.freeze(CollisionTolerances)

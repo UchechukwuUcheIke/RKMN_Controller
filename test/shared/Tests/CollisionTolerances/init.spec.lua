@@ -9,24 +9,26 @@ local expect = JestGlobals.expect
 
 local CollisionTolerances = require(ReplicatedStorage.RKMNController.CollisionTolerances)
 
-describe("CollisionTolerances", function()
+describe("CollisionTolerances.Default", function()
+    local defaults = CollisionTolerances.Default
+
     it("sets the ground check distance", function()
-        expect(CollisionTolerances.GroundCheckDistance).toBe(0.05)
+        expect(defaults.GroundCheckDistance).toBe(0.05)
     end)
 
     it("sets the wall check distance", function()
-        expect(CollisionTolerances.WallCheckDistance).toBe(0.05)
+        expect(defaults.WallCheckDistance).toBe(0.05)
     end)
 
     it("sets the skin width", function()
-        expect(CollisionTolerances.SkinWidth).toBe(0.1)
+        expect(defaults.SkinWidth).toBe(0.1)
     end)
 
     it("sets the max slope angle", function()
-        expect(CollisionTolerances.MaxSlopeAngle).toBe(90)
+        expect(defaults.MaxSlopeAngle).toBe(90)
     end)
 
     it("is frozen", function()
-        expect(table.isfrozen(CollisionTolerances)).toBe(true)
+        expect(table.isfrozen(defaults)).toBe(true)
     end)
 end)
