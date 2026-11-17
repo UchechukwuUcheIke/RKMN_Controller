@@ -76,7 +76,7 @@ function DiagnosticCollisionQuery.UpdateState(self: DiagnosticCollisionQuery)
 	self.Snapshot.GroundContactCheck = DiagnosticCastRecord.fromBlockcast(
 		super:IsGrounded(),
 		body:GetFootCFrame(),
-		body.FootSize,
+		body:GetFootSize(),
 		Vector3.new(0, -castDistance, 0)
 	)
 end

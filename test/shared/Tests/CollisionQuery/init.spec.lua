@@ -18,7 +18,7 @@ local function makeBody(character)
 	local body = CollisionBody.new(character)
 
 	-- Narrow foot at the bottom of the body, so slopes under it do not overlap the foot box
-	body.FootSize = Vector3.new(0.2, 0.1, 0.2)
+	body._footSize = Vector3.new(0.2, 0.1, 0.2)
 
 	return body
 end

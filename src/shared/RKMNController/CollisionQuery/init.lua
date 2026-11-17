@@ -81,7 +81,7 @@ end
 
 function CollisionQuery._raycastToGround(self: CollisionQuery, offset: Vector3?): RaycastResult<BasePart>?
 	local origin = self._body:GetFootCFrame() + (offset or Vector3.zero)
-    local footSize = self._body.FootSize
+    local footSize = self._body:GetFootSize()
 	local castDistance = self._tolerances.GroundCheckDistance + self._tolerances.SkinWidth
 
 	local raycastResult: RaycastResult<BasePart>? = self._world:Blockcast(
@@ -130,7 +130,7 @@ function CollisionQuery.CheckWallContact(
 	self: CollisionQuery,
 	direction: Direction): DiagnosticCastRecord
 
-	local halfWidth: number = self._body:GetHalfExtentAlong(direction)
+	local halfWidth: number = self._body:GetHalfExtentAlongDirection(direction)
 	local castDistance: number = self._tolerances.WallCheckDistance + self._tolerances.SkinWidth
 	local origin: Vector3 = self._body:GetBodyCFrame().Position
 
@@ -212,7 +212,7 @@ end
 
 function CollisionQuery._sweep(self: CollisionQuery, velocityDelta: Vector3, originOffset: Vector3): SweepResolution
     local origin = self._body:GetBodyCFrame() + originOffset
-	local size = self._body.BodySize
+	local size = self._body:GetBodySize()
 
 	if velocityDelta.Magnitude < MIN_SWEEP_DISTANCE then
 		local castRecord = DiagnosticCastRecord.fromBlockcast(false, origin, size, velocityDelta)

@@ -54,7 +54,7 @@ describe("CollisionBody", function()
         it("sets BodySize to the model's extents size", function()
             local body = CollisionBody.new(model)
 
-            expect(body.BodySize).toEqual(model:GetExtentsSize())
+            expect(body:GetBodySize()).toEqual(model:GetExtentsSize())
         end)
 
         it("accounts for every part when computing BodySize", function()
@@ -63,17 +63,17 @@ describe("CollisionBody", function()
 
             local body = CollisionBody.new(model)
 
-            expect(body.BodySize).toEqual(model:GetExtentsSize())
+            expect(body:GetBodySize()).toEqual(model:GetExtentsSize())
         end)
 
         it("sets HalfWidth to half the body width", function()
-            expect(CollisionBody.new(model).HalfWidth).toBe(2)
+            expect(CollisionBody.new(model):GetHalfWidth()).toBe(2)
         end)
 
         it("makes the foot as wide and deep as the body and 0.1 tall", function()
             local body = CollisionBody.new(model)
 
-            expect(body.FootSize).toEqual(Vector3.new(4, 0.1, 2))
+            expect(body:GetFootSize()).toEqual(Vector3.new(4, 0.1, 2))
         end)
 
         it("throws when the model has no HumanoidRootPart", function()
@@ -113,13 +113,13 @@ describe("CollisionBody", function()
         end)
     end)
 
-    describe("GetHalfExtentAlong", function()
+    describe("GetHalfExtentAlongDirection", function()
         it("returns half the size along each axis", function()
             local body = CollisionBody.new(model)
 
-            expect(body:GetHalfExtentAlong(Vector3.xAxis)).toBeCloseTo(2, 5)
-            expect(body:GetHalfExtentAlong(Vector3.yAxis)).toBeCloseTo(2.5, 5)
-            expect(body:GetHalfExtentAlong(Vector3.zAxis)).toBeCloseTo(1, 5)
+            expect(body:GetHalfExtentAlongDirection(Vector3.xAxis)).toBeCloseTo(2, 5)
+            expect(body:GetHalfExtentAlongDirection(Vector3.yAxis)).toBeCloseTo(2.5, 5)
+            expect(body:GetHalfExtentAlongDirection(Vector3.zAxis)).toBeCloseTo(1, 5)
         end)
 
         it("accounts for the character's facing", function()
@@ -127,8 +127,8 @@ describe("CollisionBody", function()
 
             rootPart.CFrame = CFrame.Angles(0, math.rad(90), 0)
 
-            expect(body:GetHalfExtentAlong(Vector3.xAxis)).toBeCloseTo(1, 5)
-            expect(body:GetHalfExtentAlong(Vector3.zAxis)).toBeCloseTo(2, 5)
+            expect(body:GetHalfExtentAlongDirection(Vector3.xAxis)).toBeCloseTo(1, 5)
+            expect(body:GetHalfExtentAlongDirection(Vector3.zAxis)).toBeCloseTo(2, 5)
         end)
     end)
 
