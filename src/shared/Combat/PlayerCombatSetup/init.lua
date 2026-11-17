@@ -12,7 +12,7 @@ local MegaBuster = require(WeaponFolder.MegaBuster)
 local ProjectileIDRegistry = require(ProjectileFolder.ProjectileIDRegistry)
 local ProjectileModelPlacer = require(ProjectileFolder.ProjectileModelPlacer)
 local ProjectileSimulation = require(ProjectileFolder.ProjectileSimulation)
-local RKMNController = require(ReplicatedStorage.RKMNController.RKMNController)
+local RKMNControllerFacade = require(ReplicatedStorage.RKMNController.RKMNControllerFacade)
 local RenderPriorities = require(ReplicatedStorage.RenderPriorities)
 local RunServiceAdapter = require(ReplicatedStorage.RunServiceAdapter)
 local Team = require(DataFolder.Team)
@@ -21,7 +21,7 @@ local WeaponRegistry = require(WeaponFolder.WeaponRegistry)
 local WallQuery = require(ProjectileFolder.WallQuery)
 
 type ProjectileID = ProjectileIDRegistry.ProjectileID
-type RKMNController = RKMNController.RKMNController
+type RKMNControllerFacade = RKMNControllerFacade.RKMNControllerFacade
 
 -- Where a shot leaves the character, relative to the character's center, mirrored by facing.
 local MUZZLE_OFFSET = Vector2.new(2, 0.5)
@@ -43,7 +43,7 @@ end
 
 -- Builds the player's combat around an existing controller: the Mega Buster, the shots it fires,
 -- and the frame that moves them. Other fighters' hurtboxes go in the returned HurtboxRegistry.
-function PlayerCombatSetup.Setup(controller: RKMNController, character: Model): PlayerCombat
+function PlayerCombatSetup.Setup(controller: RKMNControllerFacade, character: Model): PlayerCombat
 	local world = workspace
 
 	local shotsFolder = Instance.new("Folder")

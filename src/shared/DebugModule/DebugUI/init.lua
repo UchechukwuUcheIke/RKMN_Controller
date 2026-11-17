@@ -1,7 +1,7 @@
 --!strict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RKMNControllerFolder = ReplicatedStorage.RKMNController
-local RKMNController = require(RKMNControllerFolder.RKMNController)
+local RKMNControllerFacade = require(RKMNControllerFolder.RKMNControllerFacade)
 
 local DebugModuleFolder = script.Parent
 local WidgetsFolder = DebugModuleFolder.Widgets
@@ -17,10 +17,10 @@ type PhysicsWidget = PhysicsWidget.PhysicsWidget
 type InputWidget = InputWidget.InputWidget
 type FlagsWidget = FlagsWidget.FlagsWidget
 type MovementStateMachineWidget = MovementStateMachineWidget.MovementStateMachineWidget
-type RKMNController = RKMNController.RKMNController
+type RKMNControllerFacade = RKMNControllerFacade.RKMNControllerFacade
 
 type DebugUIData = {
-	_kinematicController: RKMNController,
+	_kinematicController: RKMNControllerFacade,
 	_canvas: LayerCollector,
 	_frame: Frame,
 	physicsWidget: PhysicsWidget,
@@ -36,7 +36,7 @@ export type DebugUI = typeof(setmetatable(
 	{} :: DebugUIPrototype
 ))
 
-function DebugUI.new(layerCollector: LayerCollector, kinematicController: RKMNController): DebugUI
+function DebugUI.new(layerCollector: LayerCollector, kinematicController: RKMNControllerFacade): DebugUI
 	assert(kinematicController)
 
 	local data = {

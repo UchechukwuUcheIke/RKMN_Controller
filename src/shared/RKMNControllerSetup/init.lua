@@ -6,7 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RKMNControllerFolder = ReplicatedStorage.RKMNController
 local DebugModuleFolder = ReplicatedStorage.DebugModule
 local DebugFacade = require(DebugModuleFolder.DebugFacade)
-local RKMNController = require(RKMNControllerFolder.RKMNController)
+local RKMNControllerFacade = require(RKMNControllerFolder.RKMNControllerFacade)
 local KinematicWorld = require(ReplicatedStorage.KinematicWorld)
 local RunServiceAdapter = require(ReplicatedStorage.RunServiceAdapter)
 local RenderPriorities = require(ReplicatedStorage.RenderPriorities)
@@ -76,8 +76,8 @@ type TouchGamepadUI = TouchGamepadUI.TouchGamepadUI
 type MobileButtonPositioner = MobileButtonPositioner.MobileButtonPositioner
 type MovementStateMachine = MovementStateMachine.MovementStateMachine
 type PhysicsResolver = PhysicsResolver.PhysicsResolver
-type RKMNController = RKMNController.RKMNController
-type RKMNControllerDependencies = RKMNController.RKMNControllerDependencies
+type RKMNControllerFacade = RKMNControllerFacade.RKMNControllerFacade
+type RKMNControllerFacadeDependencies = RKMNControllerFacade.RKMNControllerFacadeDependencies
 type StateMachineContext = StateMachineContext.FSMContext
 type StateMachineContextDependencies = StateMachineContext.FSMContextDependencies
 type DiagnosticControllerQuery = DiagnosticControllerQuery.DiagnosticCollisionQuery
@@ -96,7 +96,7 @@ local function mountScreenGui(): ScreenGui
     return screenGui
 end
 
-local function makeDependencies(character: Model, collisionQuery: CollisionQueryFacade, inputActionMerger: InputActionMerger): RKMNControllerDependencies
+local function makeDependencies(character: Model, collisionQuery: CollisionQueryFacade, inputActionMerger: InputActionMerger): RKMNControllerFacadeDependencies
     local movementStats = MovementStats.new()
     local timerRegistry = TimerRegistry.new()
     local playerInput = PlayerInputFacade.new(timerRegistry, inputActionMerger)
@@ -111,7 +111,7 @@ local function makeDependencies(character: Model, collisionQuery: CollisionQuery
     local stateMachineContext = StateMachineContext.new(FSMContextDependencies)
     local movementStateMachine = MovementStateMachine.new(stateMachineContext)
 
-    local dependencies: RKMNControllerDependencies = {
+    local dependencies: RKMNControllerFacadeDependencies = {
         TimerRegistry = timerRegistry,
         CollisionQuery = collisionQuery,
         PlayerInput = playerInput,
@@ -122,7 +122,7 @@ local function makeDependencies(character: Model, collisionQuery: CollisionQuery
     return dependencies
 end
 
-local function makeDebugDependencies(character: Model, inputActionMerger: InputActionMerger): RKMNControllerDependencies
+local function makeDebugDependencies(character: Model, inputActionMerger: InputActionMerger): RKMNControllerFacadeDependencies
     local world = game.Workspace
     local body = CollisionBody.new(character)
     local collisionQuery = CollisionQueryFacade.new(world, character, body, CollisionTolerances.Default)
@@ -131,7 +131,7 @@ local function makeDebugDependencies(character: Model, inputActionMerger: InputA
     return makeDependencies(character, (diagnosticQuery :: any) :: CollisionQueryFacade, inputActionMerger)
 end
 
-local function _makeProdDependencies(character: Model, inputActionMerger: InputActionMerger): RKMNControllerDependencies
+local function _makeProdDependencies(character: Model, inputActionMerger: InputActionMerger): RKMNControllerFacadeDependencies
     local world = game.Workspace
     local body = CollisionBody.new(character)
     local collisionQuery = CollisionQueryFacade.new(world, character, body, CollisionTolerances.Default)
@@ -301,7 +301,7 @@ local function replaceTouchControls(deviceDetector: DeviceDetector, touchGamepad
     activeTouchGamepad = touchGamepad
 end
 
-function RKMNControllerSetup.Setup(character: Model): RKMNController
+function RKMNControllerSetup.Setup(character: Model): RKMNControllerFacade
     destroyScreenMediator()
     destroyTouchLayoutEditing()
 
@@ -311,8 +311,8 @@ function RKMNControllerSetup.Setup(character: Model): RKMNController
     -- The detector loads the profile's scheme for the device in use into the mapper.
     local deviceDetector = DeviceDetector.new(UserInputService, inputMapper, controlProfile)
 
-    local dependencies: RKMNControllerDependencies = makeDebugDependencies(character, inputActionMerger)
-    local kinematicController = RKMNController.new(dependencies)
+    local dependencies: RKMNControllerFacadeDependencies = makeDebugDependencies(character, inputActionMerger)
+    local kinematicController = RKMNControllerFacade.new(dependencies)
     kinematicController:SetInputEnabled(true)
 
     local touchGamepad = makeTouchGamepad(deviceDetector, dependencies.PlayerInput)

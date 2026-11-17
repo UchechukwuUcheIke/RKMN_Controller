@@ -5,7 +5,7 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local RKMNControllerFolder = ReplicatedStorage.RKMNController
-local RKMNController = require(RKMNControllerFolder.RKMNController)
+local RKMNControllerFacade = require(RKMNControllerFolder.RKMNControllerFacade)
 
 local DebuggerFolder = script.Parent
 local DebugInputHandler = require(DebuggerFolder.DebugInputHandler)
@@ -17,7 +17,7 @@ local RunServiceAdapter = require(ReplicatedStorage.RunServiceAdapter)
 local RenderPriorities = require(ReplicatedStorage.RenderPriorities)
 
 type KinematicWorld = KinematicWorld.KinematicWorld
-type RKMNController = RKMNController.RKMNController
+type RKMNControllerFacade = RKMNControllerFacade.RKMNControllerFacade
 type DebugInputHandler = DebugInputHandler.InputHandler
 type DiagnosticCollisionQuery = DiagnosticCollisionQuery.DiagnosticCollisionQuery
 type DebugUI = DebugUI.DebugUI
@@ -38,7 +38,7 @@ type DebugFacadeData = {
 	_world: WorldRoot,
 	_kinematicWorld: KinematicWorld,
 	_layerCollector: LayerCollector,
-	_kinematicController: RKMNController,
+	_kinematicController: RKMNControllerFacade,
 	_inputHandler: DebugInputHandler,
 	_userInterface: DebugUI,
 	_worldVisualizer: DebugWorldVisualizer,
@@ -53,7 +53,7 @@ export type DebugFacade = typeof(setmetatable(
 	{} :: DebugFacadePrototype
 ))
 
-function DebugFacade.new(world: WorldRoot, layerCollector: LayerCollector, kinematicWorld: KinematicWorld, kinematicController: RKMNController, runServiceAdapter: RunServiceAdapter): DebugFacade
+function DebugFacade.new(world: WorldRoot, layerCollector: LayerCollector, kinematicWorld: KinematicWorld, kinematicController: RKMNControllerFacade, runServiceAdapter: RunServiceAdapter): DebugFacade
 	local self = setmetatable({}, DebugFacade)
 
 	self._world = world

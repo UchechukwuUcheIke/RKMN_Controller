@@ -10,7 +10,7 @@ local afterEach = JestGlobals.afterEach
 
 local MockerUtils = require(ReplicatedStorage.Tests.TestUtils.MockUtils)
 local RKMNControllerFolder = ReplicatedStorage.RKMNController
-local RKMNController = require(RKMNControllerFolder.RKMNController)
+local RKMNControllerFacade = require(RKMNControllerFolder.RKMNControllerFacade)
 local KinematicWorld = require(ReplicatedStorage.KinematicWorld)
 
 local TimerRegistry = require(RKMNControllerFolder.TimerRegistry)
@@ -54,7 +54,7 @@ describe("KinematicWorld", function()
 			end
 		end
 
-		local controller = MockerUtils.createMockClass(RKMNController, subsystemInstances)
+		local controller = MockerUtils.createMockClass(RKMNControllerFacade, subsystemInstances)
 
 		return {
 			Instance = controller.Instance,

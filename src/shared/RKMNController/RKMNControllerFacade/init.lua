@@ -1,6 +1,6 @@
 --!strict
-local RKMNController = {}
-RKMNController.__index = RKMNController
+local RKMNControllerFacade = {}
+RKMNControllerFacade.__index = RKMNControllerFacade
 
 local RKMNControllerFolder = script.Parent
 local TimerRegistry = require(RKMNControllerFolder.TimerRegistry)
@@ -20,7 +20,7 @@ type MovementStateMachine = MovementStateMachine.MovementStateMachine
 type PhysicsResolver = PhysicsResolver.PhysicsResolver
 
 -- TODO: Add Action FSM and AnimationController back
-type RKMNControllerData = {
+type RKMNControllerFacadeData = {
     _inputEnabled: boolean,
 
     TimerRegistry: TimerRegistry,
@@ -33,7 +33,7 @@ type RKMNControllerData = {
 type FSMContext = FSMContext.FSMContext
 type FSMContextDependencies = FSMContext.FSMContextDependencies
 
-export type RKMNControllerDependencies = {
+export type RKMNControllerFacadeDependencies = {
     TimerRegistry: TimerRegistry,
     CollisionQuery: CollisionQueryFacade,
     PlayerInput: PlayerInputFacade,
@@ -41,9 +41,9 @@ export type RKMNControllerDependencies = {
     PhysicsResolver: PhysicsResolver
 }
 
-export type RKMNController = typeof(setmetatable({} :: RKMNControllerData, RKMNController))
+export type RKMNControllerFacade = typeof(setmetatable({} :: RKMNControllerFacadeData, RKMNControllerFacade))
 
-function RKMNController.new(dependencies: RKMNControllerDependencies): RKMNController
+function RKMNControllerFacade.new(dependencies: RKMNControllerFacadeDependencies): RKMNControllerFacade
     local self = {}
 
     self._inputEnabled = true
@@ -53,26 +53,26 @@ function RKMNController.new(dependencies: RKMNControllerDependencies): RKMNContr
     self.PhysicsResolver = dependencies.PhysicsResolver
     self.MovementStateMachine = dependencies.MovementStateMachine
 
-    setmetatable(self, RKMNController)
+    setmetatable(self, RKMNControllerFacade)
     return self
 end
 
-function RKMNController.Reset(self: RKMNController): ()
+function RKMNControllerFacade.Reset(self: RKMNControllerFacade): ()
 	self.MovementStateMachine:ChangeState(MovementState.Idle)
 	self.TimerRegistry:FlushAll()
 end
 
-function RKMNController.IsInputEnabled(self: RKMNController): boolean
+function RKMNControllerFacade.IsInputEnabled(self: RKMNControllerFacade): boolean
     return self._inputEnabled
 end
 
 
-function RKMNController.SetInputEnabled(self: RKMNController, isEnabled: boolean)
+function RKMNControllerFacade.SetInputEnabled(self: RKMNControllerFacade, isEnabled: boolean)
 	self._inputEnabled = isEnabled
 	self.PlayerInput:SetEnabled(isEnabled)
 end
 
-function RKMNController.Destroy(self: RKMNController)	
+function RKMNControllerFacade.Destroy(self: RKMNControllerFacade)	
 	self.PlayerInput:Destroy()
 	self.TimerRegistry:Destroy()
 	self.PhysicsResolver:Destroy()
@@ -81,4 +81,4 @@ function RKMNController.Destroy(self: RKMNController)
 end
 
 
-return RKMNController
+return RKMNControllerFacade

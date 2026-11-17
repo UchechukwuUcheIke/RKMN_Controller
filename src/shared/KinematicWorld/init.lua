@@ -1,15 +1,15 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RKMNControllerFolder = ReplicatedStorage.RKMNController
-local RKMNController = require(RKMNControllerFolder.RKMNController)
+local RKMNControllerFacade = require(RKMNControllerFolder.RKMNControllerFacade)
 
 local KinematicWorld = {}
 KinematicWorld.__index = KinematicWorld
 KinematicWorld.ClassName = "KinematicWorld"
 
-type RKMNController = RKMNController.RKMNController
+type RKMNControllerFacade = RKMNControllerFacade.RKMNControllerFacade
 
 type KinematicWorldData = {
-	_players: {RKMNController},
+	_players: {RKMNControllerFacade},
 }
 
 type KinematicWorldPrototype = typeof(KinematicWorld)
@@ -25,17 +25,17 @@ function KinematicWorld.new(): KinematicWorld
 	return self
 end
 
-function KinematicWorld.RegisterPlayer(self: KinematicWorld, controller: RKMNController): ()
+function KinematicWorld.RegisterPlayer(self: KinematicWorld, controller: RKMNControllerFacade): ()
 	table.insert(self._players, controller)
 end
 
 function KinematicWorld.StepWorld(self: KinematicWorld, deltaTime: number)
-	for _, playerController: RKMNController in ipairs(self._players) do
+	for _, playerController: RKMNControllerFacade in ipairs(self._players) do
 		self:_processEntity(playerController, deltaTime)
 	end
 end
 
-function KinematicWorld._processEntity(self: KinematicWorld, entityController: RKMNController, deltaTime: number)
+function KinematicWorld._processEntity(self: KinematicWorld, entityController: RKMNControllerFacade, deltaTime: number)
 	if entityController.TimerRegistry then 
         entityController.TimerRegistry:Step(deltaTime) 
     end

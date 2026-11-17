@@ -5,12 +5,12 @@ DebugWorldVisualizer.__index = DebugWorldVisualizer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DebugFolder = script.Parent
 local RKMNControllerFolder = ReplicatedStorage.RKMNController
-local RKMNController = require(RKMNControllerFolder.RKMNController)
+local RKMNControllerFacade = require(RKMNControllerFolder.RKMNControllerFacade)
 local DiagnosticCollisionQuery = require(DebugFolder.DiagnosticCollisionQuery)
 local CollisionQuerySnapshot = require(DebugFolder.Data.CollisionQuerySnapshot)
 local DiagnosticCastRecord = require(RKMNControllerFolder.DiagnosticCastRecord)
 
-type RKMNController = RKMNController.RKMNController
+type RKMNControllerFacade = RKMNControllerFacade.RKMNControllerFacade
 type DiagnosticCastRecord = DiagnosticCastRecord.DiagnosticCastRecord
 type DiagnosticCollisionQuery = DiagnosticCollisionQuery.DiagnosticCollisionQuery
 type CollisionQuerySnapshot = CollisionQuerySnapshot.CollisionQuerySnapshot
