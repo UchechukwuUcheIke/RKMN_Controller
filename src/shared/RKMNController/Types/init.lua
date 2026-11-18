@@ -14,12 +14,18 @@ export type BaseState = typeof(setmetatable(
 	}
 ))
 
+export type StateChangedSignal = {
+	Connect: (self: StateChangedSignal, handler: (newStateId: string) -> ()) -> { Disconnect: (self: any) -> () },
+	Fire: (self: StateChangedSignal, newStateId: string) -> (),
+	Destroy: (self: StateChangedSignal) -> (),
+}
+
 export type StateMachine = {
 	Context: any,
 	States: { [string]: BaseState },
 	CurrentStateId: string?,
 	CurrentState: BaseState?,
-	OnStateChanged: any,
+	OnStateChanged: StateChangedSignal,
 	RegisterState: (self: StateMachine, id: string, state: BaseState) -> (),
 	SetStates: (self: StateMachine, states: { [string]: BaseState }) -> (),
 	ChangeState: (self: StateMachine, newStateId: string) -> (),

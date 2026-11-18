@@ -338,4 +338,15 @@ describe("StateMachine.Destroy", function()
 		expect(context.Destroy).toHaveBeenCalledTimes(1)
 		expect(next(stateMachine.States)).toBeNil()
 	end)
+
+	it("Disconnects OnStateChanged listeners", function()
+		local listener = jest.fn()
+		local signal = stateMachine.OnStateChanged
+		signal:Connect(listener)
+
+		stateMachine:Destroy()
+		signal:Fire("Idle")
+
+		expect(listener).never.toHaveBeenCalled()
+	end)
 end)

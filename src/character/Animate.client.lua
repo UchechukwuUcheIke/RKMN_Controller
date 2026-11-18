@@ -1,0 +1,2 @@
+-- Intentionally empty. A script named "Animate" in StarterCharacterScripts replaces Roblox's default Animate script,
+-- which would otherwise drive animation from Humanoid state. AnimationControllerFacade plays the animations instead.

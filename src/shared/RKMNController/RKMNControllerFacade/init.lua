@@ -9,6 +9,7 @@ local PlayerInputFacade = require(game:GetService("ReplicatedStorage").PlayerInp
 local FSMContext = require(RKMNControllerFolder.FSMContext)
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
 local PhysicsResolverFacade = require(RKMNControllerFolder.PhysicsResolver.PhysicsResolverFacade)
+local AnimationControllerFacade = require(RKMNControllerFolder.AnimationController.AnimationControllerFacade)
 
 local MovementState = require(RKMNControllerFolder.MovementStateIDs)
 
@@ -18,8 +19,9 @@ type CollisionQueryFacade = CollisionQueryFacade.CollisionQueryFacade
 type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type MovementStateMachine = MovementStateMachine.MovementStateMachine
 type PhysicsResolverFacade = PhysicsResolverFacade.PhysicsResolverFacade
+type AnimationControllerFacade = AnimationControllerFacade.AnimationControllerFacade
 
--- TODO: Add Action FSM and AnimationController back
+-- TODO: Add Action FSM back
 type RKMNControllerFacadeData = {
     _inputEnabled: boolean,
 
@@ -28,6 +30,7 @@ type RKMNControllerFacadeData = {
     PlayerInput: PlayerInputFacade,
     MovementStateMachine: MovementStateMachine,
     PhysicsResolver: PhysicsResolverFacade,
+    AnimationController: AnimationControllerFacade,
 }
 
 type FSMContext = FSMContext.FSMContext
@@ -38,7 +41,8 @@ export type RKMNControllerFacadeDependencies = {
     CollisionQuery: CollisionQueryFacade,
     PlayerInput: PlayerInputFacade,
     MovementStateMachine: MovementStateMachine,
-    PhysicsResolver: PhysicsResolverFacade
+    PhysicsResolver: PhysicsResolverFacade,
+    AnimationController: AnimationControllerFacade
 }
 
 export type RKMNControllerFacade = typeof(setmetatable({} :: RKMNControllerFacadeData, RKMNControllerFacade))
@@ -52,6 +56,7 @@ function RKMNControllerFacade.new(dependencies: RKMNControllerFacadeDependencies
     self.PlayerInput = dependencies.PlayerInput
     self.PhysicsResolver = dependencies.PhysicsResolver
     self.MovementStateMachine = dependencies.MovementStateMachine
+    self.AnimationController = dependencies.AnimationController
 
     setmetatable(self, RKMNControllerFacade)
     return self
@@ -73,6 +78,7 @@ function RKMNControllerFacade.SetInputEnabled(self: RKMNControllerFacade, isEnab
 end
 
 function RKMNControllerFacade.Destroy(self: RKMNControllerFacade)	
+	self.AnimationController:Destroy()
 	self.PlayerInput:Destroy()
 	self.TimerRegistry:Destroy()
 	self.PhysicsResolver:Destroy()

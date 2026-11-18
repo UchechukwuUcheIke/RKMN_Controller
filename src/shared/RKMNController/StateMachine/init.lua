@@ -84,6 +84,7 @@ function StateMachine.Update(self: StateMachine, dt: number): ()
 end
 
 function StateMachine.Destroy(self: StateMachine): ()
+	self.OnStateChanged:Destroy()
 	self.Context:Destroy()
 	table.clear(self.States)
 	table.clear(self._connections)

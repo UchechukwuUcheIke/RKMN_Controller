@@ -28,6 +28,9 @@
         "JestTests": {
           "$path": "test/client"
         }
+      },
+      "StarterCharacterScripts": {
+        "$path": "src/character"
       }
     }
   }

@@ -55,6 +55,7 @@ local BugReportPresenter = require(BugReportFolder.BugReportPresenter)
 local PlatformDetector = require(BugReportFolder.PlatformDetector)
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
 local PhysicsResolverFacade = require(RKMNControllerFolder.PhysicsResolver.PhysicsResolverFacade)
+local AnimationControllerFacade = require(RKMNControllerFolder.AnimationController.AnimationControllerFacade)
 local StateMachineContext = require(RKMNControllerFolder.FSMContext)
 local DiagnosticControllerQuery = require(DebugModuleFolder.DiagnosticCollisionQuery)
 
@@ -110,13 +111,15 @@ local function makeDependencies(character: Model, collisionQuery: CollisionQuery
     }
     local stateMachineContext = StateMachineContext.new(FSMContextDependencies)
     local movementStateMachine = MovementStateMachine.new(stateMachineContext)
+    local animationController = AnimationControllerFacade.new(character, movementStateMachine)
 
     local dependencies: RKMNControllerFacadeDependencies = {
         TimerRegistry = timerRegistry,
         CollisionQuery = collisionQuery,
         PlayerInput = playerInput,
         MovementStateMachine = movementStateMachine,
-        PhysicsResolver = physicsResolver
+        PhysicsResolver = physicsResolver,
+        AnimationController = animationController
     }
 
     return dependencies
