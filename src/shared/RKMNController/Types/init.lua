@@ -15,8 +15,8 @@ export type BaseState = typeof(setmetatable(
 ))
 
 export type StateChangedSignal = {
-	Connect: (self: StateChangedSignal, handler: (newStateId: string) -> ()) -> { Disconnect: (self: any) -> () },
-	Fire: (self: StateChangedSignal, newStateId: string) -> (),
+	Connect: (self: StateChangedSignal, handler: (newStateId: string, previousStateId: string?) -> ()) -> { Disconnect: (self: any) -> () },
+	Fire: (self: StateChangedSignal, newStateId: string, previousStateId: string?) -> (),
 	Destroy: (self: StateChangedSignal) -> (),
 }
 

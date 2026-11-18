@@ -56,6 +56,10 @@ local PlatformDetector = require(BugReportFolder.PlatformDetector)
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
 local PhysicsResolverFacade = require(RKMNControllerFolder.PhysicsResolver.PhysicsResolverFacade)
 local AnimationControllerFacade = require(RKMNControllerFolder.AnimationController.AnimationControllerFacade)
+local MovementStateID = require(RKMNControllerFolder.MovementStateIDs)
+local SFXEmitterFolder = ReplicatedStorage.SFXEmitter
+local SFXEmitterFacade = require(SFXEmitterFolder.SFXEmitterFacade)
+local SFXIDs = require(SFXEmitterFolder.SFXIDs)
 local StateMachineContext = require(RKMNControllerFolder.FSMContext)
 local DiagnosticControllerQuery = require(DebugModuleFolder.DiagnosticCollisionQuery)
 
@@ -79,6 +83,7 @@ type MovementStateMachine = MovementStateMachine.MovementStateMachine
 type PhysicsResolverFacade = PhysicsResolverFacade.PhysicsResolverFacade
 type RKMNControllerFacade = RKMNControllerFacade.RKMNControllerFacade
 type RKMNControllerFacadeDependencies = RKMNControllerFacade.RKMNControllerFacadeDependencies
+type SFXEmitterFacade = SFXEmitterFacade.SFXEmitterFacade
 type StateMachineContext = StateMachineContext.FSMContext
 type StateMachineContextDependencies = StateMachineContext.FSMContextDependencies
 type DiagnosticControllerQuery = DiagnosticControllerQuery.DiagnosticCollisionQuery
@@ -97,6 +102,25 @@ local function mountScreenGui(): ScreenGui
     return screenGui
 end
 
+-- OnStateChanged hands over (newStateId, previousStateId), so each sound says which transition it belongs to.
+-- A wall jump is a Jump entered from WallSlide, so the plain jump sound excludes that case.
+local function makeMovementSFXEmitter(movementStateMachine: MovementStateMachine): SFXEmitterFacade
+    local emitter = SFXEmitterFacade.new()
+    local stateChanged = movementStateMachine.OnStateChanged
+
+    emitter:Bind(stateChanged, SFXIDs.Dash, function(newStateId: string)
+        return newStateId == MovementStateID.Dash
+    end)
+    emitter:Bind(stateChanged, SFXIDs.WallJump, function(newStateId: string, previousStateId: string?)
+        return newStateId == MovementStateID.Jump and previousStateId == MovementStateID.WallSlide
+    end)
+    emitter:Bind(stateChanged, SFXIDs.Jump, function(newStateId: string, previousStateId: string?)
+        return newStateId == MovementStateID.Jump and previousStateId ~= MovementStateID.WallSlide
+    end)
+
+    return emitter
+end
+
 local function makeDependencies(character: Model, collisionQuery: CollisionQueryFacade, inputActionMerger: InputActionMerger): RKMNControllerFacadeDependencies
     local movementStats = MovementStats.new()
     local timerRegistry = TimerRegistry.new()
@@ -112,6 +136,7 @@ local function makeDependencies(character: Model, collisionQuery: CollisionQuery
     local stateMachineContext = StateMachineContext.new(FSMContextDependencies)
     local movementStateMachine = MovementStateMachine.new(stateMachineContext)
     local animationController = AnimationControllerFacade.new(character, movementStateMachine)
+    local sfxEmitter = makeMovementSFXEmitter(movementStateMachine)
 
     local dependencies: RKMNControllerFacadeDependencies = {
         TimerRegistry = timerRegistry,
@@ -119,7 +144,8 @@ local function makeDependencies(character: Model, collisionQuery: CollisionQuery
         PlayerInput = playerInput,
         MovementStateMachine = movementStateMachine,
         PhysicsResolver = physicsResolver,
-        AnimationController = animationController
+        AnimationController = animationController,
+        SFXEmitter = sfxEmitter
     }
 
     return dependencies

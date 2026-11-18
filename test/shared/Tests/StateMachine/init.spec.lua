@@ -243,7 +243,21 @@ describe("StateMachine.ChangeState", function()
 		stateMachine:ChangeState(idleStateName)
 
 		expect(listener).toHaveBeenCalledTimes(1)
-		expect(listener).toHaveBeenCalledWith(idleStateName)
+		expect(listener.mock.calls[1][1]).toBe(idleStateName)
+		expect(listener.mock.calls[1][2]).toBeNil()
+	end)
+
+	it("fires OnStateChanged with the previous state id as the second argument", function()
+		stateMachine:RegisterState("Idle", createMockState().Instance)
+		stateMachine:RegisterState("Walk", createMockState().Instance)
+		stateMachine:ChangeState("Idle")
+
+		local listener = jest.fn()
+		stateMachine.OnStateChanged:Connect(listener)
+
+		stateMachine:ChangeState("Walk")
+
+		expect(listener).toHaveBeenCalledWith("Walk", "Idle")
 	end)
 
 	it("is a no-op when changing to the currently active state", function()

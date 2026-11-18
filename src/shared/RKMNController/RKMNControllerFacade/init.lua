@@ -10,6 +10,7 @@ local FSMContext = require(RKMNControllerFolder.FSMContext)
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
 local PhysicsResolverFacade = require(RKMNControllerFolder.PhysicsResolver.PhysicsResolverFacade)
 local AnimationControllerFacade = require(RKMNControllerFolder.AnimationController.AnimationControllerFacade)
+local SFXEmitterFacade = require(game:GetService("ReplicatedStorage").SFXEmitter.SFXEmitterFacade)
 
 local MovementState = require(RKMNControllerFolder.MovementStateIDs)
 
@@ -20,6 +21,7 @@ type PlayerInputFacade = PlayerInputFacade.PlayerInputFacade
 type MovementStateMachine = MovementStateMachine.MovementStateMachine
 type PhysicsResolverFacade = PhysicsResolverFacade.PhysicsResolverFacade
 type AnimationControllerFacade = AnimationControllerFacade.AnimationControllerFacade
+type SFXEmitterFacade = SFXEmitterFacade.SFXEmitterFacade
 
 -- TODO: Add Action FSM back
 type RKMNControllerFacadeData = {
@@ -31,6 +33,7 @@ type RKMNControllerFacadeData = {
     MovementStateMachine: MovementStateMachine,
     PhysicsResolver: PhysicsResolverFacade,
     AnimationController: AnimationControllerFacade,
+    SFXEmitter: SFXEmitterFacade,
 }
 
 type FSMContext = FSMContext.FSMContext
@@ -42,7 +45,8 @@ export type RKMNControllerFacadeDependencies = {
     PlayerInput: PlayerInputFacade,
     MovementStateMachine: MovementStateMachine,
     PhysicsResolver: PhysicsResolverFacade,
-    AnimationController: AnimationControllerFacade
+    AnimationController: AnimationControllerFacade,
+    SFXEmitter: SFXEmitterFacade,
 }
 
 export type RKMNControllerFacade = typeof(setmetatable({} :: RKMNControllerFacadeData, RKMNControllerFacade))
@@ -57,6 +61,7 @@ function RKMNControllerFacade.new(dependencies: RKMNControllerFacadeDependencies
     self.PhysicsResolver = dependencies.PhysicsResolver
     self.MovementStateMachine = dependencies.MovementStateMachine
     self.AnimationController = dependencies.AnimationController
+    self.SFXEmitter = dependencies.SFXEmitter
 
     setmetatable(self, RKMNControllerFacade)
     return self
@@ -79,6 +84,7 @@ end
 
 function RKMNControllerFacade.Destroy(self: RKMNControllerFacade)	
 	self.AnimationController:Destroy()
+	self.SFXEmitter:Destroy()
 	self.PlayerInput:Destroy()
 	self.TimerRegistry:Destroy()
 	self.PhysicsResolver:Destroy()

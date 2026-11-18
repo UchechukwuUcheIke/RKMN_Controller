@@ -72,9 +72,10 @@ function StateMachine.ChangeState(self: StateMachine, newStateId: string)
 		return 
 	end
 	
+	local previousStateId = self.CurrentStateId
 	self:_exitCurrentState()
 	self:_enterNewState(newStateId, newState :: Types.BaseState)
-	self.OnStateChanged:Fire(newStateId)
+	self.OnStateChanged:Fire(newStateId, previousStateId)
 end
 
 function StateMachine.Update(self: StateMachine, dt: number): ()
