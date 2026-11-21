@@ -13,74 +13,23 @@ local RKMNControllerFolder = ReplicatedStorage.RKMNController
 local RKMNControllerFacade = require(RKMNControllerFolder.RKMNControllerFacade)
 local KinematicWorld = require(ReplicatedStorage.KinematicWorld)
 
-local TimerRegistry = require(RKMNControllerFolder.TimerRegistry)
-local PlayerInputFacade = require(ReplicatedStorage.PlayerInput.PlayerInputFacade)
-local CollisionQuery = require(RKMNControllerFolder.CollisionQuery.CollisionQueryFacade)
-local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
-local PhysicsResolver = require(RKMNControllerFolder.PhysicsResolver.PhysicsResolverFacade)
 
--- Subsystems in the order _processEntity is expected to run them.
--- `method` is the method the world calls; `takesDt` is whether it receives deltaTime.
-local SUBSYSTEMS = {
-	{ field = "TimerRegistry", class = TimerRegistry, method = "Step", takesDt = true },
-	{ field = "PlayerInput", class = PlayerInputFacade, method = "Poll", takesDt = true },
-	{ field = "CollisionQuery", class = CollisionQuery, method = "UpdateState", takesDt = false },
-	{ field = "MovementStateMachine", class = MovementStateMachine, method = "Update", takesDt = true },
-	{ field = "PhysicsResolver", class = PhysicsResolver, method = "Resolve", takesDt = true },
-}
 
 describe("KinematicWorld", function()
 	local world
 	local callLog
 
-	-- Builds a mock controller out of MockerUtils mocks.
-	-- Every mocked method appends "<id>:<field>" to callLog so call order can be asserted.
-	-- Returns the controller instance plus the jest mocks and subsystem instances by field name.
-	local function makeController(id, omitted)
-		omitted = omitted or {}
-
-		local subsystemInstances = {}
-		local mocks = {}
-
-		for _, subsystem in ipairs(SUBSYSTEMS) do
-			if not omitted[subsystem.field] then
-				local mock = MockerUtils.createMockClass(subsystem.class)
-				mock.Mocks[subsystem.method].mockImplementation(function()
-					table.insert(callLog, id .. ":" .. subsystem.field)
-				end)
-
-				subsystemInstances[subsystem.field] = mock.Instance
-				mocks[subsystem.field] = mock.Mocks[subsystem.method]
-			end
-		end
-
-		local controller = MockerUtils.createMockClass(RKMNControllerFacade, subsystemInstances)
+	-- Builds a mock controller whose Update appends "<id>" to callLog so call order can be asserted
+	local function makeController(id)
+		local controller = MockerUtils.createMockClass(RKMNControllerFacade)
+		controller.Mocks.Update.mockImplementation(function()
+			table.insert(callLog, id)
+		end)
 
 		return {
 			Instance = controller.Instance,
-			Mocks = mocks,
-			Subsystems = subsystemInstances,
+			Update = controller.Mocks.Update,
 		}
-	end
-
-	-- The call log we expect for the given controller ids, optionally skipping one subsystem
-	local function expectedLog(ids, omittedField)
-		local expected = {}
-
-		for _, id in ipairs(ids) do
-			for _, subsystem in ipairs(SUBSYSTEMS) do
-				if subsystem.field ~= omittedField then
-					table.insert(expected, id .. ":" .. subsystem.field)
-				end
-			end
-		end
-
-		return expected
-	end
-
-	-- Argument `argIndex` (1 is `self`) of the nth call to a jest mock
-	local function callArg(mock, callIndex, argIndex)
-		return mock.mock.calls[callIndex][argIndex]
 	end
 
 	beforeEach(function()
@@ -153,170 +102,59 @@ describe("KinematicWorld", function()
 			end).never.toThrow()
 		end)
 
-		it("should call every subsystem once for a registered player", function()
+		it("should call Update once on a registered player", function()
 			local player = makeController("1")
 			world:RegisterPlayer(player.Instance)
 
 			world:StepWorld(1 / 60)
 
-			for _, subsystem in ipairs(SUBSYSTEMS) do
-				expect(player.Mocks[subsystem.field]).toHaveBeenCalledTimes(1)
-			end
+			expect(player.Update).toHaveBeenCalledTimes(1)
+			expect(player.Update.mock.calls[1][1]).toBe(player.Instance)
 		end)
 
-		it("should run the subsystems in timer, input, collision, state machine, physics order", function()
+		it("should pass deltaTime to Update", function()
 			local player = makeController("1")
 			world:RegisterPlayer(player.Instance)
+
+			world:StepWorld(0.0125)
+
+			expect(player.Update.mock.calls[1][2]).toBeCloseTo(0.0125, 5)
+		end)
+
+		it("should update every registered player once, in registration order", function()
+			world:RegisterPlayer(makeController("1").Instance)
+			world:RegisterPlayer(makeController("2").Instance)
+			world:RegisterPlayer(makeController("3").Instance)
 
 			world:StepWorld(1 / 60)
 
-			expect(callLog).toEqual(expectedLog({ "1" }))
+			expect(callLog).toEqual({ "1", "2", "3" })
 		end)
 
-		it("should call each method on the controller's own subsystem instance", function()
-			local player = makeController("1")
-			world:RegisterPlayer(player.Instance)
-
-			world:StepWorld(1 / 60)
-
-			for _, subsystem in ipairs(SUBSYSTEMS) do
-				expect(callArg(player.Mocks[subsystem.field], 1, 1)).toBe(player.Subsystems[subsystem.field])
-			end
-		end)
-
-		it("should pass deltaTime to the subsystems that take it", function()
-			local player = makeController("1")
-			world:RegisterPlayer(player.Instance)
-			local dt = 0.0125
-
-			world:StepWorld(dt)
-
-			for _, subsystem in ipairs(SUBSYSTEMS) do
-				if subsystem.takesDt then
-					expect(callArg(player.Mocks[subsystem.field], 1, 2)).toBeCloseTo(dt, 5)
-				end
-			end
-		end)
-
-		it("should not pass deltaTime to CollisionQuery:UpdateState", function()
-			local player = makeController("1")
-			world:RegisterPlayer(player.Instance)
-
-			world:StepWorld(0.5)
-
-			-- Only `self` is passed
-			expect(#player.Mocks.CollisionQuery.mock.calls[1]).toBe(1)
-		end)
-
-		it("should step every registered player once, one player at a time in registration order", function()
-			local first = makeController("1")
-			local second = makeController("2")
-			local third = makeController("3")
-			world:RegisterPlayer(first.Instance)
-			world:RegisterPlayer(second.Instance)
-			world:RegisterPlayer(third.Instance)
-
-			world:StepWorld(1 / 60)
-
-			expect(callLog).toEqual(expectedLog({ "1", "2", "3" }))
-		end)
-
-		it("should step on every call, using that call's deltaTime", function()
+		it("should update on every call, using that call's deltaTime", function()
 			local player = makeController("1")
 			world:RegisterPlayer(player.Instance)
 
 			world:StepWorld(0.01)
 			world:StepWorld(0.02)
 
-			local timerStep = player.Mocks.TimerRegistry
-			expect(timerStep).toHaveBeenCalledTimes(2)
-			expect(callArg(timerStep, 1, 2)).toBeCloseTo(0.01, 5)
-			expect(callArg(timerStep, 2, 2)).toBeCloseTo(0.02, 5)
-		end)
-
-		it("should simulate a run of frames in order", function()
-			local player = makeController("1")
-			world:RegisterPlayer(player.Instance)
-			local frameCount = 5
-
-			for _ = 1, frameCount do
-				world:StepWorld(1 / 60)
-			end
-
-			local expected = {}
-			for _ = 1, frameCount do
-				for _, entry in ipairs(expectedLog({ "1" })) do
-					table.insert(expected, entry)
-				end
-			end
-			expect(callLog).toEqual(expected)
+			expect(player.Update).toHaveBeenCalledTimes(2)
+			expect(player.Update.mock.calls[1][2]).toBeCloseTo(0.01, 5)
+			expect(player.Update.mock.calls[2][2]).toBeCloseTo(0.02, 5)
 		end)
 
 		it("should include players registered after earlier steps", function()
-			local early = makeController("1")
-			world:RegisterPlayer(early.Instance)
+			world:RegisterPlayer(makeController("1").Instance)
 			world:StepWorld(1 / 60)
 
-			local late = makeController("2")
-			world:RegisterPlayer(late.Instance)
+			world:RegisterPlayer(makeController("2").Instance)
 			callLog = {}
 			world:StepWorld(1 / 60)
 
-			expect(callLog).toEqual(expectedLog({ "1", "2" }))
-		end)
-
-		it("should skip a controller that has no subsystems", function()
-			local omitAll = {}
-			for _, subsystem in ipairs(SUBSYSTEMS) do
-				omitAll[subsystem.field] = true
-			end
-			local bare = makeController("1", omitAll)
-			world:RegisterPlayer(bare.Instance)
-
-			expect(function()
-				world:StepWorld(1 / 60)
-			end).never.toThrow()
-			expect(#callLog).toBe(0)
-		end)
-
-		for _, omitted in ipairs(SUBSYSTEMS) do
-			it("should still run the other subsystems when " .. omitted.field .. " is missing", function()
-				local player = makeController("1", { [omitted.field] = true })
-				world:RegisterPlayer(player.Instance)
-
-				expect(function()
-					world:StepWorld(1 / 60)
-				end).never.toThrow()
-
-				expect(callLog).toEqual(expectedLog({ "1" }, omitted.field))
-			end)
-		end
-
-		it("should keep stepping other players when one has a missing subsystem", function()
-			local incomplete = makeController("1", { PlayerInput = true })
-			local complete = makeController("2")
-			world:RegisterPlayer(incomplete.Instance)
-			world:RegisterPlayer(complete.Instance)
-
-			world:StepWorld(1 / 60)
-
-			local expected = expectedLog({ "1" }, "PlayerInput")
-			for _, entry in ipairs(expectedLog({ "2" })) do
-				table.insert(expected, entry)
-			end
-			expect(callLog).toEqual(expected)
-		end)
-
-		it("should work without the world having been started", function()
-			local player = makeController("1")
-			world:RegisterPlayer(player.Instance)
-			expect(world._isRunning).toBe(false)
-
-			world:StepWorld(1 / 60)
-
-			expect(player.Mocks.PhysicsResolver).toHaveBeenCalledTimes(1)
+			expect(callLog).toEqual({ "1", "2" })
 		end)
 	end)
+
 
 	describe("Destroy", function()
 		it("should clear the registered players", function()

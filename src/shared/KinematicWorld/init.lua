@@ -31,30 +31,8 @@ end
 
 function KinematicWorld.StepWorld(self: KinematicWorld, deltaTime: number)
 	for _, playerController: RKMNControllerFacade in ipairs(self._players) do
-		self:_processEntity(playerController, deltaTime)
+		playerController:Update(deltaTime)
 	end
-end
-
-function KinematicWorld._processEntity(self: KinematicWorld, entityController: RKMNControllerFacade, deltaTime: number)
-	if entityController.TimerRegistry then 
-        entityController.TimerRegistry:Step(deltaTime) 
-    end
-
-	if entityController.PlayerInput then 
-        entityController.PlayerInput:Poll(deltaTime)
-    end
-	
-	if entityController.CollisionQuery then
-        entityController.CollisionQuery:UpdateState()
-    end
-	
-	if entityController.MovementStateMachine then
-        entityController.MovementStateMachine:Update(deltaTime)
-    end
-	
-	if entityController.PhysicsResolver then
-        entityController.PhysicsResolver:Resolve(deltaTime)
-    end
 end
 
 function KinematicWorld.Destroy(self: KinematicWorld): ()

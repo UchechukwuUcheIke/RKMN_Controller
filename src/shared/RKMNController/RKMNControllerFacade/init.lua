@@ -67,6 +67,14 @@ function RKMNControllerFacade.new(dependencies: RKMNControllerFacadeDependencies
     return self
 end
 
+function RKMNControllerFacade.Update(self: RKMNControllerFacade, deltaTime: number): ()
+    self.TimerRegistry:Step(deltaTime)
+    self.PlayerInput:Poll(deltaTime)
+    self.CollisionQuery:UpdateState()
+    self.MovementStateMachine:Update(deltaTime)
+    self.PhysicsResolver:Resolve(deltaTime)
+end
+
 function RKMNControllerFacade.Reset(self: RKMNControllerFacade): ()
 	self.MovementStateMachine:ChangeState(MovementState.Idle)
 	self.TimerRegistry:FlushAll()
