@@ -25,6 +25,14 @@ describe("MovementAnimationSet", function()
 		end
 	end)
 
+	it("should prefix every non-empty animation id with rbxassetid://", function()
+		for _, entry in MovementAnimationSet do
+			if entry.AnimationId ~= "" then
+				expect(string.sub(entry.AnimationId, 1, 13)).toBe("rbxassetid://")
+			end
+		end
+	end)
+
 	it("should be read-only", function()
 		expect(table.isfrozen(MovementAnimationSet)).toBe(true)
 	end)

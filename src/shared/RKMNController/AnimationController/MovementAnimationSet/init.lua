@@ -12,7 +12,7 @@ export type MovementAnimationSet = { [string]: AnimationEntry }
 
 local function AnimationEntry(animationId: string, isLooped: boolean, priority: Enum.AnimationPriority): AnimationEntry
 	return table.freeze({
-		AnimationId = "",
+		AnimationId = if animationId == "" then "" else "rbxassetid://" .. animationId,
 		IsLooped = isLooped,
 		Priority = priority,
 	})
