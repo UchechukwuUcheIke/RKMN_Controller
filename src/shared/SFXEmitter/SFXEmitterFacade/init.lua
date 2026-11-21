@@ -4,6 +4,7 @@ SFXEmitterFacade.__index = SFXEmitterFacade
 SFXEmitterFacade.ClassName = "SFXEmitterFacade"
 
 local SoundService = game:GetService("SoundService")
+local ContentProvider = game:GetService("ContentProvider")
 
 local SFXEmitterFolder = script.Parent
 local SFXRegistry = require(SFXEmitterFolder.SFXRegistry)
@@ -26,7 +27,7 @@ export type SFXEmitterConfig = {
 
 type SFXEmitterFacadeData = {
 	_folder: Folder,
-	_pool: SoundObjectPool,
+	_pools: { [string]: SoundObjectPool },
 	_mixer: SFXMixer,
 	_player: SFXPlayer,
 	_binder: SFXBinder,
@@ -38,6 +39,38 @@ export type SFXEmitterFacade = typeof(setmetatable(
 	{} :: SFXEmitterFacadeData,
 	{} :: SFXEmitterFacadePrototype))
 
+local function prewarmSounds(sounds: { Sound }): ()
+	local hasSoundsToPrewarm = #sounds > 0
+	if hasSoundsToPrewarm then
+		task.spawn(function()
+			ContentProvider:PreloadAsync(sounds)
+		end)
+	end
+end
+local function createPools(registry: SFXRegistry, folder: Folder, mixer: SFXMixer): { [string]: SoundObjectPool }
+	local pools: { [string]: SoundObjectPool } = {}
+	local soundsToPrewarm: { Sound } = {}
+
+	for sfxId, entry in registry do
+		pools[sfxId] = SoundObjectPool.new(function(): Sound
+			local sound = Instance.new("Sound")
+			sound.SoundId = entry.SoundId
+			sound.Volume = entry.Volume
+			sound.PlaybackSpeed = entry.PlaybackSpeed
+			sound.SoundGroup = mixer:GetSoundGroup()
+			sound.Parent = folder
+			if entry.SoundId ~= "" then
+				table.insert(soundsToPrewarm, sound)
+			end
+			return sound
+		end)
+	end
+
+	prewarmSounds(soundsToPrewarm)
+
+	return pools
+end
+
 function SFXEmitterFacade.new(config: SFXEmitterConfig?): SFXEmitterFacade
 	local registry = if config and config.Registry then config.Registry else SFXRegistry
 	local parent = if config and config.Parent then config.Parent else SoundService
@@ -47,17 +80,12 @@ function SFXEmitterFacade.new(config: SFXEmitterConfig?): SFXEmitterFacade
 	folder.Parent = parent
 
 	local mixer = SFXMixer.new(folder)
-	local pool = SoundObjectPool.new(function(): Sound
-		local sound = Instance.new("Sound")
-		sound.SoundGroup = mixer:GetSoundGroup()
-		sound.Parent = folder
-		return sound
-	end)
-	local player = SFXPlayer.new(registry, pool)
+	local pools = createPools(registry, folder, mixer)
+	local player = SFXPlayer.new(registry, pools)
 
 	local data: SFXEmitterFacadeData = {
 		_folder = folder,
-		_pool = pool,
+		_pools = pools,
 		_mixer = mixer,
 		_player = player,
 		_binder = SFXBinder.new(player),
@@ -89,7 +117,9 @@ end
 
 function SFXEmitterFacade.Destroy(self: SFXEmitterFacade): ()
 	self._binder:Destroy()
-	self._pool:Destroy()
+	for _, pool in self._pools do
+		pool:Destroy()
+	end
 	self._mixer:Destroy()
 	self._folder:Destroy()
 	setmetatable(self :: any, nil)

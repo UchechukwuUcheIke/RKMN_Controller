@@ -21,10 +21,10 @@ local function SFXEntry(newSoundId: string, newVolume: number?, newSpeed: number
 end
 
 local SFXRegistry: SFXRegistry = {
-	[SFXIDs.Jump] = SFXEntry("79506152808870"),
-	[SFXIDs.WallJump] = SFXEntry("79506152808870"),
-	[SFXIDs.Dash] = SFXEntry("78825264077928"),
-	[SFXIDs.Land] = SFXEntry("120170393329204"),
+	[SFXIDs.Jump] = SFXEntry("122285439744207"),
+	[SFXIDs.WallJump] = SFXEntry("122285439744207"),
+	[SFXIDs.Dash] = SFXEntry("125799063437606"),
+	[SFXIDs.Land] = SFXEntry("123918344791559"),
 }
 
 return table.freeze(SFXRegistry)

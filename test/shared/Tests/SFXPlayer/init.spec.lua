@@ -50,6 +50,7 @@ end
 describe("SFXPlayer", function()
 	local registry
 	local pool
+	local dashPool
 	local player
 
 	beforeEach(function()
@@ -58,17 +59,16 @@ describe("SFXPlayer", function()
 			Dash = { SoundId = "", Volume = 1, PlaybackSpeed = 1 },
 		}
 		pool = createPoolStub()
-		player = SFXPlayer.new(registry, pool)
+		dashPool = createPoolStub()
+		player = SFXPlayer.new(registry, { Jump = pool, Dash = dashPool })
 	end)
 
 	describe("Play", function()
-		it("should configure a pooled sound from the registry entry and play it", function()
+		it("should play a sound from that id's pool without reconfiguring it", function()
 			player:Play("Jump")
 
 			local sound = pool.acquired[1]
-			expect(sound.SoundId).toBe("rbxassetid://jump")
-			expect(sound.Volume).toBe(0.5)
-			expect(sound.PlaybackSpeed).toBe(1.5)
+			expect(sound.SoundId).toBeNil()
 			expect(sound.playCount).toBe(1)
 		end)
 
@@ -81,7 +81,7 @@ describe("SFXPlayer", function()
 		it("should skip an entry whose SoundId is still empty", function()
 			player:Play("Dash")
 
-			expect(#pool.acquired).toBe(0)
+			expect(#dashPool.acquired).toBe(0)
 		end)
 
 		it("should return the sound to the pool when it ends", function()
