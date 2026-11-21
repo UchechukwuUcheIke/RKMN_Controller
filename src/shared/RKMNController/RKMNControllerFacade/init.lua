@@ -73,6 +73,7 @@ function RKMNControllerFacade.Update(self: RKMNControllerFacade, deltaTime: numb
     self.CollisionQuery:UpdateState()
     self.MovementStateMachine:Update(deltaTime)
     self.PhysicsResolver:Resolve(deltaTime)
+    self.AnimationController:Update()
 end
 
 function RKMNControllerFacade.Reset(self: RKMNControllerFacade): ()

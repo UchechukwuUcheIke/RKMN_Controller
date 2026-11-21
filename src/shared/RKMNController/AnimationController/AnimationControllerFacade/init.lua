@@ -6,12 +6,14 @@ AnimationControllerFacade.ClassName = "AnimationControllerFacade"
 local AnimationControllerFolder = script.Parent
 local RKMNControllerFolder = AnimationControllerFolder.Parent
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
+local PhysicsResolverFacade = require(RKMNControllerFolder.PhysicsResolver.PhysicsResolverFacade)
 local MovementAnimationSet = require(AnimationControllerFolder.MovementAnimationSet)
 local AnimationTrackPlayer = require(AnimationControllerFolder.AnimationTrackPlayer)
 local StateAnimationBinder = require(AnimationControllerFolder.StateAnimationBinder)
 
 type MovementStateMachine = MovementStateMachine.MovementStateMachine
 type MovementAnimationSet = MovementAnimationSet.MovementAnimationSet
+type PhysicsResolverFacade = PhysicsResolverFacade.PhysicsResolverFacade
 type AnimationTrackPlayer = AnimationTrackPlayer.AnimationTrackPlayer
 type StateAnimationBinder = StateAnimationBinder.StateAnimationBinder
 
@@ -43,16 +45,25 @@ end
 function AnimationControllerFacade.new(
 	characterModel: Model,
 	movementFSM: MovementStateMachine,
-	animationSet: MovementAnimationSet?): AnimationControllerFacade
+	physicsResolver: PhysicsResolverFacade,
+		animationSet: MovementAnimationSet?): AnimationControllerFacade
 
 	local animator = findOrCreateAnimator(characterModel)
 	local trackPlayer = AnimationTrackPlayer.new(animator)
+	local function getFacingDirection()
+		return physicsResolver:GetFacingDirection()
+	end
 	local data: AnimationControllerFacadeData = {
 		_trackPlayer = trackPlayer,
-		_binder = StateAnimationBinder.new(movementFSM, animationSet or MovementAnimationSet, trackPlayer),
+		_binder = StateAnimationBinder.new(
+			movementFSM, animationSet or MovementAnimationSet, trackPlayer, getFacingDirection),
 	}
 
 	return setmetatable(data, AnimationControllerFacade)
+end
+
+function AnimationControllerFacade.Update(self: AnimationControllerFacade): ()
+	self._binder:Update()
 end
 
 function AnimationControllerFacade.Destroy(self: AnimationControllerFacade): ()

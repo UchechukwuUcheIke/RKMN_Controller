@@ -8,7 +8,8 @@ local expect = JestGlobals.expect
 local beforeEach = JestGlobals.beforeEach
 local afterEach = JestGlobals.afterEach
 
-local Signal = require(ReplicatedStorage.DevPackages.goodsignal)
+local Direction = require(ReplicatedStorage.Data.Direction)
+local Signal =require(ReplicatedStorage.DevPackages.goodsignal)
 local AnimationControllerFacade = require(ReplicatedStorage.RKMNController.AnimationController.AnimationControllerFacade)
 
 local function createCharacter()
@@ -24,6 +25,14 @@ local function createMovementFSMStub()
 	return {
 		CurrentStateId = "Idle",
 		OnStateChanged = Signal.new(),
+	}
+end
+
+local function createPhysicsResolverStub()
+	return {
+		GetFacingDirection = function()
+			return Direction.Right
+		end,
 	}
 end
 
@@ -51,12 +60,12 @@ describe("AnimationControllerFacade", function()
 			character:FindFirstChildOfClass("Humanoid"):Destroy()
 
 			expect(function()
-				AnimationControllerFacade.new(character, fsm, {})
+				AnimationControllerFacade.new(character, fsm, createPhysicsResolverStub(), {})
 			end).toThrow("Humanoid")
 		end)
 
 		it("should create an Animator under the Humanoid when there is none", function()
-			controller = AnimationControllerFacade.new(character, fsm, {})
+			controller = AnimationControllerFacade.new(character, fsm, createPhysicsResolverStub(), {})
 
 			local humanoid = character:FindFirstChildOfClass("Humanoid")
 			expect(humanoid:FindFirstChildOfClass("Animator")).toBeDefined()
@@ -67,7 +76,7 @@ describe("AnimationControllerFacade", function()
 			local existing = Instance.new("Animator")
 			existing.Parent = humanoid
 
-			controller = AnimationControllerFacade.new(character, fsm, {})
+			controller = AnimationControllerFacade.new(character, fsm, createPhysicsResolverStub(), {})
 
 			expect(humanoid:FindFirstChildOfClass("Animator")).toBe(existing)
 		end)
@@ -75,7 +84,7 @@ describe("AnimationControllerFacade", function()
 
 	describe("Destroy", function()
 		it("should stop listening to state changes", function()
-			controller = AnimationControllerFacade.new(character, fsm, {})
+			controller = AnimationControllerFacade.new(character, fsm, createPhysicsResolverStub(), {})
 
 			controller:Destroy()
 			controller = nil

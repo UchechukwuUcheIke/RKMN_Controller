@@ -18,17 +18,21 @@ describe("MovementAnimationSet", function()
 	end)
 
 	it("should give every entry the fields the track player needs", function()
-		for _, entry in MovementAnimationSet do
-			expect(type(entry.AnimationId)).toBe("string")
-			expect(type(entry.IsLooped)).toBe("boolean")
-			expect(typeof(entry.Priority)).toBe("EnumItem")
+		for _, directionalEntry in MovementAnimationSet do
+			for _, entry in { directionalEntry.Left, directionalEntry.Right } do
+				expect(type(entry.AnimationId)).toBe("string")
+				expect(type(entry.IsLooped)).toBe("boolean")
+				expect(typeof(entry.Priority)).toBe("EnumItem")
+			end
 		end
 	end)
 
 	it("should prefix every non-empty animation id with rbxassetid://", function()
-		for _, entry in MovementAnimationSet do
-			if entry.AnimationId ~= "" then
-				expect(string.sub(entry.AnimationId, 1, 13)).toBe("rbxassetid://")
+		for _, directionalEntry in MovementAnimationSet do
+			for _, entry in { directionalEntry.Left, directionalEntry.Right } do
+				if entry.AnimationId ~= "" then
+					expect(string.sub(entry.AnimationId, 1, 13)).toBe("rbxassetid://")
+				end
 			end
 		end
 	end)

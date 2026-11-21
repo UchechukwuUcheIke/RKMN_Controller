@@ -142,7 +142,7 @@ local function makeDependencies(character: Model, collisionQuery: CollisionQuery
     }
     local stateMachineContext = StateMachineContext.new(FSMContextDependencies)
     local movementStateMachine = MovementStateMachine.new(stateMachineContext)
-    local animationController = AnimationControllerFacade.new(character, movementStateMachine)
+    local animationController = AnimationControllerFacade.new(character, movementStateMachine, physicsResolver)
     local sfxEmitter = makeMovementSFXEmitter(movementStateMachine)
 
     local dependencies: RKMNControllerFacadeDependencies = {

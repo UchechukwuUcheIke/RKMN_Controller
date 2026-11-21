@@ -8,14 +8,19 @@ local RKMNControllerFolder = AnimationControllerFolder.Parent
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
 local MovementAnimationSet = require(AnimationControllerFolder.MovementAnimationSet)
 local AnimationTrackPlayer = require(AnimationControllerFolder.AnimationTrackPlayer)
+local Direction = require(game:GetService("ReplicatedStorage").Data.Direction)
 
 type MovementStateMachine = MovementStateMachine.MovementStateMachine
 type MovementAnimationSet = MovementAnimationSet.MovementAnimationSet
 type AnimationTrackPlayer = AnimationTrackPlayer.AnimationTrackPlayer
+type Direction = Direction.Direction
 
 type StateAnimationBinderData = {
 	_animationSet: MovementAnimationSet,
 	_trackPlayer: AnimationTrackPlayer,
+	_getFacingDirection: () -> Direction,
+	_currentStateId: string?,
+	_playedFacingDirection: Direction,
 	_connection: { Disconnect: (self: any) -> () }?,
 }
 
@@ -28,11 +33,15 @@ export type StateAnimationBinder = typeof(setmetatable(
 function StateAnimationBinder.new(
 	movementFSM: MovementStateMachine,
 	animationSet: MovementAnimationSet,
-	trackPlayer: AnimationTrackPlayer): StateAnimationBinder
+	trackPlayer: AnimationTrackPlayer,
+	getFacingDirection: () -> Direction): StateAnimationBinder
 
 	local data: StateAnimationBinderData = {
 		_animationSet = animationSet,
 		_trackPlayer = trackPlayer,
+		_getFacingDirection = getFacingDirection,
+		_currentStateId = nil,
+		_playedFacingDirection = getFacingDirection(),
 		_connection = nil,
 	}
 	local self = setmetatable(data, StateAnimationBinder)
@@ -50,13 +59,34 @@ function StateAnimationBinder.new(
 end
 
 function StateAnimationBinder._playAnimationFor(self: StateAnimationBinder, stateId: string): ()
-	local entry = self._animationSet[stateId]
-	if entry == nil or entry.AnimationId == "" then
+	local facingDirection = self._getFacingDirection()
+	self._currentStateId = stateId
+	self._playedFacingDirection = facingDirection
+
+	local directionalEntry = self._animationSet[stateId]
+	if directionalEntry == nil then
+		self._trackPlayer:Stop()
+		return
+	end
+
+	local entry = if facingDirection == Direction.Left then directionalEntry.Left else directionalEntry.Right
+	if entry.AnimationId == "" then
 		self._trackPlayer:Stop()
 		return
 	end
 
 	self._trackPlayer:Play(entry)
+end
+
+function StateAnimationBinder.Update(self: StateAnimationBinder): ()
+	local currentStateId = self._currentStateId
+	if currentStateId == nil then
+		return
+	end
+
+	if self._getFacingDirection() ~= self._playedFacingDirection then
+		self:_playAnimationFor(currentStateId)
+	end
 end
 
 function StateAnimationBinder._clearConnections(self: StateAnimationBinder): ()
@@ -70,7 +100,7 @@ end
 function StateAnimationBinder.Destroy(self: StateAnimationBinder): ()
 	self:_clearConnections()
 	setmetatable(self :: any, nil)
-	table.freeze(self)	
+	table.freeze(self)
 end
 
 table.freeze(StateAnimationBinder)
