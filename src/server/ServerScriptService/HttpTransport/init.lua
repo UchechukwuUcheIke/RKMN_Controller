@@ -6,7 +6,7 @@ local HttpService = game:GetService("HttpService")
 export type HttpMethod = "GET" | "POST" | "PATCH" | "DELETE"
 
 export type HttpRequest = {
-    Url: string,
+    Url: string | Secret,
     Method: HttpMethod,
     Headers: {[string]: string | Secret}?,
     Body: string?
@@ -61,19 +61,19 @@ function HttpTransport.ToResult(response: HttpResponse): HttpResult
     })
 end
 
-function HttpTransport.Get(url: string, headers: {[string]: string | Secret}?): HttpResult
+function HttpTransport.Get(url: string | Secret, headers: {[string]: string | Secret}?): HttpResult
     return HttpTransport.Request({ Url = url, Method = "GET", Headers = headers })
 end
 
-function HttpTransport.Post(url: string, body: string, headers: {[string]: string | Secret}?): HttpResult
+function HttpTransport.Post(url: string | Secret, body: string, headers: {[string]: string | Secret}?): HttpResult
     return HttpTransport.Request({ Url = url, Method = "POST", Headers = headers, Body = body })
 end
 
-function HttpTransport.Patch(url: string, body: string, headers: {[string]: string | Secret}?): HttpResult
+function HttpTransport.Patch(url: string | Secret, body: string, headers: {[string]: string | Secret}?): HttpResult
     return HttpTransport.Request({ Url = url, Method = "PATCH", Headers = headers, Body = body })
 end
 
-function HttpTransport.Delete(url: string, headers: {[string]: string | Secret}?): HttpResult
+function HttpTransport.Delete(url: string | Secret, headers: {[string]: string | Secret}?): HttpResult
     return HttpTransport.Request({ Url = url, Method = "DELETE", Headers = headers })
 end
 

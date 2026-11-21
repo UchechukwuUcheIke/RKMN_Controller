@@ -8,7 +8,7 @@ type HttpResult = HttpTransport.HttpResult
 type Key = string | Secret
 
 export type SupabaseConfig = {
-    Url: string,
+    Url: Key,
     AnonKey: Key
 }
 
@@ -28,11 +28,15 @@ local function failure(message: string): HttpResult
     })
 end
 
-function SupabaseClient.BuildTableUrl(config: SupabaseConfig, tableName: string): string
+function SupabaseClient.BuildTableUrl(config: SupabaseConfig, tableName: string): Key
     assert(tableName:match("^[%w_]+$") ~= nil, `Invalid Supabase table name: {tableName}`)
 
-    local baseUrl = config.Url:gsub("/+$", "")
-    return baseUrl .. REST_PATH .. tableName
+    local path = REST_PATH .. tableName
+    if typeof(config.Url) == "string" then
+        local baseUrl = config.Url:gsub("/+$", "")
+        return baseUrl .. path
+    end
+    return config.Url:AddSuffix(path)
 end
 
 function SupabaseClient.BuildInsertHeaders(config: SupabaseConfig): {[string]: Key}

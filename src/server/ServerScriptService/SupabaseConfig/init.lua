@@ -1,6 +1,7 @@
 --!strict
 local SupabaseConfig = {}
 
+local HttpService = game:GetService("HttpService")
 local SupabaseClient = require(script.Parent.SupabaseClient)
 
 type SupabaseClientConfig = SupabaseClient.SupabaseConfig
@@ -11,8 +12,9 @@ export type ConfigResult = {
     Error: string?
 }
 
-local CREDENTIALS_MODULE_NAME = "SupabaseCredentials"
-local SETUP_HINT = `Copy {CREDENTIALS_MODULE_NAME}.lua.example to {CREDENTIALS_MODULE_NAME}.lua and fill it in.`
+-- The API url is the project ref as a subdomain, not the dashboard address. It is not sensitive.
+local PROJECT_URL = "https://aqmoeezwjmkngbuenmlk.supabase.co"
+local ANON_KEY_SECRET_NAME = "anon_public_key"
 
 local function failure(message: string): ConfigResult
     return table.freeze({
@@ -21,30 +23,25 @@ local function failure(message: string): ConfigResult
     })
 end
 
-local function isNonEmptyString(value: any): boolean
-    return typeof(value) == "string" and value ~= ""
+local function getSecret(name: string): (Secret?, string?)
+    local didGet, secretOrError = pcall(HttpService.GetSecret, HttpService, name)
+    if not didGet then
+        return nil, `Secret "{name}" could not be read: {secretOrError}`
+    end
+    return secretOrError :: Secret, nil
 end
 
 function SupabaseConfig.Get(): ConfigResult
-    local credentialsModule = script:FindFirstChild(CREDENTIALS_MODULE_NAME)
-    if not credentialsModule or not credentialsModule:IsA("ModuleScript") then
-        return failure(`Supabase credentials not found. {SETUP_HINT}`)
-    end
-
-    local didLoad, credentials = pcall(require, credentialsModule)
-    if not didLoad then
-        return failure(`Supabase credentials failed to load: {credentials}`)
-    end
-
-    if typeof(credentials) ~= "table" or not isNonEmptyString(credentials.Url) or not isNonEmptyString(credentials.AnonKey) then
-        return failure(`Supabase credentials need a non-empty Url and AnonKey. {SETUP_HINT}`)
+    local anonKey, keyError = getSecret(ANON_KEY_SECRET_NAME)
+    if not anonKey then
+        return failure(keyError or "Anon key secret missing")
     end
 
     return table.freeze({
         Ok = true,
         Config = table.freeze({
-            Url = credentials.Url :: string,
-            AnonKey = credentials.AnonKey :: string,
+            Url = PROJECT_URL,
+            AnonKey = anonKey,
         }),
     })
 end
