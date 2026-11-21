@@ -10,7 +10,7 @@ export type AnimationEntry = {
 
 export type MovementAnimationSet = { [string]: AnimationEntry }
 
-local function entry(isLooped: boolean, priority: Enum.AnimationPriority): AnimationEntry
+local function AnimationEntry(animationId: string, isLooped: boolean, priority: Enum.AnimationPriority): AnimationEntry
 	return table.freeze({
 		AnimationId = "",
 		IsLooped = isLooped,
@@ -19,13 +19,13 @@ local function entry(isLooped: boolean, priority: Enum.AnimationPriority): Anima
 end
 
 local MovementAnimationSet: MovementAnimationSet = {
-	[MovementStateID.Idle] = entry(true, Enum.AnimationPriority.Idle),
-	[MovementStateID.Walk] = entry(true, Enum.AnimationPriority.Movement),
-	[MovementStateID.Jump] = entry(false, Enum.AnimationPriority.Movement),
-	[MovementStateID.Freefall] = entry(true, Enum.AnimationPriority.Movement),
-	[MovementStateID.WallSlide] = entry(true, Enum.AnimationPriority.Movement),
-	[MovementStateID.Dash] = entry(false, Enum.AnimationPriority.Movement),
-	[MovementStateID.Stun] = entry(false, Enum.AnimationPriority.Action),
+	[MovementStateID.Idle] = AnimationEntry("18840245322", true, Enum.AnimationPriority.Idle),
+	[MovementStateID.Walk] = AnimationEntry("18823831918", true, Enum.AnimationPriority.Movement),
+	[MovementStateID.Jump] = AnimationEntry("8444234110", false, Enum.AnimationPriority.Movement),
+	[MovementStateID.Freefall] = AnimationEntry("", true, Enum.AnimationPriority.Movement),
+	[MovementStateID.WallSlide] = AnimationEntry("18854784306", true, Enum.AnimationPriority.Movement),
+	[MovementStateID.Dash] = AnimationEntry("18823624728", false, Enum.AnimationPriority.Movement),
+	[MovementStateID.Stun] = AnimationEntry("8545260081", false, Enum.AnimationPriority.Action),
 }
 
 return table.freeze(MovementAnimationSet)
