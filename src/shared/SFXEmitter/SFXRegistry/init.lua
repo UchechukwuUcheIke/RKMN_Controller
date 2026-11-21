@@ -10,7 +10,7 @@ export type SFXEntry = {
 export type SFXRegistry = { [string]: SFXEntry }
 
 local function SFXEntry(newSoundId: string, newVolume: number?, newSpeed: number?): SFXEntry
-	local soundId = newSoundId or ""
+	local soundId = if newSoundId == "" then "" else "rbxassetid://" .. newSoundId
 	local volume = newVolume or 1
 	local speed = newSpeed or 1
 	return table.freeze({
