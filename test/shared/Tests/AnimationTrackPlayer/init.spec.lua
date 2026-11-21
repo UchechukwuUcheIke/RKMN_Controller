@@ -62,6 +62,50 @@ describe("AnimationTrackPlayer", function()
 		player = AnimationTrackPlayer.new(animator)
 	end)
 
+	describe("new", function()
+		it("should load a track for every preload entry without playing any", function()
+			player = AnimationTrackPlayer.new(animator, {
+				makeEntry("rbxassetid://1"),
+				makeEntry("rbxassetid://2"),
+			})
+
+			expect(animator.loadCount).toBe(2)
+			expect(#log).toBe(0)
+		end)
+
+		it("should load one track for entries that share an id", function()
+			player = AnimationTrackPlayer.new(animator, {
+				makeEntry("rbxassetid://1"),
+				makeEntry("rbxassetid://1"),
+			})
+
+			expect(animator.loadCount).toBe(1)
+		end)
+
+		it("should skip preload entries with an empty id", function()
+			player = AnimationTrackPlayer.new(animator, { makeEntry("") })
+
+			expect(animator.loadCount).toBe(0)
+		end)
+
+		it("should play a preloaded animation without loading it again", function()
+			player = AnimationTrackPlayer.new(animator, { makeEntry("rbxassetid://1") })
+
+			player:Play(makeEntry("rbxassetid://1"))
+
+			expect(animator.loadCount).toBe(1)
+			expect(log).toEqual({ { "Play", "rbxassetid://1", 0 } })
+		end)
+
+		it("should destroy preloaded tracks that never played", function()
+			player = AnimationTrackPlayer.new(animator, { makeEntry("rbxassetid://1") })
+
+			player:Destroy()
+
+			expect(log).toEqual({ { "Destroy", "rbxassetid://1" } })
+		end)
+	end)
+
 	describe("Play", function()
 		it("should load the animation and play it with no fade", function()
 			player:Play(makeEntry("rbxassetid://1"))

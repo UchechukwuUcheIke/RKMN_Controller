@@ -22,19 +22,28 @@ export type AnimationTrackPlayer = typeof(setmetatable(
 	{} :: AnimationTrackPlayerData,
 	{} :: AnimationTrackPlayerPrototype))
 
-function AnimationTrackPlayer.new(animator: Animator): AnimationTrackPlayer
+-- Entries with an empty id are skipped, and entries sharing an id load one track.
+function AnimationTrackPlayer.new(animator: Animator, preloadEntries: { AnimationEntry }?): AnimationTrackPlayer
 	local data: AnimationTrackPlayerData = {
 		_animator = animator,
 		_tracksById = {},
 		_currentAnimationId = nil,
 		_currentTrack = nil,
 	}
+	local self = setmetatable(data, AnimationTrackPlayer)
 
-	return setmetatable(data, AnimationTrackPlayer)
+	if preloadEntries then
+		for _, entry in preloadEntries do
+			if entry.AnimationId ~= "" then
+				self:_getTrack(entry)
+			end
+		end
+	end
+
+	return self
 end
 
 function AnimationTrackPlayer._getTrack(self: AnimationTrackPlayer, entry: AnimationEntry): AnimationTrack
-	-- NOTE: May be worth it to populate cache on init.
 	local cachedTrack = self._tracksById[entry.AnimationId]
 	if cachedTrack then
 		return cachedTrack

@@ -13,6 +13,7 @@ local StateAnimationBinder = require(AnimationControllerFolder.StateAnimationBin
 
 type MovementStateMachine = MovementStateMachine.MovementStateMachine
 type MovementAnimationSet = MovementAnimationSet.MovementAnimationSet
+type AnimationEntry = MovementAnimationSet.AnimationEntry
 type PhysicsResolverFacade = PhysicsResolverFacade.PhysicsResolverFacade
 type AnimationTrackPlayer = AnimationTrackPlayer.AnimationTrackPlayer
 type StateAnimationBinder = StateAnimationBinder.StateAnimationBinder
@@ -42,21 +43,32 @@ local function findOrCreateAnimator(characterModel: Model): Animator
 	return newAnimator
 end
 
+-- Every animation the set can ask for, so the track player can load them all up front.
+local function listEntries(animationSet: MovementAnimationSet): { AnimationEntry }
+	local entries = {}
+	for _, directionalEntry in animationSet do
+		table.insert(entries, directionalEntry.Left)
+		table.insert(entries, directionalEntry.Right)
+	end
+	return entries
+end
+
 function AnimationControllerFacade.new(
 	characterModel: Model,
 	movementFSM: MovementStateMachine,
 	physicsResolver: PhysicsResolverFacade,
 		animationSet: MovementAnimationSet?): AnimationControllerFacade
 
+	local resolvedAnimationSet = animationSet or MovementAnimationSet
 	local animator = findOrCreateAnimator(characterModel)
-	local trackPlayer = AnimationTrackPlayer.new(animator)
+	local trackPlayer = AnimationTrackPlayer.new(animator, listEntries(resolvedAnimationSet))
 	local function getFacingDirection()
 		return physicsResolver:GetFacingDirection()
 	end
 	local data: AnimationControllerFacadeData = {
 		_trackPlayer = trackPlayer,
 		_binder = StateAnimationBinder.new(
-			movementFSM, animationSet or MovementAnimationSet, trackPlayer, getFacingDirection),
+			movementFSM, resolvedAnimationSet, trackPlayer, getFacingDirection),
 	}
 
 	return setmetatable(data, AnimationControllerFacade)
