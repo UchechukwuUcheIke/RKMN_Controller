@@ -117,6 +117,13 @@ local function makeMovementSFXEmitter(movementStateMachine: MovementStateMachine
     emitter:Bind(stateChanged, SFXIDs.Jump, function(newStateId: string, previousStateId: string?)
         return newStateId == MovementStateID.Jump and previousStateId ~= MovementStateID.WallSlide
     end)
+    emitter:Bind(stateChanged, SFXIDs.Land, function(newStateId: string, previousStateId: string?)
+        local isGrounded = newStateId == MovementStateID.Idle or newStateId == MovementStateID.Walk
+        local wasAirborne = previousStateId == MovementStateID.Freefall
+            or previousStateId == MovementStateID.Jump
+            or previousStateId == MovementStateID.WallSlide
+        return isGrounded and wasAirborne
+    end)
 
     return emitter
 end
