@@ -7,9 +7,10 @@ local describe = JestGlobals.describe
 local it = JestGlobals.it
 local expect = JestGlobals.expect
 
+local ControlPreferenceReportContext = require(ServerScriptService.Server.Telemetry.ControlPreferences.ControlPreferenceReportContext)
 local ControlPreferenceValidator = require(ServerScriptService.Server.Telemetry.ControlPreferences.ControlPreferenceValidator)
 
-local CONTEXT = { ReportId = "report-1", PlaceVersion = 3, SessionId = "session-1" }
+local CONTEXT = ControlPreferenceReportContext.new("report-1", 3, "session-1")
 
 local function touchEntry(overrides)
 	local entry = {

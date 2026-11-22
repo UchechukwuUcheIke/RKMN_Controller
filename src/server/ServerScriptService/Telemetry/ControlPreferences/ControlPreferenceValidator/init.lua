@@ -7,6 +7,7 @@ local StringEnum = require(ReplicatedStorage.Utility.StringEnum)
 local InputAction = require(ReplicatedStorage.PlayerInput.InputAction)
 local TouchGamepadLayoutRegistry = require(ReplicatedStorage.TouchGamepad.TouchGamepadLayoutRegistry)
 local ControlPreferenceReport = require(ReplicatedStorage.Telemetry.ControlPreferences.ControlPreferenceReport)
+local ControlPreferenceReportContext = require(script.Parent.ControlPreferenceReportContext)
 local ControlPreferenceRow = require(script.Parent.ControlPreferenceRow)
 local ControlPreferenceBindingRow = require(script.Parent.ControlPreferenceBindingRow)
 local ControlPreferenceTouchRow = require(script.Parent.ControlPreferenceTouchRow)
@@ -16,7 +17,7 @@ type ControlPreferenceBindingRow = ControlPreferenceBindingRow.ControlPreference
 type ControlPreferenceTouchRow = ControlPreferenceTouchRow.ControlPreferenceTouchRow
 type BindingEntry = ControlPreferenceReport.BindingEntry
 type TouchControlEntry = ControlPreferenceReport.TouchControlEntry
-type ReportContext = ControlPreferenceRow.ReportContext
+type ControlPreferenceReportContext = ControlPreferenceReportContext.ControlPreferenceReportContext
 
 export type ValidationResult = {
     Ok: boolean,
@@ -131,12 +132,13 @@ end
 
 -- A touch report carries only touch controls and every other device carries only bindings, so
 -- entries of the other kind are ignored. A report with nothing left in it says nothing and is rejected.
-function ControlPreferenceValidator.Validate(report: any, context: ReportContext): ValidationResult
+function ControlPreferenceValidator.Validate(report: unknown, context: ControlPreferenceReportContext): ValidationResult
     if typeof(report) ~= "table" then
         return failure("Report must be a table")
     end
 
-    local device = report.Device
+    local fields = report :: {[string]: any}
+    local device = fields.Device
     if not InputDevice.IsValid(device) or device == InputDevice.Unknown then
         return failure("Device is not a known input device")
     end
@@ -144,11 +146,11 @@ function ControlPreferenceValidator.Validate(report: any, context: ReportContext
     local bindingRows: {ControlPreferenceBindingRow} = {}
     local touchRows: {ControlPreferenceTouchRow} = {}
     if device == InputDevice.Touch then
-        for _, entry in ipairs(cleanTouchControls(report.TouchControls)) do
+        for _, entry in ipairs(cleanTouchControls(fields.TouchControls)) do
             table.insert(touchRows, ControlPreferenceTouchRow.new(entry, context.ReportId))
         end
     else
-        for _, entry in ipairs(cleanBindings(report.Bindings)) do
+        for _, entry in ipairs(cleanBindings(fields.Bindings)) do
             table.insert(bindingRows, ControlPreferenceBindingRow.new(entry, context.ReportId))
         end
     end

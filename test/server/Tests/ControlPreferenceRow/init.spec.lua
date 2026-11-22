@@ -7,9 +7,10 @@ local describe = JestGlobals.describe
 local it = JestGlobals.it
 local expect = JestGlobals.expect
 
+local ControlPreferenceReportContext = require(ServerScriptService.Server.Telemetry.ControlPreferences.ControlPreferenceReportContext)
 local ControlPreferenceRow = require(ServerScriptService.Server.Telemetry.ControlPreferences.ControlPreferenceRow)
 
-local CONTEXT = { ReportId = "report-1", PlaceVersion = 7, SessionId = "session-1" }
+local CONTEXT = ControlPreferenceReportContext.new("report-1", 7, "session-1")
 
 describe("ControlPreferenceRow.new", function()
 	it("maps the device and context onto the table's columns", function()
