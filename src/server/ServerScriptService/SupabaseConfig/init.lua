@@ -12,7 +12,6 @@ export type ConfigResult = {
     Error: string?
 }
 
--- The API url is the project ref as a subdomain, not the dashboard address. It is not sensitive.
 local PROJECT_URL = "https://aqmoeezwjmkngbuenmlk.supabase.co"
 local ANON_KEY_SECRET_NAME = "anon_public_key"
 
