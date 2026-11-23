@@ -22,7 +22,9 @@ function GroundedState.new(name: string): GroundedState
 end
 
 local function attemptExitToFreefallState(stateMachine: StateMachine): boolean
-    local isGrounded: boolean = stateMachine.Context.CollisionQuery:IsGrounded()
+    local context: StateMachineContext = stateMachine.Context
+    local collisionQuery = context.CollisionQuery
+    local isGrounded: boolean = collisionQuery:IsGrounded()
     if isGrounded then
         return false
     end
@@ -31,9 +33,10 @@ local function attemptExitToFreefallState(stateMachine: StateMachine): boolean
     return true
 end
 
-local function attemptExitToIdleOrWalkState(stateMachine: StateMachine): ()
+local function attemptTransitionToIdleOrWalkState(stateMachine: StateMachine): ()
     local context: StateMachineContext = stateMachine.Context
-    local moveDirection = context.PlayerInput:GetMoveDirection()
+    local playerInput = context.PlayerInput
+    local moveDirection = playerInput:GetMoveDirection()
     local isMoving: boolean = moveDirection ~= Direction.None
     local newStateID: string = if isMoving then MovementStateID.Walk else MovementStateID.Idle 
     stateMachine:ChangeState(newStateID)
@@ -41,7 +44,8 @@ end
 
 
 local function attemptExitToJumpState(stateMachine: StateMachine): boolean
-    local playerInput = stateMachine.Context.PlayerInput
+    local context: StateMachineContext = stateMachine.Context
+    local playerInput = context.PlayerInput
     if not playerInput:HasBufferedJump() then
         return false
     end
@@ -68,18 +72,21 @@ local function drivePlayerMovement(stateMachine: StateMachine): ()
     context.PhysicsResolver:MoveInDirection(moveDirection, MovementConfig.MoveSpeed)
 end
 
+local function attemptExitToNonGroundedState(stateMachine): boolean
+    local successfulExit = (attemptExitToFreefallState(stateMachine) 
+        or attemptExitToJumpState(stateMachine) 
+        or attemptExitToDashState(stateMachine))
+    return successfulExit
+end
+
 function GroundedState.OnStep(self: GroundedState, stateMachine: StateMachine, dt: number): ()
-	local success: boolean = attemptExitToFreefallState(stateMachine)
+	local success: boolean = attemptExitToNonGroundedState(stateMachine)
     if success then
         return
     end
 
-    if attemptExitToJumpState(stateMachine) or attemptExitToDashState(stateMachine) then
-        return
-    end
-
     drivePlayerMovement(stateMachine)
-    attemptExitToIdleOrWalkState(stateMachine)
+    attemptTransitionToIdleOrWalkState(stateMachine)
 end
 
 local function restorePlayerControls(stateMachine: StateMachine): ()
