@@ -61,20 +61,12 @@ local function attemptExitToFreefallState(stateMachine: StateMachine): boolean
 	return false
 end
 
-local EXIT_CHECKS = {
-	attemptExitToFreefallState,
-	attemptExitToJumpState,
-	attemptExitToIdleState,
-}
-
 local function attemptExitDashState(stateMachine: StateMachine): boolean
-	for _, check in ipairs(EXIT_CHECKS) do
-		if check(stateMachine) then
-			return true
-		end
-	end
+	local successfullyExited = (attemptExitToFreefallState(stateMachine) 
+		or attemptExitToJumpState(stateMachine) 
+		or attemptExitToIdleState(stateMachine))
 	
-	return false
+	return successfullyExited
 end
 
 local function driveDashMovement(stateMachine: StateMachine): ()
