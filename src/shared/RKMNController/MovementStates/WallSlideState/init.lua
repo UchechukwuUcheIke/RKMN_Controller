@@ -23,10 +23,11 @@ function WallSlideState.OnEnter(self: WallSlideState, stateMachine: StateMachine
     stateMachine.Context.PhysicsResolver:SetFallSpeedOverride(MovementConfig.WallSlideSpeed)
 end
 
-local function isHoldingTowardWall(stateMachine: StateMachine): boolean
+local function isMovingTowardWall(stateMachine: StateMachine): boolean
     local context = stateMachine.Context
     local moveDirection: Direction = context.PlayerInput:GetMoveDirection()
-    if moveDirection == Direction.None then
+    local isPlayerMoving = moveDirection ~= Direction.None
+    if not isPlayerMoving then
         return false
     end
 
@@ -34,7 +35,8 @@ local function isHoldingTowardWall(stateMachine: StateMachine): boolean
 end
 
 local function attemptExitToIdleState(stateMachine: StateMachine): boolean
-    if not stateMachine.Context.CollisionQuery:IsGrounded() then
+    local isPlayerGrounded = stateMachine.Context.CollisionQuery:IsGrounded()
+    if not isPlayerGrounded then
         return false
     end
 
@@ -54,7 +56,7 @@ local function attemptExitToJumpState(stateMachine: StateMachine): boolean
 end
 
 local function attemptExitToFreefallState(stateMachine: StateMachine): boolean
-    if isHoldingTowardWall(stateMachine) then
+    if isMovingTowardWall(stateMachine) then
         return false
     end
 
@@ -62,24 +64,15 @@ local function attemptExitToFreefallState(stateMachine: StateMachine): boolean
     return true
 end
 
-local EXIT_CHECKS = {
-    attemptExitToIdleState,
-    attemptExitToJumpState,
-    attemptExitToFreefallState,
-}
-
 local function attemptExitWallSlideState(stateMachine: StateMachine): boolean
-    for _, check in ipairs(EXIT_CHECKS) do
-        if check(stateMachine) then
-            return true
-        end
-    end
+    local exitedSuccessfully = (attemptExitToIdleState(stateMachine) 
+        or attemptExitToJumpState(stateMachine) 
+        or attemptExitToFreefallState(stateMachine))
 
-    return false
+    return exitedSuccessfully
 end
 
--- No horizontal velocity while sliding: a diagonal sweep into the wall would stall the vertical movement.
-local function driveSlideMovement(stateMachine: StateMachine): ()
+local function curtailHorizontalMovement(stateMachine: StateMachine): ()
     stateMachine.Context.PhysicsResolver:MoveInDirection(Direction.None, 0)
 end
 
@@ -88,7 +81,7 @@ function WallSlideState.OnStep(self: WallSlideState, stateMachine: StateMachine,
         return
     end
 
-    driveSlideMovement(stateMachine)
+    curtailHorizontalMovement(stateMachine)
 end
 
 function WallSlideState.OnExit(self: WallSlideState, stateMachine: StateMachine): ()
