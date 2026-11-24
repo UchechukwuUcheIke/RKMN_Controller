@@ -38,10 +38,6 @@ function WalkState.OnStep(self: WalkState, stateMachine: StateMachine, dt: numbe
     attemptExitToIdleState(stateMachine)
 end
 
-function WalkState.OnExit(self: WalkState, stateMachine: StateMachine): ()
-    --GroundedBehavior.RestorePlayerControls(stateMachine.Context)
-end
-
 table.freeze(WalkState)
 
 return WalkState
