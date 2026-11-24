@@ -25,34 +25,39 @@ function AirborneState.new(name: string): AirborneState
 	return self :: AirborneState
 end
 
-local function isDashJumpEntry(context): boolean
-    if context.PreviousStateId == MovementStateID.Dash then
+local function isPlayerDashJumping(context): boolean
+    local wasPlayerDashing = context.PreviousStateId == MovementStateID.Dash
+    if wasPlayerDashing then
         return true
     end
 
-    return context.PreviousStateId == MovementStateID.WallSlide and context.PlayerInput:IsHoldingDash()
+    local playerIsWallSliding = context.PreviousStateId == MovementStateID.WallSlide
+    local playerIsHoldingDash = context.PlayerInput:IsHoldingDash()
+    local isPlayerWallDashJumping = playerIsWallSliding and playerIsHoldingDash
+    return isPlayerWallDashJumping
 end
 
-function AirborneState._resolveAirborneVariables(self: AirborneState, stateMachine: StateMachine): ()
-    local context = stateMachine.Context
-    if AIRBORNE_STATE_IDS[context.PreviousStateId] then
+local function refreshDashJumpFlag(context): ()
+    local wasPlayerInAirborneStatePreviously = AIRBORNE_STATE_IDS[context.PreviousStateId]
+    if wasPlayerInAirborneStatePreviously then
         return
     end
 
     context:ClearFlag(DASH_JUMP_FLAG)
-    if isDashJumpEntry(context) then
+    if isPlayerDashJumping(context) then
         context:SetFlag(DASH_JUMP_FLAG)
     end
 end
 
 function AirborneState.OnEnter(self: AirborneState, stateMachine: StateMachine)
-    self:_resolveAirborneVariables(stateMachine)
+    local context = stateMachine.Context
+    refreshDashJumpFlag(context)
 
-    if self.Id ~= MovementStateID.Jump then
+    local isPlayerJumping = self.Id == MovementStateID.Jump
+    if not isPlayerJumping then
         return
     end
 
-    local context = stateMachine.Context
     context.PhysicsResolver:ApplyJumpImpulse()
 end
 
@@ -68,17 +73,20 @@ local function attemptExitToIdleState(stateMachine: StateMachine): boolean
 end
 
 local function attemptExitToWallSlideState(stateMachine: StateMachine): boolean
-    if stateMachine.CurrentStateId ~= MovementStateID.Freefall then
+    local isPlayerInFreefall = stateMachine.CurrentStateId == MovementStateID.Freefall
+    if not isPlayerInFreefall then
         return false
     end
 
     local context = stateMachine.Context
     local moveDirection = context.PlayerInput:GetMoveDirection()
-    if moveDirection == Direction.None then
+    local isPlayerMoving = moveDirection ~= Direction.None
+    if not isPlayerMoving then
         return false
     end
 
-    if not context.CollisionQuery:CheckWallContact(moveDirection).Success then
+    local isPlayerTouchingWall = context.CollisionQuery:CheckWallContact(moveDirection).Success
+    if not isPlayerTouchingWall then
         return false
     end
 
@@ -87,11 +95,13 @@ local function attemptExitToWallSlideState(stateMachine: StateMachine): boolean
 end
 
 local function attemptExitToFreefallState(stateMachine: StateMachine): boolean
-    if stateMachine.CurrentStateId ~= MovementStateID.Jump then
+    local isPlayerJumping = stateMachine.CurrentStateId == MovementStateID.Jump
+    if not isPlayerJumping then
         return false
     end
-
-    if stateMachine.Context.PhysicsResolver:GetVelocity().Y > 0 then
+    
+    local isPlayerRisingInAir = stateMachine.Context.PhysicsResolver:GetVelocity().Y > 0
+    if isPlayerRisingInAir then
         return false
     end
 
@@ -99,33 +109,26 @@ local function attemptExitToFreefallState(stateMachine: StateMachine): boolean
     return true
 end
 
-local EXIT_CHECKS = {
-    attemptExitToIdleState,
-    attemptExitToFreefallState,
-    attemptExitToWallSlideState,
-}
-
 local function attemptExitAirborneState(stateMachine: StateMachine): boolean
-    for _, check in ipairs(EXIT_CHECKS) do
-        if check(stateMachine) then
-            return true
-        end
-    end
+    local successfullyExited = (attemptExitToIdleState(stateMachine) 
+        or attemptExitToFreefallState(stateMachine)
+        or attemptExitToWallSlideState(stateMachine))
 
-    return false
+    return successfullyExited
 end
 
-local function attemptCutJumpEarly(stateMachine: StateMachine): ()
-    local context = stateMachine.Context
-    if context.PlayerInput:IsHoldingJump() or context.PhysicsResolver:GetVelocity().Y <= 0 then
+local function attemptCutJumpEarly(context): ()
+    local physicsResolver = context.PhysicsResolver
+    local isPlayerRising = physicsResolver:GetVelocity().Y > 0
+    local isPlayerHoldingJump = context.PlayerInput:IsHoldingJump()
+    if isPlayerHoldingJump or not isPlayerRising then
         return
     end
 
-    context.PhysicsResolver:CutRise()
+    physicsResolver:CutRise()
 end
 
-local function driveHorizontalMovement(stateMachine: StateMachine): ()
-    local context = stateMachine.Context
+local function driveHorizontalMovement(context): ()
     local moveDirection = context.PlayerInput:GetMoveDirection()
     local speed: number = if context:HasFlag(DASH_JUMP_FLAG) then MovementConfig.DashSpeed else MovementConfig.MoveSpeed
     context.PhysicsResolver:MoveInDirection(moveDirection, speed)
@@ -136,10 +139,11 @@ function AirborneState.OnStep(self: AirborneState, stateMachine: StateMachine, d
         return
     end
 
+    local context = stateMachine.Context
     if self.Id == MovementStateID.Jump then
-        attemptCutJumpEarly(stateMachine)
+        attemptCutJumpEarly(context)
     end
-    driveHorizontalMovement(stateMachine)
+    driveHorizontalMovement(context)
 end
 
 table.freeze(AirborneState)
