@@ -10,7 +10,7 @@ local afterEach = JestGlobals.afterEach
 local jest = JestGlobals.jest
 
 local MockUtils = require(script.Parent.Parent.Parent.TestUtils.MockUtils)
-local FSMContext = require(RKMNControllerFolder.FSMContext)
+local StateMachineContext = require(RKMNControllerFolder.StateMachineContext)
 local StateMachine = require(RKMNControllerFolder.StateMachine)
 local BaseState = require(RKMNControllerFolder.BaseState)
 
@@ -18,15 +18,15 @@ local createMockClass = MockUtils.createMockClass
 
 type MethodMap = MockUtils.MethodMap
 type MockResult<T> = MockUtils.MockResult<T>
-type FSMContext = FSMContext.FSMContext
+type StateMachineContext = StateMachineContext.StateMachineContext
 type BaseState = BaseState.BaseState
 type StateMachine = StateMachine.StateMachine
 
 const IDLE_STATE_NAME = "Idle"
 
-local function createMockContext(): FSMContext
-	local mockResult: MockResult<FSMContext> = createMockClass(FSMContext)
-    local mockedInstance: FSMContext = mockResult.Instance
+local function createMockContext(): StateMachineContext
+	local mockResult: MockResult<StateMachineContext> = createMockClass(StateMachineContext)
+    local mockedInstance: StateMachineContext = mockResult.Instance
     return mockedInstance
 end
 
@@ -44,7 +44,7 @@ local function createMockState(overrides: { [string]: any }?): BaseState
 end
 
 describe("StateMachine.new", function()
-    local context: FSMContext
+    local context: StateMachineContext
     local stateMachine: StateMachine
 
     beforeEach(function()
@@ -74,7 +74,7 @@ end)
 
 
 describe("StateMachine.RegisterState", function()
-    local context: FSMContext
+    local context: StateMachineContext
     local stateMachine: StateMachine
 
     beforeEach(function()
@@ -120,7 +120,7 @@ end)
 
 
 describe("StateMachine.SetStates", function()
-    local context: FSMContext
+    local context: StateMachineContext
     local stateMachine: StateMachine
 
     beforeEach(function()
@@ -152,7 +152,7 @@ end)
 
 
 describe("StateMachine.ChangeState", function()
-    local context: FSMContext
+    local context: StateMachineContext
     local stateMachine: StateMachine
 
     beforeEach(function()
@@ -295,7 +295,7 @@ end)
 
 
 describe("StateMachine.Update", function()
-    local context: FSMContext
+    local context: StateMachineContext
     local stateMachine: StateMachine
 
     beforeEach(function()
@@ -335,12 +335,12 @@ end)
 
 
 describe("StateMachine.Destroy", function()
-    local context: FSMContext
+    local context: StateMachineContext
     local stateMachine: StateMachine
 
     beforeEach(function()
 		context = createMockContext()
-        stateMachine = StateMachine.new(context :: FSMContext)
+        stateMachine = StateMachine.new(context :: StateMachineContext)
 	end)
 
 

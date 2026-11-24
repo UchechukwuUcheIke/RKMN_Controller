@@ -6,7 +6,7 @@ local RKMNControllerFolder = script.Parent
 local TimerRegistry = require(RKMNControllerFolder.TimerRegistry)
 local CollisionQueryFacade = require(RKMNControllerFolder.CollisionQuery.CollisionQueryFacade)
 local PlayerInputFacade = require(game:GetService("ReplicatedStorage").PlayerInput.PlayerInputFacade)
-local FSMContext = require(RKMNControllerFolder.FSMContext)
+local StateMachineContext = require(RKMNControllerFolder.StateMachineContext)
 local MovementStateMachine = require(RKMNControllerFolder.MovementStateMachine)
 local PhysicsResolverFacade = require(RKMNControllerFolder.PhysicsResolver.PhysicsResolverFacade)
 local AnimationControllerFacade = require(RKMNControllerFolder.AnimationController.AnimationControllerFacade)
@@ -36,8 +36,8 @@ type RKMNControllerFacadeData = {
     SFXEmitter: SFXEmitterFacade,
 }
 
-type FSMContext = FSMContext.FSMContext
-type FSMContextDependencies = FSMContext.FSMContextDependencies
+type StateMachineContext = StateMachineContext.StateMachineContext
+type StateMachineContextDependencies = StateMachineContext.StateMachineContextDependencies
 
 export type RKMNControllerFacadeDependencies = {
     TimerRegistry: TimerRegistry,

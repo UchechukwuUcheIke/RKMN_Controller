@@ -3,7 +3,7 @@ local ParentDirectory = script.Parent
 local StateMachine = require(ParentDirectory.StateMachine)
 local BaseState = require(ParentDirectory.BaseState)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local FSMContext = require(ParentDirectory.FSMContext)
+local StateMachineContext = require(ParentDirectory.StateMachineContext)
 local Signal = require(ReplicatedStorage:WaitForChild("DevPackages"):WaitForChild("goodsignal"))
 local MovementStateID = require(ParentDirectory.MovementStateIDs)
 local MovementStateRegistry = require(ParentDirectory.MovementStateRegistry)
@@ -15,12 +15,12 @@ MovementStateMachine.__index = MovementStateMachine
 type BaseState = BaseState.BaseState
 type StateMachine = StateMachine.StateMachine
 type Signal = typeof(Signal)
-type FSMContext = FSMContext.FSMContext
+type StateMachineContext = StateMachineContext.StateMachineContext
 type MovementStateID = MovementStateID.MovementStateID
 
 export type MovementStateMachine = StateMachine
 
-function MovementStateMachine.new(context: FSMContext): MovementStateMachine	
+function MovementStateMachine.new(context: StateMachineContext): MovementStateMachine	
 	assert(context)
 	assert(context.CollisionQuery)
 	local self = StateMachine.new(context) :: MovementStateMachine

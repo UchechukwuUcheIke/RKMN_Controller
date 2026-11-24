@@ -60,7 +60,7 @@ local MovementStateID = require(RKMNControllerFolder.MovementStateIDs)
 local SFXEmitterFolder = ReplicatedStorage.SFXEmitter
 local SFXEmitterFacade = require(SFXEmitterFolder.SFXEmitterFacade)
 local SFXIDs = require(SFXEmitterFolder.SFXIDs)
-local StateMachineContext = require(RKMNControllerFolder.FSMContext)
+local StateMachineContext = require(RKMNControllerFolder.StateMachineContext)
 local DiagnosticControllerQuery = require(DebugModuleFolder.DiagnosticCollisionQuery)
 
 type TimerRegistry = TimerRegistry.TimerRegistry
@@ -84,8 +84,8 @@ type PhysicsResolverFacade = PhysicsResolverFacade.PhysicsResolverFacade
 type RKMNControllerFacade = RKMNControllerFacade.RKMNControllerFacade
 type RKMNControllerFacadeDependencies = RKMNControllerFacade.RKMNControllerFacadeDependencies
 type SFXEmitterFacade = SFXEmitterFacade.SFXEmitterFacade
-type StateMachineContext = StateMachineContext.FSMContext
-type StateMachineContextDependencies = StateMachineContext.FSMContextDependencies
+type StateMachineContext = StateMachineContext.StateMachineContext
+type StateMachineContextDependencies = StateMachineContext.StateMachineContextDependencies
 type DiagnosticControllerQuery = DiagnosticControllerQuery.DiagnosticCollisionQuery
 
 local RKMNControllerSetup = {}
@@ -134,13 +134,13 @@ local function makeDependencies(character: Model, collisionQuery: CollisionQuery
     local playerInput = PlayerInputFacade.new(timerRegistry, inputActionMerger)
     local physicsResolver = PhysicsResolverFacade.new(character, movementStats, collisionQuery)
 
-    local FSMContextDependencies: StateMachineContextDependencies = {
+    local stateMachineContextDependencies: StateMachineContextDependencies = {
         PlayerInput = playerInput,
         CollisionQuery = collisionQuery,
         PhysicsResolver = physicsResolver,
         TimerRegistry = timerRegistry
     }
-    local stateMachineContext = StateMachineContext.new(FSMContextDependencies)
+    local stateMachineContext = StateMachineContext.new(stateMachineContextDependencies)
     local movementStateMachine = MovementStateMachine.new(stateMachineContext)
     local animationController = AnimationControllerFacade.new(character, movementStateMachine, physicsResolver)
     local sfxEmitter = makeMovementSFXEmitter(movementStateMachine)

@@ -1,7 +1,7 @@
 --!strict
 local ParentDirectory = script.Parent
 local BaseState = require(ParentDirectory.BaseState)
-local FSMContext = require(ParentDirectory.FSMContext)
+local StateMachineContext = require(ParentDirectory.StateMachineContext)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Types = require(ParentDirectory.Types)
 local Signal = require(ReplicatedStorage:WaitForChild("DevPackages"):WaitForChild("goodsignal"))
@@ -10,12 +10,12 @@ local StateMachine = {}
 StateMachine.__index = StateMachine
 
 type BaseState = BaseState.BaseState
-type FSMContext = FSMContext.FSMContext
+type StateMachineContext = StateMachineContext.StateMachineContext
 type Signal = typeof(Signal)
 
 export type StateMachine = Types.StateMachine
 
-function StateMachine.new(context: FSMContext): StateMachine
+function StateMachine.new(context: StateMachineContext): StateMachine
 	assert(context)
 	local self = setmetatable({}, StateMachine)
 	

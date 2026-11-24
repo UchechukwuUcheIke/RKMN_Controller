@@ -1,12 +1,12 @@
 local RKMNControllerFolder = script.Parent.Parent
 local MovementStateID = require(RKMNControllerFolder.MovementStateIDs)
 local StateMachine = require(RKMNControllerFolder.StateMachine)
-local StateMachineContext = require(RKMNControllerFolder.FSMContext)
+local StateMachineContext = require(RKMNControllerFolder.StateMachineContext)
 local MovementConfig = require(RKMNControllerFolder.MovementConfig)
 
 local GroundedBehavior = {}
 
-type StateMachineContext = StateMachineContext.FSMContext
+type StateMachineContext = StateMachineContext.StateMachineContext
 type StateMachine = StateMachine.StateMachine
 
 function GroundedBehavior.AttemptExitToFreefallState(stateMachine: StateMachine): boolean

@@ -1,6 +1,6 @@
 --!strict
-local FSMContext = {}
-FSMContext.__index = FSMContext
+local StateMachineContext = {}
+StateMachineContext.__index = StateMachineContext
 
 local ParentDirectory = script.Parent
 local PlayerInputFacade = require(game:GetService("ReplicatedStorage").PlayerInput.PlayerInputFacade)
@@ -13,14 +13,14 @@ type CollisionQueryFacade = CollisionQueryFacade.CollisionQueryFacade
 type PhysicsResolverFacade = PhysicsResolverFacade.PhysicsResolverFacade
 type TimerRegistry = TimerRegistry.TimerRegistry
 
-export type FSMContextDependencies = {
+export type StateMachineContextDependencies = {
 	PlayerInput: PlayerInputFacade,
 	CollisionQuery: CollisionQueryFacade,
 	PhysicsResolver: PhysicsResolverFacade,
 	TimerRegistry: TimerRegistry?
 }
 
-export type FSMContext = typeof(setmetatable(
+export type StateMachineContext = typeof(setmetatable(
 	{} :: {
 		PlayerInput: PlayerInputFacade,
         CollisionQuery: CollisionQueryFacade,
@@ -29,10 +29,10 @@ export type FSMContext = typeof(setmetatable(
 		PreviousStateId: string?,
         _flags: { [string]: boolean }
 	},
-	{} :: typeof(FSMContext)
+	{} :: typeof(StateMachineContext)
 ))
 
-function FSMContext.new(deps: FSMContextDependencies): FSMContext
+function StateMachineContext.new(deps: StateMachineContextDependencies): StateMachineContext
 	assert(deps ~= nil)
 	assert(deps.CollisionQuery)
 	local self = setmetatable({
@@ -42,31 +42,31 @@ function FSMContext.new(deps: FSMContextDependencies): FSMContext
         TimerRegistry = deps.TimerRegistry,
 		PreviousStateId = nil,
         _flags =  {},
-    }, FSMContext)
+    }, StateMachineContext)
 	
-	return (self) :: FSMContext
+	return (self) :: StateMachineContext
 end
 
-function FSMContext.SetFlag(self: FSMContext, key: string): ()
+function StateMachineContext.SetFlag(self: StateMachineContext, key: string): ()
 	self._flags[key] = true
 end
 
-function FSMContext.HasFlag(self: FSMContext, key: string): boolean
+function StateMachineContext.HasFlag(self: StateMachineContext, key: string): boolean
 	return self._flags[key] or false
 end
 
-function FSMContext.ClearFlag(self: FSMContext, key: string): ()
+function StateMachineContext.ClearFlag(self: StateMachineContext, key: string): ()
 	self._flags[key] = nil
 end
 
-function FSMContext.ClearAllFlags(self: FSMContext): ()
+function StateMachineContext.ClearAllFlags(self: StateMachineContext): ()
 	table.clear(self._flags)
 end
 
-function FSMContext.Destroy(self: FSMContext): ()
+function StateMachineContext.Destroy(self: StateMachineContext): ()
 	self:ClearAllFlags()
 end
 
-table.freeze(FSMContext)
+table.freeze(StateMachineContext)
 
-return FSMContext
+return StateMachineContext
