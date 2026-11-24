@@ -25,7 +25,7 @@ type Direction = Direction.Direction
 type PhysicsResolverFacadeData = {
 	_movementStats: MovementStats,
 	_collisionQuery: CollisionQueryFacade,
-	_motion: MotionState,
+	_motionState: MotionState,
 	_gravity: GravityIntegrator,
 	_placer: RootPartPlacer,
 }
@@ -53,7 +53,7 @@ function PhysicsResolverFacade.new(
 	local data: PhysicsResolverFacadeData = {
 		_movementStats = movementStats,
 		_collisionQuery = collisionQuery,
-		_motion = MotionState.new(),
+		_motionState = MotionState.new(),
 		_gravity = GravityIntegrator.new(movementStats),
 		_placer = RootPartPlacer.new(rootPart),
 	}
@@ -62,24 +62,24 @@ function PhysicsResolverFacade.new(
 end
 
 function PhysicsResolverFacade.GetVelocity(self: PhysicsResolverFacade): Vector3
-	return self._motion.Velocity
+	return self._motionState.Velocity
 end
 
 function PhysicsResolverFacade.GetFacingDirection(self: PhysicsResolverFacade): Direction
-	return self._motion.FacingDirection
+	return self._motionState.FacingDirection
 end
 
 function PhysicsResolverFacade.SetTargetXVelocity(self: PhysicsResolverFacade, xVelocity: number, facingDirection: Direction): ()
-	self._motion:SetTargetXVelocity(xVelocity, facingDirection)
+	self._motionState:SetTargetXVelocity(xVelocity, facingDirection)
 end
 
 function PhysicsResolverFacade.MoveInDirection(self: PhysicsResolverFacade, direction: Direction, speed: number): ()
-	self._motion:SetTargetXVelocity(direction.X * speed, direction)
+	self._motionState:SetTargetXVelocity(direction.X * speed, direction)
 end
 
 function PhysicsResolverFacade.ApplyJumpImpulse(self: PhysicsResolverFacade): ()
 	self._gravity:ClearRiseCut()
-	self._motion:SetVelocityY(self._movementStats.JumpVelocity)
+	self._motionState:SetVelocityY(self._movementStats.JumpVelocity)
 end
 
 function PhysicsResolverFacade.CutRise(self: PhysicsResolverFacade): ()
@@ -91,17 +91,17 @@ function PhysicsResolverFacade.SetFallSpeedOverride(self: PhysicsResolverFacade,
 end
 
 function PhysicsResolverFacade.Resolve(self: PhysicsResolverFacade, dt: number): ()
-	local motion = self._motion
-	local previousYVelocity: number = motion.Velocity.Y
+	local motionState = self._motionState
+	local previousYVelocity: number = motionState.Velocity.Y
 
-	motion:ApplyHorizontalTarget()
-	self._gravity:Apply(motion, dt, self._collisionQuery:IsGrounded())
+	motionState:ApplyHorizontalTarget()
+	self._gravity:Apply(motionState, dt, self._collisionQuery:IsGrounded())
 
-	local desiredDelta: Vector3 = motion:ComputeFrameDelta(previousYVelocity, dt)
+	local desiredDelta: Vector3 = motionState:ComputeFrameDelta(previousYVelocity, dt)
 	local sweepResolution: SweepResolution = self._collisionQuery:GetSweepResolution(desiredDelta)
 
-	VelocityClipper.Clip(motion, sweepResolution)
-	self._placer:Place(sweepResolution.SafeDelta, motion.FacingDirection)
+	VelocityClipper.Clip(motionState, sweepResolution)
+	self._placer:Place(sweepResolution.SafeDelta, motionState.FacingDirection)
 end
 
 function PhysicsResolverFacade.Destroy(self: PhysicsResolverFacade): ()
