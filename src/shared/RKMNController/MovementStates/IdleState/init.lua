@@ -18,15 +18,12 @@ function IdleState.new(): IdleState
     return self :: IdleState
 end
 
-local function attemptExitToWalkState(stateMachine: StateMachine): boolean
+local function attemptExitToWalkState(stateMachine: StateMachine): ()
     local moveDirection = stateMachine.Context.PlayerInput:GetMoveDirection()
     local isPlayerMoving = moveDirection ~= Direction.None
-    if not isPlayerMoving then
-        return false
+    if isPlayerMoving then
+        stateMachine:ChangeState(MovementStateID.Walk)
     end
-
-    stateMachine:ChangeState(MovementStateID.Walk)
-    return true
 end
 
 function IdleState.OnStep(self: IdleState, stateMachine: StateMachine, dt: number): ()
