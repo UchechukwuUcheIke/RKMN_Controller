@@ -8,7 +8,7 @@ local Projectile = require(ProjectileFolder.Projectile)
 local ProjectileSimulation = require(ProjectileFolder.ProjectileSimulation)
 local Team = require(DataFolder.Team)
 local WeaponFolder = CombatFolder.Weapon
-local MegaBusterLemon = require(WeaponFolder.MegaBusterLemon)
+local XBusterLemon = require(WeaponFolder.XBusterLemon)
 local Weapon = require(WeaponFolder.Weapon)
 
 type Direction = Direction.Direction
@@ -16,8 +16,8 @@ type ProjectileSimulation = ProjectileSimulation.ProjectileSimulation
 type Team = Team.Team
 type Weapon = Weapon.Weapon
 
-local MegaBuster = {}
-MegaBuster.__index = MegaBuster
+local XBuster = {}
+XBuster.__index = XBuster
 
 export type Muzzle = {
 	Position: Vector2,
@@ -26,7 +26,7 @@ export type Muzzle = {
 
 export type MuzzleProvider = () -> Muzzle
 
-type MegaBusterData = {
+type XBusterData = {
 	_projectiles: ProjectileSimulation,
 	_ownerId: number,
 	_team: Team,
@@ -35,22 +35,22 @@ type MegaBusterData = {
 	_cooldownLeft: number,
 }
 
-type MegaBusterPrototype = typeof(MegaBuster) & Weapon
+type XBusterPrototype = typeof(XBuster) & Weapon
 
-export type MegaBuster = typeof(setmetatable(
-	{} :: MegaBusterData,
-	{} :: MegaBusterPrototype
+export type XBuster = typeof(setmetatable(
+	{} :: XBusterData,
+	{} :: XBusterPrototype
 ))
 
-MegaBuster.Cooldown = 0.12
+XBuster.Cooldown = 0.12
 
-function MegaBuster.new(
+function XBuster.new(
 	projectiles: ProjectileSimulation,
 	ownerId: number,
 	team: Team.Team,
 	getMuzzle: MuzzleProvider
-): MegaBuster
-	local data: MegaBusterData = {
+): XBuster
+	local data: XBusterData = {
 		_projectiles = projectiles,
 		_ownerId = ownerId,
 		_team = team,
@@ -59,32 +59,32 @@ function MegaBuster.new(
 		_cooldownLeft = 0,
 	}
 
-	return setmetatable(data, MegaBuster)
+	return setmetatable(data, XBuster)
 end
 
-function MegaBuster.Update(self: MegaBuster, dt: number): ()
+function XBuster.Update(self: XBuster, dt: number): ()
 	self._cooldownLeft = math.max(0, self._cooldownLeft - dt)
 end
 
-function MegaBuster.PressTrigger(self: MegaBuster): ()
+function XBuster.PressTrigger(self: XBuster): ()
 	local cannotFire = not self._enabled or self._cooldownLeft > 0
 	if cannotFire then
 		return
 	end
 
 	local muzzle = self._getMuzzle()
-	self._cooldownLeft = MegaBuster.Cooldown
+	self._cooldownLeft = XBuster.Cooldown
 
-	local projectile = Projectile.new(MegaBusterLemon, self._ownerId, self._team, muzzle.Position, muzzle.Direction)
+	local projectile = Projectile.new(XBusterLemon, self._ownerId, self._team, muzzle.Position, muzzle.Direction)
 	self._projectiles:Register(projectile)
 end
 
-function MegaBuster.ReleaseTrigger(self: MegaBuster): () 
+function XBuster.ReleaseTrigger(self: XBuster): () 
 	-- Nothing to release yet: only the uncharged shot exists.
 end
 
-function MegaBuster.SetEnabled(self: MegaBuster, enabled: boolean): ()
+function XBuster.SetEnabled(self: XBuster, enabled: boolean): ()
 	self._enabled = enabled
 end
 
-return MegaBuster
+return XBuster

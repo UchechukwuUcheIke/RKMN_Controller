@@ -12,7 +12,7 @@ local ProjectileIDs = require(ReplicatedStorage.Combat.Projectile.ProjectileIDRe
 
 local function makeConfig(overrides)
 	local config = {
-		Id = ProjectileIDs.MegaBusterLemon,
+		Id = ProjectileIDs.XBusterLemon,
 		Speed = 60,
 		Lifetime = 1.2,
 		Size = Vector2.new(1, 1),
@@ -29,7 +29,7 @@ describe("ProjectileDefinition.new", function()
 		local config = makeConfig({ TargetPenetrationLimit = 2 })
 		local definition = ProjectileDefinition.new(config)
 
-		expect(definition.Id).toBe(ProjectileIDs.MegaBusterLemon)
+		expect(definition.Id).toBe(ProjectileIDs.XBusterLemon)
 		expect(definition.Speed).toBe(60)
 		expect(definition.Lifetime).toBe(1.2)
 		expect(definition.Size).toEqual(Vector2.new(1, 1))

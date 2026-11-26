@@ -49,7 +49,7 @@
 			<BinaryString name="AttributesSerialize"></BinaryString>
 			<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
 			<bool name="DefinesCapabilities">false</bool>
-			<string name="Name">MegaBusterLemon</string>
+			<string name="Name">XBusterLemon</string>
 			<BinaryString name="SerializedOverrides"></BinaryString>
 			<int64 name="SourceAssetId">-1</int64>
 			<SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>

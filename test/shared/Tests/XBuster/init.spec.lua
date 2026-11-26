@@ -14,14 +14,14 @@ local HitboxRegistry = require(ReplicatedStorage.Combat.Hitbox.HitboxRegistry)
 local HitResolver = require(ReplicatedStorage.Combat.Hitbox.HitResolver)
 local Hurtbox = require(ReplicatedStorage.Combat.Hurtbox.Hurtbox)
 local HurtboxRegistry = require(ReplicatedStorage.Combat.Hurtbox.HurtboxRegistry)
-local MegaBuster = require(ReplicatedStorage.Combat.Weapon.MegaBuster)
-local MegaBusterLemon = require(ReplicatedStorage.Combat.Weapon.MegaBusterLemon)
+local XBuster = require(ReplicatedStorage.Combat.Weapon.XBuster)
+local XBusterLemon = require(ReplicatedStorage.Combat.Weapon.XBusterLemon)
 local ProjectileSimulation = require(ReplicatedStorage.Combat.Projectile.ProjectileSimulation)
 local Team = require(ReplicatedStorage.Combat.Data.Team)
 
 local OWNER_ID = 1
 
-describe("MegaBuster", function()
+describe("XBuster", function()
 	local registry
 	local simulation
 	local resolver
@@ -38,7 +38,7 @@ describe("MegaBuster", function()
 		})
 		resolver = HitResolver.new(hitboxes, registry)
 		muzzle = { Position = Vector2.new(0, 0), Direction = Direction.Right }
-		buster = MegaBuster.new(simulation, OWNER_ID, Team.Player, function()
+		buster = XBuster.new(simulation, OWNER_ID, Team.Player, function()
 			return muzzle
 		end)
 	end)
@@ -73,16 +73,16 @@ describe("MegaBuster", function()
 		local shots = simulation:GetActiveProjectiles()
 		expect(#shots).toBe(1)
 		local projectile = shots[1]
-		expect(projectile.Definition).toBe(MegaBusterLemon)
+		expect(projectile.Definition).toBe(XBusterLemon)
 		expect(projectile.Position).toEqual(Vector2.new(4, 7))
-		expect(projectile.Velocity.X).toBe(-MegaBusterLemon.Speed)
+		expect(projectile.Velocity.X).toBe(-XBusterLemon.Speed)
 		expect(projectile.OwnerId).toBe(OWNER_ID)
 		expect(projectile.Team).toBe(Team.Player)
 	end)
 
 	it("reads the muzzle fresh on every shot", function()
 		buster:PressTrigger()
-		buster:Update(MegaBuster.Cooldown + 0.01)
+		buster:Update(XBuster.Cooldown + 0.01)
 		muzzle = { Position = Vector2.new(10, 0), Direction = Direction.Left }
 
 		buster:PressTrigger()
@@ -101,7 +101,7 @@ describe("MegaBuster", function()
 
 	it("fires again once the cooldown has elapsed", function()
 		buster:PressTrigger()
-		buster:Update(MegaBuster.Cooldown - 0.01)
+		buster:Update(XBuster.Cooldown - 0.01)
 		buster:PressTrigger()
 		expect(#simulation:GetActiveProjectiles()).toBe(1)
 
@@ -161,7 +161,7 @@ describe("MegaBuster", function()
 		step(0.3)
 
 		expect(#received).toBe(1)
-		expect(received[1].Amount).toBe(MegaBusterLemon.Damage.Amount)
+		expect(received[1].Amount).toBe(XBusterLemon.Damage.Amount)
 		expect(received[1].SourceOwnerId).toBe(OWNER_ID)
 		expect(reasons).toEqual({ ProjectileStepOutcome.HitPenetrationExhausted })
 	end)
@@ -192,7 +192,7 @@ describe("MegaBuster", function()
 		end)
 
 		buster:PressTrigger()
-		step(MegaBusterLemon.Lifetime + 0.1)
+		step(XBusterLemon.Lifetime + 0.1)
 
 		expect(reasons).toEqual({ ProjectileStepOutcome.Expired })
 	end)

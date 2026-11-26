@@ -8,7 +8,7 @@ local WeaponFolder = CombatFolder.Weapon
 local HitboxRegistry = require(CombatFolder.Hitbox.HitboxRegistry)
 local HitResolver = require(CombatFolder.Hitbox.HitResolver)
 local HurtboxRegistry = require(CombatFolder.Hurtbox.HurtboxRegistry)
-local MegaBuster = require(WeaponFolder.MegaBuster)
+local XBuster = require(WeaponFolder.XBuster)
 local ProjectileIDRegistry = require(ProjectileFolder.ProjectileIDRegistry)
 local ProjectileModelPlacer = require(ProjectileFolder.ProjectileModelPlacer)
 local ProjectileSimulation = require(ProjectileFolder.ProjectileSimulation)
@@ -29,7 +29,7 @@ local MUZZLE_OFFSET = Vector2.new(2, 0.5)
 local PlayerCombatSetup = {}
 
 export type PlayerCombat = {
-	Weapon: MegaBuster.MegaBuster,
+	Weapon: XBuster.XBuster,
 	Projectiles: ProjectileSimulation.ProjectileSimulation,
 	HurtboxRegistry: HurtboxRegistry.HurtboxRegistry,
 	Destroy: (self: PlayerCombat) -> (),
@@ -41,7 +41,7 @@ local function createProjectileModel(id: ProjectileID): Model
 	return template:Clone()
 end
 
--- Builds the player's combat around an existing controller: the Mega Buster, the shots it fires,
+-- Builds the player's combat around an existing controller: the X-Buster, the shots it fires,
 -- and the frame that moves them. Other fighters' hurtboxes go in the returned HurtboxRegistry.
 function PlayerCombatSetup.Setup(controller: RKMNControllerFacade, character: Model): PlayerCombat
 	local world = workspace
@@ -58,7 +58,7 @@ function PlayerCombatSetup.Setup(controller: RKMNControllerFacade, character: Mo
 	local modelPlacer = ProjectileModelPlacer.new(projectiles, createProjectileModel, shotsFolder)
 
 	local weapons = WeaponFacade.new(WeaponRegistry.new())
-	local weapon = MegaBuster.new(projectiles, Players.LocalPlayer.UserId, Team.Player, function()
+	local weapon = XBuster.new(projectiles, Players.LocalPlayer.UserId, Team.Player, function()
 		local rootPosition = (character.PrimaryPart :: BasePart).Position
 		local center = Vector2.new(rootPosition.X, rootPosition.Y)
 		local direction = controller.PhysicsResolver:GetFacingDirection()

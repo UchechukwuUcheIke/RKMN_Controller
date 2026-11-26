@@ -2,7 +2,7 @@
 export type ProjectileID = string
 
 local ProjectileIDs = {
-	MegaBusterLemon = "MegaBusterLemon",
+	XBusterLemon = "XBusterLemon",
 }
 
 table.freeze(ProjectileIDs)
