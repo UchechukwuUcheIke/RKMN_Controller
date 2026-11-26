@@ -43,10 +43,10 @@ describe("MegaBuster", function()
 		end)
 	end)
 
-	-- One frame of shots: move them, deliver their hits, settle them.
+	-- One frame of shots: move them, deliver their hits, commit their moves.
 	local function step(dt)
 		simulation:AdvanceProjectiles(dt)
-		simulation:SettleProjectiles(resolver:Resolve())
+		simulation:CommitProjectileMoves(resolver:Resolve())
 	end
 
 	local function makeEnemy(x)

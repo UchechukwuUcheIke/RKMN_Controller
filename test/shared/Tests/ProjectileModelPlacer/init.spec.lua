@@ -58,7 +58,7 @@ end
 -- Runs one frame of the simulation with no hits and no walls.
 local function step(dt)
 	simulation:AdvanceProjectiles(dt)
-	simulation:SettleProjectiles({})
+	simulation:CommitProjectileMoves({})
 end
 
 local function modelOf(index)

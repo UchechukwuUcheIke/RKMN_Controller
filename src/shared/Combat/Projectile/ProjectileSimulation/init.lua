@@ -93,7 +93,7 @@ function ProjectileSimulation.AdvanceProjectiles(self: ProjectileSimulation, dt:
 	end
 end
 
-function ProjectileSimulation.SettleProjectiles(self: ProjectileSimulation, stops: StopFractions): ()
+function ProjectileSimulation.CommitProjectileMoves(self: ProjectileSimulation, stops: StopFractions): ()
 	local activeProjectiles = table.clone(self._activeProjectiles)
 	for _, projectile in activeProjectiles do
 		local projectileIndex = table.find(self._activeProjectiles, projectile)
@@ -102,7 +102,7 @@ function ProjectileSimulation.SettleProjectiles(self: ProjectileSimulation, stop
 			continue
 		end
 
-		local outcome = projectile:Settle(stops[projectile.Hitbox])
+		local outcome = projectile:CommitMove(stops[projectile.Hitbox])
 		if outcome ~= ProjectileStepOutcome.InFlight then
 			table.remove(self._activeProjectiles, projectileIndex)
 			self._hitboxRegistry:Unregister(projectile.Hitbox)

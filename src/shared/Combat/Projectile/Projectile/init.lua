@@ -44,13 +44,11 @@ type ProjectileData = {
 	Hitbox: Hitbox,
 
 	_onHit: HitObserver?,
-	-- Why the hitbox was stopped, if it was.
 	_stopOutcome: ProjectileStepOutcome,
-	-- The move being resolved: set by Advance, consumed by Settle.
 	_isAdvanced: boolean,
 	_stepDt: number,
-	_stepFrom: Vector2,
-	_stepTo: Vector2,
+	_stepFromPosition: Vector2,
+	_stepToPosition: Vector2,
 	_wallFraction: number?,
 }
 
@@ -61,7 +59,6 @@ export type Projectile = typeof(setmetatable(
 	{} :: ProjectilePrototype
 ))
 
--- direction must be Direction.Left or Direction.Right.
 function Projectile.new(
 	definition: ProjectileDefinition,
 	ownerId: number,
@@ -101,8 +98,8 @@ function Projectile.new(
 		_stopOutcome = ProjectileStepOutcome.InFlight :: ProjectileStepOutcome,
 		_isAdvanced = false,
 		_stepDt = 0,
-		_stepFrom = position,
-		_stepTo = position,
+		_stepFromPosition = position,
+		_stepToPosition = position,
 		_wallFraction = nil,
 	}
 
@@ -110,14 +107,10 @@ function Projectile.new(
 	return projectile
 end
 
--- Where the projectile would be after dt seconds, without moving it.
--- Kept as its own step so other trajectories only need to change this.
 function Projectile.Project(self: Projectile, dt: number): Vector2
 	return self.Position + self.Velocity * dt
 end
 
--- Whether a hit ends the projectile. A target that ignored the hit wasn't really struck, so the
--- shot flies on and may try it again. Blocking ends it even with penetration left.
 function Projectile._reactToHit(self: Projectile, hurtbox: Hurtbox, result: HitResult): PostHitReaction
 	if self._onHit then
 		self._onHit(self, hurtbox, result)
@@ -142,29 +135,25 @@ function Projectile._reactToHit(self: Projectile, hurtbox: Hurtbox, result: HitR
 	return PostHitReaction.Continue :: PostHitReaction
 end
 
--- Starts this frame's move: sweeps the hitbox over it, and keeps it from reaching past a wall.
--- The hits themselves are delivered by the hit pass, then Settle finishes the move.
 function Projectile.Advance(self: Projectile, dt: number, walls: WallCaster): ()
 	local stepDt = math.min(dt, self.TimeLeft)
-	local from = self.Position
-	local to = self:Project(stepDt)
-	local wallFraction = walls:FindFractionToWall(from, to)
+	local currentPosition = self.Position
+	local nextPosition = self:Project(stepDt)
+	local wallFraction = walls:FindFractionToWall(currentPosition, nextPosition)
 
 	self._isAdvanced = true
 	self._stepDt = stepDt
-	self._stepFrom = from
-	self._stepTo = to
+	self._stepFromPosition = currentPosition
+	self._stepToPosition = nextPosition
 	self._wallFraction = wallFraction
 	self._stopOutcome = ProjectileStepOutcome.InFlight :: ProjectileStepOutcome
 
-	self.Hitbox:MoveTo(to)
+	self.Hitbox:MoveTo(nextPosition)
 	self.Hitbox:SetReachFraction(wallFraction or 1)
 end
 
--- Finishes the move Advance started, given where the hit pass stopped the hitbox (nil if it
--- wasn't). Returns InFlight if the projectile keeps flying, otherwise why it ended.
-function Projectile.Settle(self: Projectile, stopFraction: number?): ProjectileStepOutcome
-	-- Nothing to settle for a projectile that was spawned after Advance ran.
+
+function Projectile.CommitMove(self: Projectile, stopFraction: number?): ProjectileStepOutcome
 	if not self._isAdvanced then
 		return ProjectileStepOutcome.InFlight :: ProjectileStepOutcome
 	end
@@ -181,11 +170,12 @@ function Projectile.Settle(self: Projectile, stopFraction: number?): ProjectileS
 		outcome = ProjectileStepOutcome.HitWall :: ProjectileStepOutcome
 	end
 
-	self.Position = self._stepFrom + (self._stepTo - self._stepFrom) * endFraction
+	self.Position = self._stepFromPosition + (self._stepToPosition - self._stepFromPosition) * endFraction
 	self.Hitbox:Teleport(self.Position)
 	self.TimeLeft -= self._stepDt
 
-	if outcome == ProjectileStepOutcome.InFlight and self.TimeLeft <= 0 then
+	local hasProjectileExpired = outcome == ProjectileStepOutcome.InFlight and self.TimeLeft <= 0
+	if hasProjectileExpired then
 		outcome = ProjectileStepOutcome.Expired :: ProjectileStepOutcome
 	end
 

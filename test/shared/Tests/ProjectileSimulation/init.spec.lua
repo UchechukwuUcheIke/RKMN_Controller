@@ -78,10 +78,10 @@ describe("ProjectileSimulation", function()
 		resolver = HitResolver.new(hitboxes, registry)
 	end)
 
-	-- One frame: move the shots, deliver their hits, settle them.
+	-- One frame: move the shots, deliver their hits, commit their moves.
 	local function step(dt)
 		simulation:AdvanceProjectiles(dt)
-		simulation:SettleProjectiles(resolver:Resolve())
+		simulation:CommitProjectileMoves(resolver:Resolve())
 	end
 
 	local function spawn(definition, direction, ownerId)
@@ -143,7 +143,7 @@ describe("ProjectileSimulation", function()
 			local late = spawn()
 
 			resolver:Resolve()
-			simulation:SettleProjectiles({})
+			simulation:CommitProjectileMoves({})
 
 			expect(first.Position.X).toBeCloseTo(10, 5)
 			expect(late.Position.X).toBe(0)
