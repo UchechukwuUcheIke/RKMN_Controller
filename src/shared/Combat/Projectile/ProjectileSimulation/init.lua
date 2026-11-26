@@ -2,6 +2,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CombatFolder = ReplicatedStorage.Combat
 local DataFolder = CombatFolder.Data
+local DespawnedProjectile = require(CombatFolder.Projectile.DespawnedProjectile)
 local Direction = require(ReplicatedStorage.Data.Direction)
 local Signal = require(ReplicatedStorage.DevPackages.goodsignal)
 local HitboxRegistry = require(CombatFolder.Hitbox.HitboxRegistry)
@@ -11,6 +12,7 @@ local ProjectileDefinition = require(CombatFolder.Projectile.ProjectileDefinitio
 local ProjectileStepOutcome = require(CombatFolder.Projectile.ProjectileStepOutcome)
 local Team = require(DataFolder.Team)
 
+type DespawnedProjectile = DespawnedProjectile.DespawnedProjectile
 type Direction = Direction.Direction
 type Projectile = Projectile.Projectile
 type ProjectileDefinition = ProjectileDefinition.ProjectileDefinition
@@ -83,31 +85,31 @@ function ProjectileSimulation.SpawnProjectile(
 end
 
 function ProjectileSimulation.AdvanceProjectiles(self: ProjectileSimulation, dt: number): ()
-	-- Snapshot, so shots spawned or removed by callbacks don't disturb this pass.
-	local activeProjectiles = table.clone(self._activeProjectiles)
-	for _, projectile in activeProjectiles do
-		local isProjectileActive = table.find(self._activeProjectiles, projectile) ~= nil
-		if isProjectileActive then
-			projectile:Advance(dt, self._walls)
-		end
+	for _, projectile in self._activeProjectiles do
+		projectile:Advance(dt, self._walls)
 	end
 end
 
 function ProjectileSimulation.CommitProjectileMoves(self: ProjectileSimulation, stops: StopFractions): ()
-	local activeProjectiles = table.clone(self._activeProjectiles)
-	for _, projectile in activeProjectiles do
-		local projectileIndex = table.find(self._activeProjectiles, projectile)
-		local isProjectileActive = projectileIndex ~= nil
-		if not isProjectileActive then
-			continue
-		end
+	local despawnedProjectiles: { DespawnedProjectile } = {}
 
+	for index = #self._activeProjectiles, 1, -1 do
+		local projectile = self._activeProjectiles[index]
 		local outcome = projectile:CommitMove(stops[projectile.Hitbox])
 		if outcome ~= ProjectileStepOutcome.InFlight then
-			table.remove(self._activeProjectiles, projectileIndex)
+			table.remove(self._activeProjectiles, index)
 			self._hitboxRegistry:Unregister(projectile.Hitbox)
-			self.ProjectileDespawned:Fire(projectile, outcome)
+			local despawnedProjectile = DespawnedProjectile.new(projectile, outcome :: ProjectileStepOutcome)
+			table.insert(despawnedProjectiles, despawnedProjectile)
 		end
+	end
+
+	self:_fireDespawnedEventForProjectiles(despawnedProjectiles)	
+end
+
+function ProjectileSimulation._fireDespawnedEventForProjectiles(self: ProjectileSimulation, despawnedProjectiles: { DespawnedProjectile })
+	for _, entry in despawnedProjectiles do
+		self.ProjectileDespawned:Fire(entry.Projectile, entry.Outcome)
 	end
 end
 
