@@ -29,9 +29,6 @@ export type WallCaster = {
 	FindFractionToWall: (self: any, from: Vector2, to: Vector2) -> number?,
 }
 
--- Told about every hit the projectile's hitbox delivers, including ones the target ignored.
-export type HitObserver = (projectile: Projectile, hurtbox: Hurtbox, result: HitResult) -> ()
-
 type ProjectileData = {
 	Definition: ProjectileDefinition,
 	OwnerId: number,
@@ -43,7 +40,6 @@ type ProjectileData = {
 	HitCount: number,
 	Hitbox: Hitbox,
 
-	_onHit: HitObserver?,
 	_stopOutcome: ProjectileStepOutcome,
 	_isAdvanced: boolean,
 	_stepDt: number,
@@ -64,8 +60,7 @@ function Projectile.new(
 	ownerId: number,
 	team: Team.Team,
 	position: Vector2,
-	direction: Direction,
-	onHit: HitObserver?
+	direction: Direction
 ): Projectile
 	assert(direction == Direction.Left or direction == Direction.Right, "Projectile direction must be Left or Right")
 
@@ -78,8 +73,8 @@ function Projectile.new(
 		Size = definition.Size,
 		Damage = definition.Damage,
 		Direction = direction,
-		OnHit = function(hurtbox: Hurtbox, result: HitResult): PostHitReaction
-			return projectile:_reactToHit(hurtbox, result)
+		OnHit = function(_: Hurtbox, result: HitResult): PostHitReaction
+			return projectile:_reactToHit(result)
 		end,
 	})
 
@@ -94,7 +89,6 @@ function Projectile.new(
 		HitCount = 0,
 		Hitbox = hitbox,
 
-		_onHit = onHit,
 		_stopOutcome = ProjectileStepOutcome.InFlight :: ProjectileStepOutcome,
 		_isAdvanced = false,
 		_stepDt = 0,
@@ -111,11 +105,7 @@ function Projectile.Project(self: Projectile, dt: number): Vector2
 	return self.Position + self.Velocity * dt
 end
 
-function Projectile._reactToHit(self: Projectile, hurtbox: Hurtbox, result: HitResult): PostHitReaction
-	if self._onHit then
-		self._onHit(self, hurtbox, result)
-	end
-
+function Projectile._reactToHit(self: Projectile, result: HitResult): PostHitReaction
 	if result == HitResult.Ignored then
 		return PostHitReaction.Continue :: PostHitReaction
 	end

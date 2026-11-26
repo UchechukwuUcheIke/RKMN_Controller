@@ -14,6 +14,7 @@ local HitboxRegistry = require(ReplicatedStorage.Combat.Hitbox.HitboxRegistry)
 local HitResolver = require(ReplicatedStorage.Combat.Hitbox.HitResolver)
 local Hurtbox = require(ReplicatedStorage.Combat.Hurtbox.Hurtbox)
 local HurtboxRegistry = require(ReplicatedStorage.Combat.Hurtbox.HurtboxRegistry)
+local Projectile = require(ReplicatedStorage.Combat.Projectile.Projectile)
 local ProjectileSimulation = require(ReplicatedStorage.Combat.Projectile.ProjectileSimulation)
 local Team = require(ReplicatedStorage.Combat.Data.Team)
 
@@ -85,7 +86,9 @@ describe("ProjectileSimulation", function()
 	end
 
 	local function spawn(definition, direction, ownerId)
-		return simulation:SpawnProjectile(definition or makeDefinition(), ownerId or OWNER_ID, Team.Player, ORIGIN, direction or Direction.Right)
+		local projectile = Projectile.new(definition or makeDefinition(), ownerId or OWNER_ID, Team.Player, ORIGIN, direction or Direction.Right)
+		simulation:Register(projectile)
+		return projectile
 	end
 
 	local function recordDespawns()
@@ -96,17 +99,24 @@ describe("ProjectileSimulation", function()
 		return reasons
 	end
 
-	describe("spawning", function()
-		it("returns the projectile, tracks it, and fires ProjectileSpawned", function()
+	describe("registering", function()
+		it("tracks the projectile and fires ProjectileRegistered", function()
 			local spawned = {}
-			simulation.ProjectileSpawned:Connect(function(projectile)
+			simulation.ProjectileRegistered:Connect(function(projectile)
 				table.insert(spawned, projectile)
 			end)
 
 			local projectile = spawn()
-			expect(projectile).never.toBeNil()
 			expect(#simulation:GetActiveProjectiles()).toBe(1)
 			expect(spawned[1]).toBe(projectile)
+		end)
+
+		it("rejects a projectile that is already registered", function()
+			local projectile = spawn()
+
+			expect(function()
+				simulation:Register(projectile)
+			end).toThrow()
 		end)
 	end)
 
@@ -216,23 +226,6 @@ describe("ProjectileSimulation", function()
 			step(1)
 
 			expect(received[1].Knockback).toBe(Vector2.new(-5, 2))
-		end)
-
-		it("fires ProjectileHit with the projectile, hurtbox and result", function()
-			local target = makeTarget(50, Team.Enemy, HitResult.Killed)
-			registry:Register(target)
-
-			local events = {}
-			simulation.ProjectileHit:Connect(function(projectile, hurtbox, result)
-				table.insert(events, { projectile, hurtbox, result })
-			end)
-
-			local projectile = spawn()
-			step(1)
-
-			expect(events[1][1]).toBe(projectile)
-			expect(events[1][2]).toBe(target)
-			expect(events[1][3]).toBe(HitResult.Killed)
 		end)
 
 		it("hits a thin target even with a huge step", function()

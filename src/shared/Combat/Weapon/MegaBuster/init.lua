@@ -4,6 +4,7 @@ local CombatFolder = ReplicatedStorage.Combat
 local DataFolder = CombatFolder.Data
 local Direction = require(ReplicatedStorage.Data.Direction)
 local ProjectileFolder = CombatFolder.Projectile
+local Projectile = require(ProjectileFolder.Projectile)
 local ProjectileSimulation = require(ProjectileFolder.ProjectileSimulation)
 local Team = require(DataFolder.Team)
 local WeaponFolder = CombatFolder.Weapon
@@ -74,7 +75,8 @@ function MegaBuster.PressTrigger(self: MegaBuster): ()
 	local muzzle = self._getMuzzle()
 	self._cooldownLeft = MegaBuster.Cooldown
 
-	self._projectiles:SpawnProjectile(MegaBusterLemon, self._ownerId, self._team, muzzle.Position, muzzle.Direction)
+	local projectile = Projectile.new(MegaBusterLemon, self._ownerId, self._team, muzzle.Position, muzzle.Direction)
+	self._projectiles:Register(projectile)
 end
 
 function MegaBuster.ReleaseTrigger(self: MegaBuster): () 

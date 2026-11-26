@@ -9,6 +9,7 @@ local beforeEach = JestGlobals.beforeEach
 
 local Direction = require(ReplicatedStorage.Data.Direction)
 local HitboxRegistry = require(ReplicatedStorage.Combat.Hitbox.HitboxRegistry)
+local Projectile = require(ReplicatedStorage.Combat.Projectile.Projectile)
 local ProjectileModelPlacer = require(ReplicatedStorage.Combat.Projectile.ProjectileModelPlacer)
 local ProjectileSimulation = require(ReplicatedStorage.Combat.Projectile.ProjectileSimulation)
 local Team = require(ReplicatedStorage.Combat.Data.Team)
@@ -46,13 +47,15 @@ local function createModel(id)
 end
 
 local function spawnShot(position, direction, overrides)
-	return simulation:SpawnProjectile(
+	local projectile = Projectile.new(
 		makeDefinition(overrides),
 		OWNER_ID,
 		Team.Player,
 		position or Vector2.new(0, 0),
 		direction or Direction.Right
 	)
+	simulation:Register(projectile)
+	return projectile
 end
 
 -- Runs one frame of the simulation with no hits and no walls.
@@ -91,7 +94,7 @@ describe("ProjectileModelPlacer", function()
 				return nil
 			end,
 		})
-		other:SpawnProjectile(makeDefinition(), OWNER_ID, Team.Player, Vector2.new(4, 4), Direction.Right)
+		other:Register(Projectile.new(makeDefinition(), OWNER_ID, Team.Player, Vector2.new(4, 4), Direction.Right))
 		local parent = Instance.new("Folder")
 
 		ProjectileModelPlacer.new(other, createModel, parent)

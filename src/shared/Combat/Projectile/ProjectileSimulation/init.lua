@@ -1,24 +1,17 @@
 --!strict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CombatFolder = ReplicatedStorage.Combat
-local DataFolder = CombatFolder.Data
 local DespawnedProjectile = require(CombatFolder.Projectile.DespawnedProjectile)
-local Direction = require(ReplicatedStorage.Data.Direction)
 local Signal = require(ReplicatedStorage.DevPackages.goodsignal)
 local HitboxRegistry = require(CombatFolder.Hitbox.HitboxRegistry)
 local HitResolver = require(CombatFolder.Hitbox.HitResolver)
 local Projectile = require(CombatFolder.Projectile.Projectile)
-local ProjectileDefinition = require(CombatFolder.Projectile.ProjectileDefinition)
 local ProjectileStepOutcome = require(CombatFolder.Projectile.ProjectileStepOutcome)
-local Team = require(DataFolder.Team)
 
 type DespawnedProjectile = DespawnedProjectile.DespawnedProjectile
-type Direction = Direction.Direction
 type Projectile = Projectile.Projectile
-type ProjectileDefinition = ProjectileDefinition.ProjectileDefinition
 type SignalInstance = typeof(Signal.new())
 type ProjectileStepOutcome = ProjectileStepOutcome.ProjectileStepOutcome
-type Team = Team.Team
 type HitboxRegistry = HitboxRegistry.HitboxRegistry
 type StopFractions = HitResolver.StopFractions
 
@@ -29,8 +22,7 @@ export type WallCaster = Projectile.WallCaster
 
 type ProjectileSimulationData = {
 
-	ProjectileSpawned: SignalInstance,
-	ProjectileHit: SignalInstance,
+	ProjectileRegistered: SignalInstance,
 	ProjectileDespawned: SignalInstance,
 
 	_hitboxRegistry: HitboxRegistry,
@@ -47,8 +39,7 @@ export type ProjectileSimulation = typeof(setmetatable(
 
 function ProjectileSimulation.new(hitboxRegistry: HitboxRegistry, walls: WallCaster): ProjectileSimulation
 	local data: ProjectileSimulationData = {
-		ProjectileSpawned = Signal.new(),
-		ProjectileHit = Signal.new(),
+		ProjectileRegistered = Signal.new(),
 		ProjectileDespawned = Signal.new(),
 
 		_hitboxRegistry = hitboxRegistry,
@@ -63,25 +54,12 @@ function ProjectileSimulation.GetActiveProjectiles(self: ProjectileSimulation): 
 	return self._activeProjectiles
 end
 
-function ProjectileSimulation.SpawnProjectile(
-	self: ProjectileSimulation,
-	definition: ProjectileDefinition,
-	ownerId: number,
-	team: Team,
-	position: Vector2,
-	direction: Direction
-): Projectile
+function ProjectileSimulation.Register(self: ProjectileSimulation, projectile: Projectile): ()
+	assert(not table.find(self._activeProjectiles, projectile), "Projectile is already registered")
 
-	local onHitCallback = function(shot, hurtbox, result)
-		self.ProjectileHit:Fire(shot, hurtbox, result)
-	end
-
-	local projectile = Projectile.new(definition, ownerId, team, position, direction, onHitCallback)
 	table.insert(self._activeProjectiles, projectile)
 	self._hitboxRegistry:Register(projectile.Hitbox)
-	self.ProjectileSpawned:Fire(projectile)
-
-	return projectile
+	self.ProjectileRegistered:Fire(projectile)
 end
 
 function ProjectileSimulation.AdvanceProjectiles(self: ProjectileSimulation, dt: number): ()
@@ -118,8 +96,7 @@ function ProjectileSimulation.Destroy(self: ProjectileSimulation): ()
 		self._hitboxRegistry:Unregister(projectile.Hitbox)
 	end
 
-	self.ProjectileSpawned:Destroy()
-	self.ProjectileHit:Destroy()
+	self.ProjectileRegistered:Destroy()
 	self.ProjectileDespawned:Destroy()
 	table.clear(self._activeProjectiles)
 	setmetatable(self :: any, nil)
