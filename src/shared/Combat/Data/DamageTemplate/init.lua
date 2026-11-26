@@ -15,13 +15,15 @@ export type DamageTemplateConfig = {
 	Tags: { string }?,
 }
 
+const DEFAULT_TAGS = {}
+
 function DamageTemplate.new(config: DamageTemplateConfig): DamageTemplate
 	local hitstopDuration = config.HitstopDuration or 0
 
 	assert(config.Amount >= 0, "DamageTemplate Amount must not be negative")
 	assert(hitstopDuration >= 0, "DamageTemplate HitstopDuration must not be negative")
 
-    local tags = table.freeze(table.clone(config.Tags or {}))
+    local tags = table.freeze(table.clone(config.Tags or DEFAULT_TAGS))
 
 	local template: DamageTemplate = {
 		Amount = config.Amount,

@@ -40,8 +40,6 @@ function DamagePayload.new(config: DamagePayload): DamagePayload
 	return table.freeze(payload)
 end
 
--- Builds the payload for a source facing the given direction. A template's knockback is written for
--- a source facing right, so its horizontal part is mirrored when the source faces left.
 function DamagePayload.fromTemplate(
 	template: DamageTemplate,
 	sourceOwnerId: number,

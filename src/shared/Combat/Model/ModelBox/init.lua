@@ -37,7 +37,6 @@ function ModelBox.new(model: Model): ModelBox
 	return setmetatable(data, ModelBox)
 end
 
--- Where the model's box is right now.
 function ModelBox.GetCenter(self: ModelBox): Vector2
 	local position = (self._primaryPart.CFrame * self._offset).Position
 

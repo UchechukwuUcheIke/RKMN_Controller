@@ -24,11 +24,9 @@ ProjectileSimulation.__index = ProjectileSimulation
 export type WallCaster = Projectile.WallCaster
 
 type ProjectileSimulationData = {
-	-- Fired with (projectile)
+
 	Spawned: SignalInstance,
-	-- Fired with (projectile, hurtbox, hitResult) for every hit that reaches a target
 	Hit: SignalInstance,
-	-- Fired with (projectile, outcome), where outcome is never InFlight
 	Despawned: SignalInstance,
 
 	_hitboxes: HitboxRegistry.HitboxRegistry,

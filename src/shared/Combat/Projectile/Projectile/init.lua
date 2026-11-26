@@ -98,7 +98,7 @@ function Projectile.new(
 		Hitbox = hitbox,
 
 		_onHit = onHit,
-		_stopOutcome = ProjectileStepOutcome.InFlight,
+		_stopOutcome = ProjectileStepOutcome.InFlight :: ProjectileStepOutcome,
 		_isAdvanced = false,
 		_stepDt = 0,
 		_stepFrom = position,
@@ -124,21 +124,22 @@ function Projectile._reactToHit(self: Projectile, hurtbox: Hurtbox, result: HitR
 	end
 
 	if result == HitResult.Ignored then
-		return PostHitReaction.Continue
+		return PostHitReaction.Continue :: PostHitReaction
 	end
 
 	self.HitCount += 1
 
 	if result == HitResult.Blocked then
-		self._stopOutcome = ProjectileStepOutcome.Blocked
-		return PostHitReaction.Stop
-	end
-	if self.HitCount > self.Definition.TargetPenetrationLimit then
-		self._stopOutcome = ProjectileStepOutcome.HitPenetrationExhausted
-		return PostHitReaction.Stop
+		self._stopOutcome = ProjectileStepOutcome.Blocked :: ProjectileStepOutcome
+		return PostHitReaction.Stop :: PostHitReaction
 	end
 
-	return PostHitReaction.Continue
+	if self.HitCount > self.Definition.TargetPenetrationLimit then
+		self._stopOutcome = ProjectileStepOutcome.HitPenetrationExhausted :: ProjectileStepOutcome
+		return PostHitReaction.Stop :: PostHitReaction
+	end
+
+	return PostHitReaction.Continue :: PostHitReaction
 end
 
 -- Starts this frame's move: sweeps the hitbox over it, and keeps it from reaching past a wall.
@@ -154,7 +155,7 @@ function Projectile.Advance(self: Projectile, dt: number, walls: WallCaster): ()
 	self._stepFrom = from
 	self._stepTo = to
 	self._wallFraction = wallFraction
-	self._stopOutcome = ProjectileStepOutcome.InFlight
+	self._stopOutcome = ProjectileStepOutcome.InFlight :: ProjectileStepOutcome
 
 	self.Hitbox:MoveTo(to)
 	self.Hitbox:SetReachFraction(wallFraction or 1)
@@ -165,19 +166,19 @@ end
 function Projectile.Settle(self: Projectile, stopFraction: number?): ProjectileStepOutcome
 	-- Nothing to settle for a projectile that was spawned after Advance ran.
 	if not self._isAdvanced then
-		return ProjectileStepOutcome.InFlight
+		return ProjectileStepOutcome.InFlight :: ProjectileStepOutcome
 	end
 	self._isAdvanced = false
 
 	local endFraction = 1
-	local outcome: ProjectileStepOutcome = ProjectileStepOutcome.InFlight
+	local outcome: ProjectileStepOutcome = ProjectileStepOutcome.InFlight :: ProjectileStepOutcome
 
 	if stopFraction then
 		endFraction = stopFraction
 		outcome = self._stopOutcome
 	elseif self._wallFraction then
 		endFraction = self._wallFraction
-		outcome = ProjectileStepOutcome.HitWall
+		outcome = ProjectileStepOutcome.HitWall :: ProjectileStepOutcome
 	end
 
 	self.Position = self._stepFrom + (self._stepTo - self._stepFrom) * endFraction
@@ -185,7 +186,7 @@ function Projectile.Settle(self: Projectile, stopFraction: number?): ProjectileS
 	self.TimeLeft -= self._stepDt
 
 	if outcome == ProjectileStepOutcome.InFlight and self.TimeLeft <= 0 then
-		outcome = ProjectileStepOutcome.Expired
+		outcome = ProjectileStepOutcome.Expired :: ProjectileStepOutcome
 	end
 
 	return outcome
