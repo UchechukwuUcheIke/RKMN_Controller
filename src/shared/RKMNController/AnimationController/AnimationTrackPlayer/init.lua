@@ -22,7 +22,6 @@ export type AnimationTrackPlayer = typeof(setmetatable(
 	{} :: AnimationTrackPlayerData,
 	{} :: AnimationTrackPlayerPrototype))
 
--- Entries with an empty id are skipped, and entries sharing an id load one track.
 function AnimationTrackPlayer.new(animator: Animator, preloadEntries: { AnimationEntry }?): AnimationTrackPlayer
 	local data: AnimationTrackPlayerData = {
 		_animator = animator,

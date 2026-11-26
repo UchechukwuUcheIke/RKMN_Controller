@@ -74,7 +74,7 @@ function MegaBuster.PressTrigger(self: MegaBuster): ()
 	local muzzle = self._getMuzzle()
 	self._cooldownLeft = MegaBuster.Cooldown
 
-	self._projectiles:Spawn(MegaBusterLemon, self._ownerId, self._team, muzzle.Position, muzzle.Direction)
+	self._projectiles:SpawnProjectile(MegaBusterLemon, self._ownerId, self._team, muzzle.Position, muzzle.Direction)
 end
 
 function MegaBuster.ReleaseTrigger(self: MegaBuster): () 

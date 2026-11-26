@@ -45,8 +45,8 @@ describe("MegaBuster", function()
 
 	-- One frame of shots: move them, deliver their hits, settle them.
 	local function step(dt)
-		simulation:Advance(dt)
-		simulation:Settle(resolver:Resolve())
+		simulation:AdvanceProjectiles(dt)
+		simulation:SettleProjectiles(resolver:Resolve())
 	end
 
 	local function makeEnemy(x)
@@ -70,7 +70,7 @@ describe("MegaBuster", function()
 
 		buster:PressTrigger()
 
-		local shots = simulation:GetActive()
+		local shots = simulation:GetActiveProjectiles()
 		expect(#shots).toBe(1)
 		local projectile = shots[1]
 		expect(projectile.Definition).toBe(MegaBusterLemon)
@@ -87,7 +87,7 @@ describe("MegaBuster", function()
 
 		buster:PressTrigger()
 
-		local second = simulation:GetActive()[2]
+		local second = simulation:GetActiveProjectiles()[2]
 		expect(second.Position.X).toBe(10)
 		expect(second.Direction).toBe(Direction.Left)
 	end)
@@ -96,32 +96,32 @@ describe("MegaBuster", function()
 		buster:PressTrigger()
 		buster:PressTrigger()
 
-		expect(#simulation:GetActive()).toBe(1)
+		expect(#simulation:GetActiveProjectiles()).toBe(1)
 	end)
 
 	it("fires again once the cooldown has elapsed", function()
 		buster:PressTrigger()
 		buster:Update(MegaBuster.Cooldown - 0.01)
 		buster:PressTrigger()
-		expect(#simulation:GetActive()).toBe(1)
+		expect(#simulation:GetActiveProjectiles()).toBe(1)
 
 		buster:Update(0.02)
 		buster:PressTrigger()
-		expect(#simulation:GetActive()).toBe(2)
+		expect(#simulation:GetActiveProjectiles()).toBe(2)
 	end)
 
 	it("does not repeat the shot while the trigger is held", function()
 		buster:PressTrigger()
 		buster:Update(1)
 
-		expect(#simulation:GetActive()).toBe(1)
+		expect(#simulation:GetActiveProjectiles()).toBe(1)
 	end)
 
 	it("ignores a release", function()
 		expect(function()
 			buster:ReleaseTrigger()
 		end).never.toThrow()
-		expect(#simulation:GetActive()).toBe(0)
+		expect(#simulation:GetActiveProjectiles()).toBe(0)
 	end)
 
 	it("ignores presses while disabled", function()
@@ -129,7 +129,7 @@ describe("MegaBuster", function()
 
 		buster:PressTrigger()
 
-		expect(#simulation:GetActive()).toBe(0)
+		expect(#simulation:GetActiveProjectiles()).toBe(0)
 	end)
 
 	it("does not replay a press made while disabled once enabled again", function()
@@ -138,7 +138,7 @@ describe("MegaBuster", function()
 		buster:SetEnabled(true)
 		buster:Update(1)
 
-		expect(#simulation:GetActive()).toBe(0)
+		expect(#simulation:GetActiveProjectiles()).toBe(0)
 	end)
 
 	it("fires on a fresh press after being enabled again", function()
@@ -147,13 +147,13 @@ describe("MegaBuster", function()
 
 		buster:PressTrigger()
 
-		expect(#simulation:GetActive()).toBe(1)
+		expect(#simulation:GetActiveProjectiles()).toBe(1)
 	end)
 
 	it("hurts an enemy in its path for the lemon's damage, then ends on the hit", function()
 		local received = makeEnemy(10)
 		local reasons = {}
-		simulation.Despawned:Connect(function(_, reason)
+		simulation.ProjectileDespawned:Connect(function(_, reason)
 			table.insert(reasons, reason)
 		end)
 
@@ -187,7 +187,7 @@ describe("MegaBuster", function()
 
 	it("expires after its lifetime when nothing is in the way", function()
 		local reasons = {}
-		simulation.Despawned:Connect(function(_, reason)
+		simulation.ProjectileDespawned:Connect(function(_, reason)
 			table.insert(reasons, reason)
 		end)
 

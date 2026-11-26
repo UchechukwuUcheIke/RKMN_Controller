@@ -81,8 +81,8 @@ function PlayerCombatSetup.Setup(controller: RKMNControllerFacade, character: Mo
 
 	local frame = RunServiceAdapter.new("PlayerCombatFrame", RenderPriorities.Combat, function(dt: number)
 		weapons:Update(dt)
-		projectiles:Advance(dt)
-		projectiles:Settle(resolver:Resolve())
+		projectiles:AdvanceProjectiles(dt)
+		projectiles:SettleProjectiles(resolver:Resolve())
 		modelPlacer:Update()
 	end)
 	frame:Start()

@@ -46,7 +46,7 @@ local function createModel(id)
 end
 
 local function spawnShot(position, direction, overrides)
-	return simulation:Spawn(
+	return simulation:SpawnProjectile(
 		makeDefinition(overrides),
 		OWNER_ID,
 		Team.Player,
@@ -57,8 +57,8 @@ end
 
 -- Runs one frame of the simulation with no hits and no walls.
 local function step(dt)
-	simulation:Advance(dt)
-	simulation:Settle({})
+	simulation:AdvanceProjectiles(dt)
+	simulation:SettleProjectiles({})
 end
 
 local function modelOf(index)
@@ -91,7 +91,7 @@ describe("ProjectileModelPlacer", function()
 				return nil
 			end,
 		})
-		other:Spawn(makeDefinition(), OWNER_ID, Team.Player, Vector2.new(4, 4), Direction.Right)
+		other:SpawnProjectile(makeDefinition(), OWNER_ID, Team.Player, Vector2.new(4, 4), Direction.Right)
 		local parent = Instance.new("Folder")
 
 		ProjectileModelPlacer.new(other, createModel, parent)

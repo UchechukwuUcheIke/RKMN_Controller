@@ -80,32 +80,32 @@ describe("ProjectileSimulation", function()
 
 	-- One frame: move the shots, deliver their hits, settle them.
 	local function step(dt)
-		simulation:Advance(dt)
-		simulation:Settle(resolver:Resolve())
+		simulation:AdvanceProjectiles(dt)
+		simulation:SettleProjectiles(resolver:Resolve())
 	end
 
 	local function spawn(definition, direction, ownerId)
-		return simulation:Spawn(definition or makeDefinition(), ownerId or OWNER_ID, Team.Player, ORIGIN, direction or Direction.Right)
+		return simulation:SpawnProjectile(definition or makeDefinition(), ownerId or OWNER_ID, Team.Player, ORIGIN, direction or Direction.Right)
 	end
 
 	local function recordDespawns()
 		local reasons = {}
-		simulation.Despawned:Connect(function(_, reason)
+		simulation.ProjectileDespawned:Connect(function(_, reason)
 			table.insert(reasons, reason)
 		end)
 		return reasons
 	end
 
 	describe("spawning", function()
-		it("returns the projectile, tracks it, and fires Spawned", function()
+		it("returns the projectile, tracks it, and fires ProjectileSpawned", function()
 			local spawned = {}
-			simulation.Spawned:Connect(function(projectile)
+			simulation.ProjectileSpawned:Connect(function(projectile)
 				table.insert(spawned, projectile)
 			end)
 
 			local projectile = spawn()
 			expect(projectile).never.toBeNil()
-			expect(#simulation:GetActive()).toBe(1)
+			expect(#simulation:GetActiveProjectiles()).toBe(1)
 			expect(spawned[1]).toBe(projectile)
 		end)
 	end)
@@ -139,15 +139,15 @@ describe("ProjectileSimulation", function()
 
 		it("leaves a projectile spawned mid-frame alone until the next frame", function()
 			local first = spawn()
-			simulation:Advance(0.1)
+			simulation:AdvanceProjectiles(0.1)
 			local late = spawn()
 
 			resolver:Resolve()
-			simulation:Settle({})
+			simulation:SettleProjectiles({})
 
 			expect(first.Position.X).toBeCloseTo(10, 5)
 			expect(late.Position.X).toBe(0)
-			expect(#simulation:GetActive()).toBe(2)
+			expect(#simulation:GetActiveProjectiles()).toBe(2)
 		end)
 	end)
 
@@ -171,7 +171,7 @@ describe("ProjectileSimulation", function()
 			expect(#reasons).toBe(0)
 			step(0.6)
 			expect(reasons).toEqual({ ProjectileStepOutcome.Expired })
-			expect(#simulation:GetActive()).toBe(0)
+			expect(#simulation:GetActiveProjectiles()).toBe(0)
 			-- It only travels for the lifetime it had left, not the whole second step.
 			expect(projectile.Position.X).toBeCloseTo(100, 5)
 		end)
@@ -218,12 +218,12 @@ describe("ProjectileSimulation", function()
 			expect(received[1].Knockback).toBe(Vector2.new(-5, 2))
 		end)
 
-		it("fires Hit with the projectile, hurtbox and result", function()
+		it("fires ProjectileHit with the projectile, hurtbox and result", function()
 			local target = makeTarget(50, Team.Enemy, HitResult.Killed)
 			registry:Register(target)
 
 			local events = {}
-			simulation.Hit:Connect(function(projectile, hurtbox, result)
+			simulation.ProjectileHit:Connect(function(projectile, hurtbox, result)
 				table.insert(events, { projectile, hurtbox, result })
 			end)
 
@@ -265,7 +265,7 @@ describe("ProjectileSimulation", function()
 			step(0.1)
 
 			expect(#received).toBe(0)
-			expect(#simulation:GetActive()).toBe(1)
+			expect(#simulation:GetActiveProjectiles()).toBe(1)
 		end)
 
 		it("does not hit hurtboxes of a team it cannot hurt", function()
@@ -330,7 +330,7 @@ describe("ProjectileSimulation", function()
 			step(0.5)
 
 			expect(#received).toBe(1)
-			expect(#simulation:GetActive()).toBe(1)
+			expect(#simulation:GetActiveProjectiles()).toBe(1)
 		end)
 
 		it("never hits the same target twice", function()
@@ -444,7 +444,7 @@ describe("ProjectileSimulation", function()
 			spawn()
 			simulation:Destroy()
 			expect(function()
-				simulation:GetActive()
+				simulation:GetActiveProjectiles()
 			end).toThrow()
 		end)
 	end)

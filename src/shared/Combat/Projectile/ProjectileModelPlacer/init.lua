@@ -36,20 +36,20 @@ export type ProjectileModelPlacer = typeof(setmetatable(
 function ProjectileModelPlacer._populateConnections(self: ProjectileModelPlacer, projectileSimulation: ProjectileSimulation): ()
 	table.insert(
 		self._connections,
-		projectileSimulation.Spawned:Connect(function(projectile: Projectile)
+		projectileSimulation.ProjectileSpawned:Connect(function(projectile: Projectile)
 			self:_show(projectile)
 		end)
 	)
 	table.insert(
 		self._connections,
-		projectileSimulation.Despawned:Connect(function(projectile: Projectile)
+		projectileSimulation.ProjectileDespawned:Connect(function(projectile: Projectile)
 			self:_hide(projectile)
 		end)
 	)
 end
 
 function ProjectileModelPlacer._showActiveProjectiles(self: ProjectileModelPlacer, projectileSimulation: ProjectileSimulation): ()
-	for _, projectile in projectileSimulation:GetActive() do
+	for _, projectile in projectileSimulation:GetActiveProjectiles() do
 		self:_show(projectile)
 	end
 end

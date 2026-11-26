@@ -17,6 +17,8 @@ type ProjectileDefinition = ProjectileDefinition.ProjectileDefinition
 type SignalInstance = typeof(Signal.new())
 type ProjectileStepOutcome = ProjectileStepOutcome.ProjectileStepOutcome
 type Team = Team.Team
+type HitboxRegistry = HitboxRegistry.HitboxRegistry
+type StopFractions = HitResolver.StopFractions
 
 local ProjectileSimulation = {}
 ProjectileSimulation.__index = ProjectileSimulation
@@ -25,13 +27,13 @@ export type WallCaster = Projectile.WallCaster
 
 type ProjectileSimulationData = {
 
-	Spawned: SignalInstance,
-	Hit: SignalInstance,
-	Despawned: SignalInstance,
+	ProjectileSpawned: SignalInstance,
+	ProjectileHit: SignalInstance,
+	ProjectileDespawned: SignalInstance,
 
-	_hitboxes: HitboxRegistry.HitboxRegistry,
+	_hitboxRegistry: HitboxRegistry,
 	_walls: WallCaster,
-	_active: { Projectile },
+	_activeProjectiles: { Projectile },
 }
 
 type ProjectileSimulationPrototype = typeof(ProjectileSimulation)
@@ -41,28 +43,25 @@ export type ProjectileSimulation = typeof(setmetatable(
 	{} :: ProjectileSimulationPrototype
 ))
 
--- Projectiles register their hitboxes in `hitboxes`, which the frame's hit pass (a HitResolver
--- over the same registry) delivers hits for.
-function ProjectileSimulation.new(hitboxes: HitboxRegistry.HitboxRegistry, walls: WallCaster): ProjectileSimulation
+function ProjectileSimulation.new(hitboxRegistry: HitboxRegistry, walls: WallCaster): ProjectileSimulation
 	local data: ProjectileSimulationData = {
-		Spawned = Signal.new(),
-		Hit = Signal.new(),
-		Despawned = Signal.new(),
+		ProjectileSpawned = Signal.new(),
+		ProjectileHit = Signal.new(),
+		ProjectileDespawned = Signal.new(),
 
-		_hitboxes = hitboxes,
+		_hitboxRegistry = hitboxRegistry,
 		_walls = walls,
-		_active = {},
+		_activeProjectiles = {},
 	}
 
 	return setmetatable(data, ProjectileSimulation)
 end
 
-function ProjectileSimulation.GetActive(self: ProjectileSimulation): { Projectile }
-	return self._active
+function ProjectileSimulation.GetActiveProjectiles(self: ProjectileSimulation): { Projectile }
+	return self._activeProjectiles
 end
 
--- Fire rate is the weapon's business; the simulation spawns whatever it is asked to.
-function ProjectileSimulation.Spawn(
+function ProjectileSimulation.SpawnProjectile(
 	self: ProjectileSimulation,
 	definition: ProjectileDefinition,
 	ownerId: number,
@@ -70,54 +69,57 @@ function ProjectileSimulation.Spawn(
 	position: Vector2,
 	direction: Direction
 ): Projectile
-	local projectile = Projectile.new(definition, ownerId, team, position, direction, function(shot, hurtbox, result)
-		self.Hit:Fire(shot, hurtbox, result)
-	end)
-	table.insert(self._active, projectile)
-	self._hitboxes:Register(projectile.Hitbox)
-	self.Spawned:Fire(projectile)
+
+	local onHitCallback = function(shot, hurtbox, result)
+		self.ProjectileHit:Fire(shot, hurtbox, result)
+	end
+
+	local projectile = Projectile.new(definition, ownerId, team, position, direction, onHitCallback)
+	table.insert(self._activeProjectiles, projectile)
+	self._hitboxRegistry:Register(projectile.Hitbox)
+	self.ProjectileSpawned:Fire(projectile)
 
 	return projectile
 end
 
--- First half of a frame: moves every projectile's hitbox over its step. The hit pass runs between
--- this and Settle.
-function ProjectileSimulation.Advance(self: ProjectileSimulation, dt: number): ()
+function ProjectileSimulation.AdvanceProjectiles(self: ProjectileSimulation, dt: number): ()
 	-- Snapshot, so shots spawned or removed by callbacks don't disturb this pass.
-	for _, projectile in table.clone(self._active) do
-		if table.find(self._active, projectile) then
+	local activeProjectiles = table.clone(self._activeProjectiles)
+	for _, projectile in activeProjectiles do
+		local isProjectileActive = table.find(self._activeProjectiles, projectile) ~= nil
+		if isProjectileActive then
 			projectile:Advance(dt, self._walls)
 		end
 	end
 end
 
--- Second half of a frame: finishes every projectile's move given where the hit pass stopped each
--- hitbox, and despawns the ones that ended.
-function ProjectileSimulation.Settle(self: ProjectileSimulation, stops: HitResolver.StopFractions): ()
-	for _, projectile in table.clone(self._active) do
-		local index = table.find(self._active, projectile)
-		if not index then
+function ProjectileSimulation.SettleProjectiles(self: ProjectileSimulation, stops: StopFractions): ()
+	local activeProjectiles = table.clone(self._activeProjectiles)
+	for _, projectile in activeProjectiles do
+		local projectileIndex = table.find(self._activeProjectiles, projectile)
+		local isProjectileActive = projectileIndex ~= nil
+		if not isProjectileActive then
 			continue
 		end
 
 		local outcome = projectile:Settle(stops[projectile.Hitbox])
 		if outcome ~= ProjectileStepOutcome.InFlight then
-			table.remove(self._active, index)
-			self._hitboxes:Unregister(projectile.Hitbox)
-			self.Despawned:Fire(projectile, outcome)
+			table.remove(self._activeProjectiles, projectileIndex)
+			self._hitboxRegistry:Unregister(projectile.Hitbox)
+			self.ProjectileDespawned:Fire(projectile, outcome)
 		end
 	end
 end
 
 function ProjectileSimulation.Destroy(self: ProjectileSimulation): ()
-	for _, projectile in self._active do
-		self._hitboxes:Unregister(projectile.Hitbox)
+	for _, projectile in self._activeProjectiles do
+		self._hitboxRegistry:Unregister(projectile.Hitbox)
 	end
 
-	self.Spawned:Destroy()
-	self.Hit:Destroy()
-	self.Despawned:Destroy()
-	table.clear(self._active)
+	self.ProjectileSpawned:Destroy()
+	self.ProjectileHit:Destroy()
+	self.ProjectileDespawned:Destroy()
+	table.clear(self._activeProjectiles)
 	setmetatable(self :: any, nil)
 end
 
