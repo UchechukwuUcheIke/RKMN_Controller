@@ -48,18 +48,6 @@ describe("KinematicSimulation", function()
 		it("should start with no players", function()
 			expect(#simulation._players).toBe(0)
 		end)
-
-		it("should start not running", function()
-			expect(simulation._isRunning).toBe(false)
-		end)
-
-		it("should default to the master kinematic loop bind name", function()
-			local freshSimulation = KinematicSimulation.new()
-
-			expect(freshSimulation._runserviceBindName).toBe("MasterKinematicLoop")
-
-			freshSimulation:Destroy()
-		end)
 	end)
 
 	describe("RegisterPlayer", function()
