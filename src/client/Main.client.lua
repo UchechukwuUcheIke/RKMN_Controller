@@ -5,9 +5,11 @@ local RKMNControllerSetup = require(ReplicatedStorage.RKMNControllerSetup)
 local RKMNCameraSetup = require(ReplicatedStorage.RKMNCameraSetup)
 local CombatSimulationSetup = require(ReplicatedStorage.Combat.CombatSimulationSetup)
 local PlayerCombatSetup = require(ReplicatedStorage.Combat.PlayerCombatSetup)
+local DummyEnemySetup = require(ReplicatedStorage.Combat.Enemy.DummyEnemySetup)
 
 local rkmnCamera = RKMNCameraSetup.Setup(workspace.CurrentCamera)
 local combatSimulation = CombatSimulationSetup.Setup()
+DummyEnemySetup.Setup(combatSimulation)
 
 local playerCombat
 
