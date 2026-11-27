@@ -7,7 +7,7 @@ local RKMNControllerFolder = ReplicatedStorage.RKMNController
 local DebugModuleFolder = ReplicatedStorage.DebugModule
 local DebugFacade = require(DebugModuleFolder.DebugFacade)
 local RKMNControllerFacade = require(RKMNControllerFolder.RKMNControllerFacade)
-local KinematicWorld = require(ReplicatedStorage.KinematicWorld)
+local KinematicSimulation = require(ReplicatedStorage.KinematicSimulation)
 local RunServiceAdapter = require(ReplicatedStorage.RunServiceAdapter)
 local RenderPriorities = require(ReplicatedStorage.RenderPriorities)
 local CollisionBody = require(RKMNControllerFolder.CollisionBody)
@@ -90,9 +90,9 @@ type DiagnosticControllerQuery = DiagnosticControllerQuery.DiagnosticCollisionQu
 
 local RKMNControllerSetup = {}
 
-local kinematicWorld = KinematicWorld.new()
-local runServiceAdapter = RunServiceAdapter.new("LiveKinematicLoop", RenderPriorities.World, function(dt: number)
-    kinematicWorld:StepWorld(dt)
+local kinematicSimulation = KinematicSimulation.new()
+local runServiceAdapter = RunServiceAdapter.new("LiveKinematicLoop", RenderPriorities.Kinematic, function(dt: number)
+    kinematicSimulation:Step(dt)
 end)
 
 local function mountScreenGui(): ScreenGui
@@ -385,8 +385,8 @@ function RKMNControllerSetup.Setup(character: Model): RKMNControllerFacade
     screenMediator:AddEntryPoint(touchGamepad)
     activeScreenMediator = screenMediator
 
-    local debugTool = DebugFacade.new(world, screenGui, kinematicWorld, kinematicController, runServiceAdapter)
-    kinematicWorld:RegisterPlayer(kinematicController)
+    local debugTool = DebugFacade.new(world, screenGui, kinematicSimulation, kinematicController, runServiceAdapter)
+    kinematicSimulation:RegisterPlayer(kinematicController)
     runServiceAdapter:Start()
     debugTool:Enable()
 

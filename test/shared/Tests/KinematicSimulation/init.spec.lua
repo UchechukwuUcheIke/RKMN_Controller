@@ -11,12 +11,12 @@ local afterEach = JestGlobals.afterEach
 local MockerUtils = require(ReplicatedStorage.Tests.TestUtils.MockUtils)
 local RKMNControllerFolder = ReplicatedStorage.RKMNController
 local RKMNControllerFacade = require(RKMNControllerFolder.RKMNControllerFacade)
-local KinematicWorld = require(ReplicatedStorage.KinematicWorld)
+local KinematicSimulation = require(ReplicatedStorage.KinematicSimulation)
 
 
 
-describe("KinematicWorld", function()
-	local world
+describe("KinematicSimulation", function()
+	local simulation
 	local callLog
 
 	-- Builds a mock controller whose Update appends "<id>" to callLog so call order can be asserted
@@ -34,42 +34,42 @@ describe("KinematicWorld", function()
 
 	beforeEach(function()
 		callLog = {}
-		world = KinematicWorld.new()
+		simulation = KinematicSimulation.new()
 	end)
 
 	afterEach(function()
-		-- Tests that call Destroy() themselves set `world` to nil
-		if world then
-			world:Destroy()
+		-- Tests that call Destroy() themselves set `simulation` to nil
+		if simulation then
+			simulation:Destroy()
 		end
 	end)
 
 	describe("new", function()
 		it("should start with no players", function()
-			expect(#world._players).toBe(0)
+			expect(#simulation._players).toBe(0)
 		end)
 
 		it("should start not running", function()
-			expect(world._isRunning).toBe(false)
+			expect(simulation._isRunning).toBe(false)
 		end)
 
 		it("should default to the master kinematic loop bind name", function()
-			local freshWorld = KinematicWorld.new()
+			local freshSimulation = KinematicSimulation.new()
 
-			expect(freshWorld._runserviceBindName).toBe("MasterKinematicLoop")
+			expect(freshSimulation._runserviceBindName).toBe("MasterKinematicLoop")
 
-			freshWorld:Destroy()
+			freshSimulation:Destroy()
 		end)
 	end)
 
 	describe("RegisterPlayer", function()
-		it("should add the controller to the world", function()
+		it("should add the controller to the simulation", function()
 			local player = makeController("1")
 
-			world:RegisterPlayer(player.Instance)
+			simulation:RegisterPlayer(player.Instance)
 
-			expect(#world._players).toBe(1)
-			expect(world._players[1]).toBe(player.Instance)
+			expect(#simulation._players).toBe(1)
+			expect(simulation._players[1]).toBe(player.Instance)
 		end)
 
 		it("should keep controllers in registration order", function()
@@ -77,36 +77,36 @@ describe("KinematicWorld", function()
 			local second = makeController("2")
 			local third = makeController("3")
 
-			world:RegisterPlayer(first.Instance)
-			world:RegisterPlayer(second.Instance)
-			world:RegisterPlayer(third.Instance)
+			simulation:RegisterPlayer(first.Instance)
+			simulation:RegisterPlayer(second.Instance)
+			simulation:RegisterPlayer(third.Instance)
 
-			expect(world._players[1]).toBe(first.Instance)
-			expect(world._players[2]).toBe(second.Instance)
-			expect(world._players[3]).toBe(third.Instance)
+			expect(simulation._players[1]).toBe(first.Instance)
+			expect(simulation._players[2]).toBe(second.Instance)
+			expect(simulation._players[3]).toBe(third.Instance)
 		end)
 
-		it("should not step the player until StepWorld is called", function()
+		it("should not step the player until Step is called", function()
 			local player = makeController("1")
 
-			world:RegisterPlayer(player.Instance)
+			simulation:RegisterPlayer(player.Instance)
 
 			expect(#callLog).toBe(0)
 		end)
 	end)
 
-	describe("StepWorld", function()
+	describe("Step", function()
 		it("should do nothing when no players are registered", function()
 			expect(function()
-				world:StepWorld(1 / 60)
+				simulation:Step(1 / 60)
 			end).never.toThrow()
 		end)
 
 		it("should call Update once on a registered player", function()
 			local player = makeController("1")
-			world:RegisterPlayer(player.Instance)
+			simulation:RegisterPlayer(player.Instance)
 
-			world:StepWorld(1 / 60)
+			simulation:Step(1 / 60)
 
 			expect(player.Update).toHaveBeenCalledTimes(1)
 			expect(player.Update.mock.calls[1][1]).toBe(player.Instance)
@@ -114,29 +114,29 @@ describe("KinematicWorld", function()
 
 		it("should pass deltaTime to Update", function()
 			local player = makeController("1")
-			world:RegisterPlayer(player.Instance)
+			simulation:RegisterPlayer(player.Instance)
 
-			world:StepWorld(0.0125)
+			simulation:Step(0.0125)
 
 			expect(player.Update.mock.calls[1][2]).toBeCloseTo(0.0125, 5)
 		end)
 
 		it("should update every registered player once, in registration order", function()
-			world:RegisterPlayer(makeController("1").Instance)
-			world:RegisterPlayer(makeController("2").Instance)
-			world:RegisterPlayer(makeController("3").Instance)
+			simulation:RegisterPlayer(makeController("1").Instance)
+			simulation:RegisterPlayer(makeController("2").Instance)
+			simulation:RegisterPlayer(makeController("3").Instance)
 
-			world:StepWorld(1 / 60)
+			simulation:Step(1 / 60)
 
 			expect(callLog).toEqual({ "1", "2", "3" })
 		end)
 
 		it("should update on every call, using that call's deltaTime", function()
 			local player = makeController("1")
-			world:RegisterPlayer(player.Instance)
+			simulation:RegisterPlayer(player.Instance)
 
-			world:StepWorld(0.01)
-			world:StepWorld(0.02)
+			simulation:Step(0.01)
+			simulation:Step(0.02)
 
 			expect(player.Update).toHaveBeenCalledTimes(2)
 			expect(player.Update.mock.calls[1][2]).toBeCloseTo(0.01, 5)
@@ -144,12 +144,12 @@ describe("KinematicWorld", function()
 		end)
 
 		it("should include players registered after earlier steps", function()
-			world:RegisterPlayer(makeController("1").Instance)
-			world:StepWorld(1 / 60)
+			simulation:RegisterPlayer(makeController("1").Instance)
+			simulation:Step(1 / 60)
 
-			world:RegisterPlayer(makeController("2").Instance)
+			simulation:RegisterPlayer(makeController("2").Instance)
 			callLog = {}
-			world:StepWorld(1 / 60)
+			simulation:Step(1 / 60)
 
 			expect(callLog).toEqual({ "1", "2" })
 		end)
@@ -158,40 +158,40 @@ describe("KinematicWorld", function()
 
 	describe("Destroy", function()
 		it("should clear the registered players", function()
-			world:RegisterPlayer(makeController("1").Instance)
-			world:RegisterPlayer(makeController("2").Instance)
-			local players = world._players
+			simulation:RegisterPlayer(makeController("1").Instance)
+			simulation:RegisterPlayer(makeController("2").Instance)
+			local players = simulation._players
 
-			world:Destroy()
-			world = nil
+			simulation:Destroy()
+			simulation = nil
 
 			expect(#players).toBe(0)
 		end)
 
 		it("should not step or touch any subsystem", function()
-			world:RegisterPlayer(makeController("1").Instance)
-			world:RegisterPlayer(makeController("2").Instance)
+			simulation:RegisterPlayer(makeController("1").Instance)
+			simulation:RegisterPlayer(makeController("2").Instance)
 
-			world:Destroy()
-			world = nil
+			simulation:Destroy()
+			simulation = nil
 
 			expect(#callLog).toBe(0)
 		end)
 
-		it("should freeze the world and strip its metatable", function()
-			local target = world
+		it("should freeze the simulation and strip its metatable", function()
+			local target = simulation
 
-			world:Destroy()
-			world = nil
+			simulation:Destroy()
+			simulation = nil
 
 			expect(table.isfrozen(target)).toBe(true)
 			expect(getmetatable(target)).toBeNil()
 		end)
 
-		it("should be safe to destroy a world that was never started", function()
+		it("should be safe to destroy a simulation that was never started", function()
 			expect(function()
-				world:Destroy()
-				world = nil
+				simulation:Destroy()
+				simulation = nil
 			end).never.toThrow()
 		end)
 	end)

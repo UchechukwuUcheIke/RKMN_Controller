@@ -12,11 +12,11 @@ local DebugInputHandler = require(DebuggerFolder.DebugInputHandler)
 local DebugUI = require(DebuggerFolder.DebugUI)
 local DebugWorldVisualizer = require(DebuggerFolder.DebugWorldVisualizer)
 local DiagnosticCollisionQuery = require(DebuggerFolder.DiagnosticCollisionQuery)
-local KinematicWorld = require(ReplicatedStorage.KinematicWorld)
+local KinematicSimulation = require(ReplicatedStorage.KinematicSimulation)
 local RunServiceAdapter = require(ReplicatedStorage.RunServiceAdapter)
 local RenderPriorities = require(ReplicatedStorage.RenderPriorities)
 
-type KinematicWorld = KinematicWorld.KinematicWorld
+type KinematicSimulation = KinematicSimulation.KinematicSimulation
 type RKMNControllerFacade = RKMNControllerFacade.RKMNControllerFacade
 type DebugInputHandler = DebugInputHandler.InputHandler
 type DiagnosticCollisionQuery = DiagnosticCollisionQuery.DiagnosticCollisionQuery
@@ -36,7 +36,7 @@ type DebugFacadeData = {
 	_isActive: boolean,
 	_isPaused: boolean,
 	_world: WorldRoot,
-	_kinematicWorld: KinematicWorld,
+	_kinematicSimulation: KinematicSimulation,
 	_layerCollector: LayerCollector,
 	_kinematicController: RKMNControllerFacade,
 	_inputHandler: DebugInputHandler,
@@ -53,11 +53,11 @@ export type DebugFacade = typeof(setmetatable(
 	{} :: DebugFacadePrototype
 ))
 
-function DebugFacade.new(world: WorldRoot, layerCollector: LayerCollector, kinematicWorld: KinematicWorld, kinematicController: RKMNControllerFacade, runServiceAdapter: RunServiceAdapter): DebugFacade
+function DebugFacade.new(world: WorldRoot, layerCollector: LayerCollector, kinematicSimulation: KinematicSimulation, kinematicController: RKMNControllerFacade, runServiceAdapter: RunServiceAdapter): DebugFacade
 	local self = setmetatable({}, DebugFacade)
 
 	self._world = world
-	self._kinematicWorld = kinematicWorld
+	self._kinematicSimulation = kinematicSimulation
 	self._kinematicController = kinematicController
 	self._layerCollector = layerCollector
 	self._runServiceAdapter = runServiceAdapter
@@ -93,7 +93,7 @@ function DebugFacade._handleOnStepForward(self: DebugFacade): ()
 		return
 	end
 
-	self._kinematicWorld:StepWorld(SINGLE_STEP_DELTA)
+	self._kinematicSimulation:Step(SINGLE_STEP_DELTA)
 end
 
 function DebugFacade._bindInputSignals(self: DebugFacade): ()
@@ -139,9 +139,9 @@ function DebugFacade._enableSubmodules(self: DebugFacade): ()
 end
 
 function DebugFacade._bindRenderStep(self: DebugFacade): ()
-	RunService:BindToRenderStep(RENDER_BIND_NAME, RenderPriorities.World, function(deltaTime: number)
+	RunService:BindToRenderStep(RENDER_BIND_NAME, RenderPriorities.Kinematic, function(deltaTime: number)
 		if not self._isPaused then
-			self._kinematicWorld:StepWorld(deltaTime)
+			self._kinematicSimulation:Step(deltaTime)
 		end
 		self:Update(deltaTime)
 	end)
