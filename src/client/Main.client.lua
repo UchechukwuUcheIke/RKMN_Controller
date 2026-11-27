@@ -3,9 +3,11 @@ local LocalPlayer = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RKMNControllerSetup = require(ReplicatedStorage.RKMNControllerSetup)
 local RKMNCameraSetup = require(ReplicatedStorage.RKMNCameraSetup)
+local CombatSimulationSetup = require(ReplicatedStorage.Combat.CombatSimulationSetup)
 local PlayerCombatSetup = require(ReplicatedStorage.Combat.PlayerCombatSetup)
 
 local rkmnCamera = RKMNCameraSetup.Setup(workspace.CurrentCamera)
+local combatSimulation = CombatSimulationSetup.Setup()
 
 local playerCombat
 
@@ -15,7 +17,7 @@ local function onCharacterAdded(character: Model)
     if playerCombat then
         playerCombat:Destroy()
     end
-    playerCombat = PlayerCombatSetup.Setup(controller, character)
+    playerCombat = PlayerCombatSetup.Setup(combatSimulation, controller, character)
     rkmnCamera:SetPlayerTarget(character)
 end
 
